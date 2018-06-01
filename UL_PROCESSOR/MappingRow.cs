@@ -17,6 +17,7 @@ namespace UL_PROCESSOR
         public String rightTag = "";
         public String aid = "";
         public String sex = "";
+        public String type = "";
         public List<DateTime> absences = new List<DateTime>();
 
         public DateTime day = new DateTime();

@@ -11,14 +11,14 @@ namespace UL_PROCESSOR
         public String root = "C://LVL/";//"D://"
         public String classroom = "APPLETREE"; //"LADYBUGS2";// "PANDAS";//"LADYBUGS1";//"APPLETREE";//"LADYBUGS2";//"DEBBIE";
         public String freePlayTimesFile ="/FREEPLAYTIMES.CSV";
-        public String mappingFile = "/MAPPINGNEW.CSV";
+        public String mappingFile = "/MAPPING";
         public String ubisenseFile = "MiamiChild.";
         public String ubisenseTagsFile = "MiamiLocation.";
         public String ubisenseFileDir = "/Ubisense_Data/FROMSUPER/";// LADYBUG/";
         public String lenaFile = "/LENA_Data/ACTIVITYBLOCKS/LENAACTIVITYBLOCKALL.csv";
         public String syncFilePre = "/SYNC/MERGED";
 
-        public Boolean justFreePlay = true;
+        public Boolean justFreePlay = false;//true;
         public DateTime from = new DateTime(2017, 3, 31);
         public DateTime to = new DateTime(2017, 4, 1);
 
@@ -30,6 +30,7 @@ namespace UL_PROCESSOR
         public int mappingAbsentCol = 13;
         public int mappingAidCol = 14;
         public int mappingSexCol = 15;
+        public int mappingTypeCol = 17;
 
 
         public int lenaFileIdCol = 16;
@@ -69,7 +70,7 @@ namespace UL_PROCESSOR
             classroom = c;
             root = r;
             freePlayTimesFile = root + classroom + freePlayTimesFile;
-            mappingFile = root + classroom + mappingFile;
+            mappingFile = root + classroom + mappingFile+"_"+classroom+".CSV";
             ubisenseFileDir = root + classroom + ubisenseFileDir;
             lenaFile = root + classroom + lenaFile;
             syncFilePre = root + classroom + syncFilePre;
@@ -77,7 +78,7 @@ namespace UL_PROCESSOR
         public Config()
         {
             freePlayTimesFile = root + classroom + freePlayTimesFile;
-            mappingFile = root + classroom + mappingFile;
+            mappingFile = root + classroom +"_" + classroom + ".CSV";
             ubisenseFileDir = root + classroom + ubisenseFileDir;
             lenaFile = root + classroom + lenaFile;
             syncFilePre = root + classroom + syncFilePre;
@@ -118,7 +119,8 @@ namespace UL_PROCESSOR
                             //tagTest.Add(mr.rightTag, false);
                             mr.sex = line[mappingSexCol].Trim();
                             mr.aid = line[mappingAidCol].Trim();
-                           
+                            mr.type = line[mappingTypeCol].Trim();
+
                             if (!mapRowsUbi.ContainsKey(mr.UbiID))
                             {
                                 mapRowsUbi.Add(mr.UbiID, new List<MappingRow>());

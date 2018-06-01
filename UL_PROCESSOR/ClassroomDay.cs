@@ -951,7 +951,7 @@ namespace UL_PROCESSOR
         {
             using (TextWriter sw = new StreamWriter(file_name))
             {
-                sw.WriteLine("BID, DateTime, X, Y, Orientation, Talking, Aid, S");
+                sw.WriteLine("BID, DateTime, X, Y, Orientation, Talking, Aid, S, Type");
                 foreach (KeyValuePair<DateTime, Dictionary<String, PersonInfo>> pi in activities.OrderBy(key => key.Key))
                 {
                     DateTime dt = pi.Key;
@@ -963,7 +963,7 @@ namespace UL_PROCESSOR
                             MappingRow mr = cf.getMapping(s, day);
                             if ((!startFromLena) || isWithLenaStart(dt, s))
                             {
-                                sw.WriteLine(s + "," + dt.ToString("hh:mm:ss.fff tt") + "," + activities[dt][s].x + "," + activities[dt][s].y + "," + activities[dt][s].ori + "," + activities[dt][s].wasTalking + "," + mr.aid + "," + mr.sex);
+                                sw.WriteLine(s + "," + dt.ToString("hh:mm:ss.fff tt") + "," + activities[dt][s].x + "," + activities[dt][s].y + "," + activities[dt][s].ori + "," + activities[dt][s].wasTalking + "," + mr.aid + "," + mr.sex+","+mr.type);
                             }
                         }
                     }
