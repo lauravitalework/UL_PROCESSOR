@@ -10,16 +10,15 @@ namespace UL_PROCESSOR
     {
         public Boolean startFromLena = true;//false;//true;
         private double minDistance = 1.5 * 1.5; //the squared value of g(r) cutoff in meters
+
         public Dictionary<String, double> pairClose = new Dictionary<string, double>();
         public Dictionary<String, double> pairCloseOrientation = new Dictionary<string, double>();
         public Dictionary<String, double> pairTime = new Dictionary<string, double>();
         public Dictionary<String, Tuple<double, double>> pairStatsSeparated = new Dictionary<string, Tuple<double, double>>();
-        public Dictionary<String, Tuple<double, double>> pairStatsSeparatedTC = new Dictionary<string, Tuple<double, double>>();
-        public Dictionary<String, Tuple<double, double>> pairStatsSeparatedVD = new Dictionary<string, Tuple<double, double>>();
+
         public Dictionary<String, PairInfo> pairStatsSep = new Dictionary<string, PairInfo>();
         public Dictionary<String, double> individualTime = new Dictionary<string, double>();
         public Dictionary<String, double> pairStats = new Dictionary<String, double>();
-        //public Dictionary<String, Tuple<double, double, double, double, double>> personTotalCounts = new Dictionary<string, Tuple<double, double, double, double, double>>();
         public Dictionary<String, PersonInfo> personTotalCounts = new Dictionary<string, PersonInfo>();
         public Dictionary<String, PersonInfo> personTotalCountsWUbi = new Dictionary<string, PersonInfo>();
 
@@ -751,21 +750,13 @@ namespace UL_PROCESSOR
                 foreach (KeyValuePair<DateTime, Dictionary<String, PersonInfo>> opi in activities.OrderBy(key => key.Key))
                 {
                     DateTime dt = opi.Key;
-                    if (dt.Hour > 9)
-                    {
-                        bool flagb = true;
-                    }
                      
                     if (trunkDetailFile && dt.CompareTo(trunk) <= 0 && ((!cf.justFreePlay)||(isThisFreePlay(dt))))/////
                     {
                          
                         foreach (String person in activities[dt].Keys)
                         {
-                            //delete
-                            if(person=="T3B" && dt.Hour>9)
-                            {
-                                bool flagb = true;
-                            }
+                            
                             if ((!startFromLena) || isWithLenaStart(dt, person))
                             {
                                 if (!individualTime.ContainsKey(person))
@@ -883,9 +874,6 @@ namespace UL_PROCESSOR
                                                                     pairInfo.p1.ac += a;
                                                                     pairInfo.p1.no += n;
                                                                     pairInfo.p1.oln += o;
-                                                                    //pairStatsSeparatedTC[pair] = new Tuple<double, double>(pairStatsSeparatedTC[pair].Item1 + tc, pairStatsSeparatedTC[pair].Item2);
-                                                                    //pairStatsSeparatedVC[pair] = new Tuple<double, double>(pairStatsSeparatedVC[pair].Item1 + vc, pairStatsSeparatedVC[pair].Item2);
-                                                                    //pairStatsSeparatedVD[pair] = new Tuple<double, double>(pairStatsSeparatedVD[pair].Item1 + vd2, pairStatsSeparatedVD[pair].Item2);
                                                                 }
                                                                 else //p is in the first part of the pair
                                                                 {
@@ -895,9 +883,6 @@ namespace UL_PROCESSOR
                                                                     pairInfo.p2.ac += a;
                                                                     pairInfo.p2.no += n;
                                                                     pairInfo.p2.oln += o;
-                                                                    //pairStatsSeparatedTC[pair] = new Tuple<double, double>(pairStatsSeparatedTC[pair].Item1, pairStatsSeparatedTC[pair].Item2 + tc);
-                                                                    //pairStatsSeparatedVC[pair] = new Tuple<double, double>(pairStatsSeparatedVC[pair].Item1, pairStatsSeparatedVC[pair].Item2 + vc);
-                                                                    //pairStatsSeparatedVD[pair] = new Tuple<double, double>(pairStatsSeparatedVD[pair].Item1, pairStatsSeparatedVD[pair].Item2 + vd2);
                                                                 }
 
                                                             }

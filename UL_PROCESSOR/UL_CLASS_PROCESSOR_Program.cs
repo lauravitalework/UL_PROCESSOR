@@ -12,8 +12,18 @@ namespace UL_PROCESSOR
         public List<DateTime> days;
         public Boolean doSummary = true;
         public String fileName = "V1";
-        public UL_CLASS_PROCESSOR_Program(Config c, List<DateTime> d, String fName)
+
+        public Boolean doTenFiles = true;
+        public Boolean doSumDayFiles = true;
+        public Boolean doSumAllFiles = true;
+        public Boolean doAngleFiles = true;
+
+        public UL_CLASS_PROCESSOR_Program(Config c, List<DateTime> d, String fName, Boolean t, Boolean sd, Boolean s, Boolean a)
         {
+            doTenFiles = t;
+            doSumDayFiles = sd;
+            doSumAllFiles = s;
+            doAngleFiles = a;
             configInfo = c;
             days = d;
             configInfo.readMappings();
@@ -41,40 +51,48 @@ namespace UL_PROCESSOR
                 cd.setUbiTagData(rawTags.Item1, rawTags.Item2);
                 Console.WriteLine("setLenaData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 cd.setLenaData(rawLena);
-                DateTime trunkAt = cd.getTrunkTime();
+                DateTime trunkAt = cd.getTrunkTime();//gets first end track time from last ten minutes of tracking.
                 Console.WriteLine("countInteractions (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 cd.countInteractions(false, true, true, trunkAt, rawLena); //count interactions but no need to write a file
-                ///////reviiew time order
-                Console.WriteLine("write10SecTalkingCSV (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                cd.write10SecTalkingCSV(configInfo.root + configInfo.classroom + "/SYNC/" + "10THOFSECTALKING_" + (configInfo.justFreePlay ? "_freeplay" : "") + day.Month + "_" + day.Day + "_" + day.Year + ".CSV"); //write complete data files to disc
+                if (doTenFiles)
+                {
+                    Console.WriteLine("write10SecTalkingCSV (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                    cd.write10SecTalkingCSV(configInfo.root + configInfo.classroom + "/SYNC/" + "10THOFSECTALKING_" + (configInfo.justFreePlay ? "_freeplay" : "") + day.Month + "_" + day.Day + "_" + day.Year + ".CSV"); //write complete data files to disc
+                }
                 cds.Add(cd);
             }
             summarize(cds, countSets, processLast);
-
-
         }
         public void summarize(List<ClassroomDay> cds, int c, Boolean processLast)
         {
-
-            foreach (ClassroomDay cd in cds)
+            if (doSumAllFiles || doSumDayFiles)
             {
-
-                try
+                foreach (ClassroomDay cd in cds)
                 {
-                    Console.WriteLine("Summarizing " + cd.day.Month + " " + cd.day.Year + " " + cd.day.Day + " (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                    List<ClassroomDay> oneDay = new List<ClassroomDay>();//sync3_3pairactivity_vo8.CSV
-                    oneDay.Add(cd);
-                    Console.WriteLine("Summarizing ONE");
-                    writeDataSummary(false, configInfo.root + configInfo.classroom + "/SYNC/PAIRACTIVITY_V41918" + c.ToString() + "_" + configInfo.classroom + "_" + (cd.justProx ? "no" : "") + (configInfo.justFreePlay ? "_freeplay" : "") + "o_" + cd.day.Month + "_" + cd.day.Day + "_" + cd.day.Year + ".csv", oneDay, true); //write summary data
+
+                    try
+                    {
+                        Console.WriteLine("Summarizing " + cd.day.Month + " " + cd.day.Year + " " + cd.day.Day + " (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                        List<ClassroomDay> oneDay = new List<ClassroomDay>();//sync3_3pairactivity_vo8.CSV
+                        oneDay.Add(cd);
+                        Console.WriteLine("Summarizing ONE");
+                        if (doSumDayFiles)
+                        {
+                            writeDataSummary(false, configInfo.root + configInfo.classroom + "/SYNC/PAIRACTIVITY_V41918" + c.ToString() + "_" + configInfo.classroom + "_" + (cd.justProx ? "no" : "") + (configInfo.justFreePlay ? "_freeplay" : "") + "o_" + cd.day.Month + "_" + cd.day.Day + "_" + cd.day.Year + ".csv", oneDay, true); //write summary data
+                        }
+                    }
+                    catch (Exception e)
+                    {
+
+                    }
                 }
-                catch (Exception e)
-                {
+                Console.WriteLine("Summarizing ALL " + " (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
 
+                if (doSumAllFiles)
+                {
+                    writeDataSummary(c > 0, configInfo.root + configInfo.classroom + "/SYNC/PAIRACTIVITY__ALL_" + fileName + configInfo.classroom + (configInfo.justFreePlay ? "_freeplay" : "") + (cds.Count > 0 ? cds[0].day.Year.ToString() : "") + ".CSV", cds, processLast); //write summary data
                 }
             }
-            Console.WriteLine("Summarizing ALL " + " (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-
-            writeDataSummary(c > 0, configInfo.root + configInfo.classroom + "/SYNC/PAIRACTIVITY__ALL_" + fileName + configInfo.classroom + (configInfo.justFreePlay ? "_freeplay" : "") + (cds.Count > 0 ? cds[0].day.Year.ToString() : "") + ".CSV", cds, processLast); //write summary data
         }
         public static Tuple<String, String, String> getMetrics(String prefix, String prefixp, PersonInfo info, PersonInfo infop, Boolean absent, Boolean absentp)
         {
