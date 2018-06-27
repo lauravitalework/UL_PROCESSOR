@@ -44,20 +44,29 @@ namespace UL_PROCESSOR
                 Console.WriteLine("readUbiTagFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>> rawTags = cd.readUbiTagFile();
                 Console.WriteLine("readLenaFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                //cd.setAdjusts();hard coded , OLD
                 Dictionary<String, List<PersonInfo>> rawLena = cd.readLenaFile();
+                Console.WriteLine("readLenaITS (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                //Dictionary<String, List<PersonInfo>> rawLenaIts = cd.readLenaItsFiles();
+                Console.WriteLine("maxVD: " + cd.maxVD.Item1 + ": " + cd.maxVD.Item2 + " secs");
+                Console.WriteLine("maxVD2: " + cd.maxVD2.Item1 + ": " + cd.maxVD2.Item2 + " secs");
+                Console.WriteLine("maxVD3: " + cd.maxVD3.Item1 + ": " + cd.maxVD3.Item2 + " secs");
                 Console.WriteLine("setUbiData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 cd.setUbiData(rawUbi);
                 Console.WriteLine("setUbiTagData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 cd.setUbiTagData(rawTags.Item1, rawTags.Item2);
                 Console.WriteLine("setLenaData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                //cd.setLenaData1(rawLena);
                 cd.setLenaData(rawLena);
+                Console.WriteLine("setLenaData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                //cd.setLenaData2(rawLenaIts);
                 DateTime trunkAt = cd.getTrunkTime();//gets first end track time from last ten minutes of tracking.
                 Console.WriteLine("countInteractions (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                cd.countInteractions(false, true, true, trunkAt, rawLena); //count interactions but no need to write a file
+                cd.countInteractions(doAngleFiles, doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file
                 if (doTenFiles)
                 {
                     Console.WriteLine("write10SecTalkingCSV (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                    cd.write10SecTalkingCSV(configInfo.root + configInfo.classroom + "/SYNC/" + "10THOFSECTALKING_" + (configInfo.justFreePlay ? "_freeplay" : "") + day.Month + "_" + day.Day + "_" + day.Year + ".CSV"); //write complete data files to disc
+                    cd.write10SecTalkingCSV(configInfo.root + configInfo.classroom + "/SYNC/" + "10THOFSECTALKING_" + (configInfo.justFreePlay ? "_freeplay" : "") + day.Month + "_" + day.Day + "_" + day.Year+(cd.startFromLena?"wlena":"wolena") + "_"+fileName+".CSV"); //write complete data files to disc
                 }
                 cds.Add(cd);
             }
@@ -90,7 +99,7 @@ namespace UL_PROCESSOR
 
                 if (doSumAllFiles)
                 {
-                    writeDataSummary(c > 0, configInfo.root + configInfo.classroom + "/SYNC/PAIRACTIVITY__ALL_" + fileName + configInfo.classroom + (configInfo.justFreePlay ? "_freeplay" : "") + (cds.Count > 0 ? cds[0].day.Year.ToString() : "") + ".CSV", cds, processLast); //write summary data
+                    writeDataSummary(c > 0, configInfo.root + configInfo.classroom + "/SYNC/PAIRACTIVITY__ALL_L_" + fileName + configInfo.classroom + (configInfo.justFreePlay ? "_freeplay" : "") + (cds.Count > 0 ? cds[0].day.Year.ToString() : "") + ".CSV", cds, processLast); //write summary data
                 }
             }
         }

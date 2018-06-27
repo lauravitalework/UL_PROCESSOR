@@ -12,9 +12,11 @@ namespace UL_PROCESSOR
         public String classroom = "APPLETREE"; //"LADYBUGS2";// "PANDAS";//"LADYBUGS1";//"APPLETREE";//"LADYBUGS2";//"DEBBIE";
         public String freePlayTimesFile ="/FREEPLAYTIMES.CSV";
         public String mappingFile = "/MAPPING";
+        public String adjustFile = "/ADJUST";
         public String ubisenseFile = "MiamiChild.";
         public String ubisenseTagsFile = "MiamiLocation.";
         public String ubisenseFileDir = "/Ubisense_Data/FROMSUPER/";// LADYBUG/";
+        public String lenaFileDir = "/LENA_Data/";// LADYBUG/";
         public String lenaFile = "/LENA_Data/ACTIVITYBLOCKS/LENAACTIVITYBLOCKALL.csv";
         public String syncFilePre = "/SYNC/MERGED";
 
@@ -71,7 +73,9 @@ namespace UL_PROCESSOR
             root = r;
             freePlayTimesFile = root + classroom + freePlayTimesFile;
             mappingFile = root + classroom + mappingFile+"_"+classroom+".CSV";
+            adjustFile = root + classroom + adjustFile + "_" + classroom + ".csv";
             ubisenseFileDir = root + classroom + ubisenseFileDir;
+            lenaFileDir = root + classroom + lenaFileDir;
             lenaFile = root + classroom + lenaFile;
             syncFilePre = root + classroom + syncFilePre;
         }
@@ -79,7 +83,9 @@ namespace UL_PROCESSOR
         {
             freePlayTimesFile = root + classroom + freePlayTimesFile;
             mappingFile = root + classroom +"_" + classroom + ".CSV";
+            adjustFile = root + classroom + adjustFile + "_" + classroom + ".csv";
             ubisenseFileDir = root + classroom + ubisenseFileDir;
+            lenaFileDir = root + classroom + lenaFileDir;
             lenaFile = root + classroom + lenaFile;
             syncFilePre = root + classroom + syncFilePre;
         }
@@ -202,6 +208,46 @@ namespace UL_PROCESSOR
 
                 }
             }
+            getAdjustedTimes();
+        }
+        public Dictionary<DateTime, Dictionary<String, double>> adjustedTimes = new Dictionary<DateTime, Dictionary<string, double>>();
+        public void getAdjustedTimes()
+        {
+            if (File.Exists(adjustFile))
+            {
+                using (StreamReader sr = new StreamReader(adjustFile))
+                {
+                    sr.ReadLine();
+                    while (!sr.EndOfStream)
+                    {
+                        try
+                        {
+                            String[] line = sr.ReadLine().Split(',');
+                            if (line.Length > 5)
+                            {
+                                String lenaId = line[0].Substring(17, 6);
+                                if (lenaId.Substring(0, 2) == "00")
+                                lenaId = lenaId.Substring(2);
+                                else if (lenaId.Substring(0, 1) == "0")
+                                lenaId = lenaId.Substring(1);
+
+                                DateTime rowDay = Convert.ToDateTime(line[1]);
+                                double adjSecs = Convert.ToDouble(line[4]);
+                                if(!adjustedTimes.ContainsKey(rowDay))
+                                {
+                                    adjustedTimes.Add(rowDay, new Dictionary<string, double>());
+                                }
+                                adjustedTimes[rowDay].Add(lenaId, adjSecs);
+                            }
+                        }
+                        catch(Exception  e)
+                        {
+
+                        }
+                    }
+                }
+            }
+            
         }
         public MappingRow getMapping(String bid, DateTime d)
         {

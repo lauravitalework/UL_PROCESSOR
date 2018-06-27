@@ -37,5 +37,8 @@ namespace UL_PROCESSOR
         public double ry = 0;
 
         public Boolean isFreePlay = false;
+
+        public Boolean simpleTalking = false;
+
     }
 }
