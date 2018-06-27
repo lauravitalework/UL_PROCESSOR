@@ -47,7 +47,6 @@
     <Compile Include="Compares.cs" />
     <Compile Include="Config.cs" />
     <Compile Include="FileComparer.cs" />
-    <Compile Include="Interop.cs" />
     <Compile Include="ItsReader.cs" />
     <Compile Include="MappingRow.cs" />
     <Compile Include="PairInfo.cs" />
@@ -59,15 +58,6 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="ClassDiagram1.cd" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="libfftw3-3.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="libfftw3f-3.dll">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="libfftw3l-3.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
