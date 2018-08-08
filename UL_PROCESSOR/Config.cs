@@ -1,352 +1,396 @@
-﻿using System;
+﻿// Decompiled with JetBrains decompiler
+// Type: UL_PROCESSOR.Config
+// Assembly: UL_PROCESSOR, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null
+// MVID: F5FBFFAF-2271-40AA-9C8E-13AEE0DF74F3
+// Assembly location: C:\Users\Psychology\Documents\Visual Studio 2015\Projects\UL_PROCESSOR\UL_PROCESSOR\bin\Debug\UL_PROCESSOR.exe
+
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.IO;
+
 namespace UL_PROCESSOR
 {
-    class Config
+  internal class Config
+  {
+    public string version = "V18";
+    public string root = "C://LVL/";
+    public string classroom = "APPLETREE";
+    public string freePlayTimesFile = "/FREEPLAYTIMES.CSV";
+    public string extractTimesFile = "//EXTRACTTIMES.CSV";
+    public string mappingFile = "/MAPPING";
+    public string adjustFile = "/ADJUST";
+    public string ubisenseFile = "MiamiChild.";
+    public string ubisenseTagsFile = "MiamiLocation.";
+    public string ubisenseFileDir = "/Ubisense_Data/FROMSUPER/";
+    public string lenaFileDir = "/LENA_Data/";
+    public string lenaFile = "/LENA_Data/ACTIVITYBLOCKS/LENAACTIVITYBLOCKALL.csv";
+    public string syncFilePre = "/SYNC/MERGED";
+    public string lenaVersion = "PRO";
+    public bool justFreePlay = false;
+    public string lenaDateType = "utc";
+    public DateTime from = new DateTime(2017, 3, 31);
+    public DateTime to = new DateTime(2017, 4, 1);
+    public int mappingBIdCol = 3;
+    public int mappingUbiIdCol = 4;
+    public int mappingLenaIdCol = 9;
+    public int mappingStartCol = 11;
+    public int mappingExpiredCol = 12;
+    public int mappingAbsentCol = 13;
+    public int mappingAidCol = 14;
+    public int mappingSexCol = 15;
+    public int mappingTypeCol = 17;
+    public int lenaFileIdCol = 16;
+    public int lenaFileDateCol = 42;
+    public int lenaFileVdCol = 22;
+    public int lenaFileVcCol = 20;
+    public int lenaFileTcCol = 19;
+    public int lenaFileBdCol = 45;
+    public int lenaFileNoCol = 33;
+    public int lenaFileAcCol = 18;
+    public int lenaFileOlnCol = 31;
+    public int ubiFileIdCol = 1;
+    public int ubiFileDateCol = 2;
+    public int ubiDataFileCols = 8;
+    public int ubiFileXPosCol = 3;
+    public int ubiFileYPosCol = 4;
+    public int ubiFileZPosCol = 5;
+    public int ubiFileOriPosCol = 6;
+    public Dictionary<string, List<MappingRow>> mapRows = new Dictionary<string, List<MappingRow>>();
+    public Dictionary<string, List<MappingRow>> mapRowsUbiL = new Dictionary<string, List<MappingRow>>();
+    public Dictionary<string, List<MappingRow>> mapRowsUbiR = new Dictionary<string, List<MappingRow>>();
+    public Dictionary<string, List<MappingRow>> mapRowsUbi = new Dictionary<string, List<MappingRow>>();
+    public Dictionary<string, List<MappingRow>> mapRowsLena = new Dictionary<string, List<MappingRow>>();
+    public List<string> bids = new List<string>();
+    public List<string> pairs = new List<string>();
+    public Dictionary<string, List<string>> freePlayTimes = new Dictionary<string, List<string>>();
+    public Dictionary<string, List<string>> extractTimes = new Dictionary<string, List<string>>();
+    public Dictionary<string, bool> tagTest = new Dictionary<string, bool>();
+    public Dictionary<DateTime, Dictionary<string, double>> adjustedTimes = new Dictionary<DateTime, Dictionary<string, double>>();
+
+    public Config(string r, string c)
     {
-        public String root = "C://LVL/";//"D://"
-        public String classroom = "APPLETREE"; //"LADYBUGS2";// "PANDAS";//"LADYBUGS1";//"APPLETREE";//"LADYBUGS2";//"DEBBIE";
-        public String freePlayTimesFile ="/FREEPLAYTIMES.CSV";
-        public String mappingFile = "/MAPPING";
-        public String adjustFile = "/ADJUST";
-        public String ubisenseFile = "MiamiChild.";
-        public String ubisenseTagsFile = "MiamiLocation.";
-        public String ubisenseFileDir = "/Ubisense_Data/FROMSUPER/";// LADYBUG/";
-        public String lenaFileDir = "/LENA_Data/";// LADYBUG/";
-        public String lenaFile = "/LENA_Data/ACTIVITYBLOCKS/LENAACTIVITYBLOCKALL.csv";
-        public String syncFilePre = "/SYNC/MERGED";
-
-        public Boolean justFreePlay = false;//true;
-        public DateTime from = new DateTime(2017, 3, 31);
-        public DateTime to = new DateTime(2017, 4, 1);
-
-        public int mappingBIdCol = 3;
-        public int mappingUbiIdCol = 4;
-        public int mappingLenaIdCol = 9;
-        public int mappingStartCol = 11;
-        public int mappingExpiredCol = 12;
-        public int mappingAbsentCol = 13;
-        public int mappingAidCol = 14;
-        public int mappingSexCol = 15;
-        public int mappingTypeCol = 17;
-
-
-        public int lenaFileIdCol = 16;
-        public int lenaFileDateCol = 42;
-        public int lenaFileVdCol = 22;
-        public int lenaFileVcCol = 20;
-        public int lenaFileTcCol = 19;
-        public int lenaFileBdCol = 45;
-        public int lenaFileNoCol = 33;
-        public int lenaFileAcCol = 18;
-        public int lenaFileOlnCol = 31;
-
-        public int ubiFileIdCol = 1;
-        public int ubiFileDateCol = 2;
-        public int ubiDataFileCols = 8;
-        //public int ubiFilePosCol = 3;
-        public int ubiFileXPosCol = 3;
-        public int ubiFileYPosCol = 4;
-        public int ubiFileZPosCol = 5;
-        public int ubiFileOriPosCol = 6;
-
-        //public MappingRows mapRows = new MappingRows();
-        public Dictionary<String, List<MappingRow>> mapRows = new Dictionary<string, List<MappingRow>>();
-        public Dictionary<String, List<MappingRow>> mapRowsUbiL = new Dictionary<string, List<MappingRow>>();
-        public Dictionary<String, List<MappingRow>> mapRowsUbiR = new Dictionary<string, List<MappingRow>>();
-        public Dictionary<String, List<MappingRow>> mapRowsUbi = new Dictionary<string, List<MappingRow>>();
-        public Dictionary<String, List<MappingRow>> mapRowsLena = new Dictionary<string, List<MappingRow>>();
-
-        public List<String> bids = new List<string>();
-        public List<String> pairs = new List<string>();
-
-        public Dictionary<String, List<String>> freePlayTimes = new Dictionary<String, List<String>>();
-        public Dictionary<String, Boolean> tagTest = new Dictionary<string, bool>();//test delete
-
-        public Config(String r, String c)
-        {
-            classroom = c;
-            root = r;
-            freePlayTimesFile = root + classroom + freePlayTimesFile;
-            mappingFile = root + classroom + mappingFile+"_"+classroom+".CSV";
-            adjustFile = root + classroom + adjustFile + "_" + classroom + ".csv";
-            ubisenseFileDir = root + classroom + ubisenseFileDir;
-            lenaFileDir = root + classroom + lenaFileDir;
-            lenaFile = root + classroom + lenaFile;
-            syncFilePre = root + classroom + syncFilePre;
-        }
-        public Config()
-        {
-            freePlayTimesFile = root + classroom + freePlayTimesFile;
-            mappingFile = root + classroom +"_" + classroom + ".CSV";
-            adjustFile = root + classroom + adjustFile + "_" + classroom + ".csv";
-            ubisenseFileDir = root + classroom + ubisenseFileDir;
-            lenaFileDir = root + classroom + lenaFileDir;
-            lenaFile = root + classroom + lenaFile;
-            syncFilePre = root + classroom + syncFilePre;
-        }
-          
-        public void readMappings()
-        {
-            using (StreamReader sr = new StreamReader(mappingFile))
-            {
-                sr.ReadLine();
-                while (!sr.EndOfStream)
-                {
-                    try
-                    {
-                        String[] line = sr.ReadLine().Split(',');
-                        if (line[7].Trim() == "00:11:CE:00:00:00:02:BE")
-                        {
-
-                            bool stop = true;
-                        }
-                        if (line.Length > 8 && (line[mappingUbiIdCol].Trim() != "" && line[mappingLenaIdCol].Trim() != ""))
-                        {
-                            MappingRow mr = new MappingRow();
-                            //4 6
-                            mr.LenaId = line[mappingLenaIdCol].Trim();
-                            mr.UbiID = line[mappingUbiIdCol].Trim();
-                            mr.BID = line[mappingBIdCol].Trim();
-                            if (!bids.Contains(mr.BID))
-                                bids.Add(mr.BID);
-                            mr.Expiration = Convert.ToDateTime(line[mappingExpiredCol]);
-                            mr.Start = Convert.ToDateTime(line[mappingStartCol]);
-                            mr.absences = getAbsentDays(line[mappingAbsentCol]);
-                            mr.aid = line[mappingAidCol].Trim();
-                            mr.sex = line[mappingSexCol].Trim();
-                            mr.leftTag = line[5].Trim();
-                            mr.rightTag = line[7].Trim();
-                            //tagTest.Add(mr.leftTag, false);
-                            //tagTest.Add(mr.rightTag, false);
-                            mr.sex = line[mappingSexCol].Trim();
-                            mr.aid = line[mappingAidCol].Trim();
-                            mr.type = line[mappingTypeCol].Trim();
-
-                            if (!mapRowsUbi.ContainsKey(mr.UbiID))
-                            {
-                                mapRowsUbi.Add(mr.UbiID, new List<MappingRow>());
-                            }
-                            if (!mapRowsLena.ContainsKey(mr.LenaId))
-                            {
-                                mapRowsLena.Add(mr.LenaId, new List<MappingRow>());
-                            }
-                            if (!mapRowsUbiL.ContainsKey(mr.leftTag))
-                            {
-                                mapRowsUbiL.Add(mr.leftTag, new List<MappingRow>());
-                            }
-                            if (!mapRowsUbiR.ContainsKey(mr.rightTag))
-                            {
-                                mapRowsUbiR.Add(mr.rightTag, new List<MappingRow>());
-                            }
-                            if (!mapRows.ContainsKey(mr.BID))
-                            {
-                                mapRows.Add(mr.BID, new List<MappingRow>());
-                            }
-                            mapRowsUbi[mr.UbiID].Add(mr);
-                            mapRowsUbiL[mr.leftTag].Add(mr);
-                            mapRowsUbiR[mr.rightTag].Add(mr);
-                            mapRowsLena[mr.LenaId].Add(mr);
-                            mapRows[mr.BID].Add(mr);
- 
-                        }
-                    }
-                    catch (Exception e)
-                    { }
-
-                }
-            }
-
-            for (int b = 0; b<bids.Count; b++)
-            {
-                String bid1 = bids[b];
-                for (int b2 = b+1; b2 < bids.Count; b2++)
-                {
-                    String bid2 = bids[b2];
-                    pairs.Add(bid1 + "-" + bid2);
-                }
-            }
-            using (StreamReader sr = new StreamReader(freePlayTimesFile))
-            {
-                sr.ReadLine();
-                while (!sr.EndOfStream)
-                {
-                    try
-                    {
-                        String[] line = sr.ReadLine().Split(',');
-                        if (line.Length > 2)
-                        {
-                            String date = Convert.ToDateTime(line[0]).ToShortDateString().Trim();
-                            foreach (String timeFrame in line[1].Split('|'))
-                            {
-                                String[] times = timeFrame.Split('-');
-                                if (times.Length == 2)
-                                {
-                                    List<String> timeFrames = new List<string>();
-
-                                    if (!freePlayTimes.ContainsKey(date))
-                                    {
-                                        timeFrames.Add(timeFrame);
-                                        freePlayTimes.Add(date, timeFrames);
-                                    }
-                                    else
-                                    {
-                                        freePlayTimes[date].Add(timeFrame);
-                                    }
-                                }
-
-                            }
-
-                        }
-                    }
-                    catch (Exception e)
-                    { }
-
-                }
-            }
-            getAdjustedTimes();
-        }
-        public Dictionary<DateTime, Dictionary<String, double>> adjustedTimes = new Dictionary<DateTime, Dictionary<string, double>>();
-        public void getAdjustedTimes()
-        {
-            if (File.Exists(adjustFile))
-            {
-                using (StreamReader sr = new StreamReader(adjustFile))
-                {
-                    sr.ReadLine();
-                    while (!sr.EndOfStream)
-                    {
-                        try
-                        {
-                            String[] line = sr.ReadLine().Split(',');
-                            if (line.Length > 5)
-                            {
-                                String lenaId = line[0].Substring(17, 6);
-                                if (lenaId.Substring(0, 2) == "00")
-                                lenaId = lenaId.Substring(2);
-                                else if (lenaId.Substring(0, 1) == "0")
-                                lenaId = lenaId.Substring(1);
-
-                                DateTime rowDay = Convert.ToDateTime(line[1]);
-                                double adjSecs = Convert.ToDouble(line[4]);
-                                if(!adjustedTimes.ContainsKey(rowDay))
-                                {
-                                    adjustedTimes.Add(rowDay, new Dictionary<string, double>());
-                                }
-                                adjustedTimes[rowDay].Add(lenaId, adjSecs);
-                            }
-                        }
-                        catch(Exception  e)
-                        {
-
-                        }
-                    }
-                }
-            }
-            
-        }
-        public MappingRow getMapping(String bid, DateTime d)
-        {
-            MappingRow mr = new MappingRow();
-            if(mapRows.ContainsKey(bid))
-            {
-                foreach(MappingRow r in mapRows[bid])
-                {
-                    if(d.CompareTo(r.Expiration) < 0 && d.CompareTo(r.Start) >= 0)
-                    {
-                        mr = r;
-                        break;
-                    }
-
-                }
-            }
-            return mr;
-        }
-        public MappingRow getUbiMapping(String ubiId, DateTime d)
-        {
-            MappingRow mr = new MappingRow();
-            if (mapRowsUbi.ContainsKey(ubiId))
-            {
-                foreach (MappingRow r in mapRowsUbi[ubiId])
-                {
-                    if (d.CompareTo(r.Expiration) < 0 && d.CompareTo(r.Start) >= 0)
-                    {
-                        mr = r;
-                        break;
-                    }
-
-                }
-            }
-            return mr;
-        }
-        
-        public MappingRow getUbiMappingL(String ubiId, DateTime d)
-        {
-            MappingRow mr = new MappingRow();
-            if (mapRowsUbiL.ContainsKey(ubiId))
-            {
-                foreach (MappingRow r in mapRowsUbiL[ubiId])
-                {
-                    if (d.CompareTo(r.Expiration) < 0 && d.CompareTo(r.Start) >= 0)
-                    {
-                        mr = r;
-                        break;
-                    }
-
-                }
-            }
-            return mr;
-        }
-        public MappingRow getUbiMappingR(String ubiId, DateTime d)
-        {
-            MappingRow mr = new MappingRow();
-            if (mapRowsUbiR.ContainsKey(ubiId))
-            {
-                foreach (MappingRow r in mapRowsUbiR[ubiId])
-                {
-                    if (d.CompareTo(r.Expiration) < 0 && d.CompareTo(r.Start) >= 0)
-                    {
-                        mr = r;
-                        break;
-                    }
-
-                }
-            }
-            return mr;
-        }
-        public MappingRow getLenaMapping(String lenaId, DateTime d)
-        {
-            MappingRow mr = new MappingRow();
-            if (mapRowsLena.ContainsKey(lenaId))
-            {
-                foreach (MappingRow r in mapRowsLena[lenaId])
-                {
-                    if (d.CompareTo(r.Expiration) < 0 && d.CompareTo(r.Start) >= 0)
-                    {
-                        mr = r;
-                        break;
-                    }
-
-                }
-            }
-            return mr;
-        }
-        public List<DateTime> getAbsentDays(String absentDays)
-        {
-            List<DateTime> absentDaysArr = new List<DateTime>();
-            String[] days = days = absentDays.Split('|');
-            foreach (String day in days)
-            {
-                if (day.Trim() != "")
-                    absentDaysArr.Add(Convert.ToDateTime(day));
-            }
-
-            return absentDaysArr;
-
-        }
+      this.classroom = c;
+      this.root = r;
+      this.freePlayTimesFile = this.root + this.classroom + this.freePlayTimesFile;
+      this.extractTimesFile = this.root + this.classroom + this.extractTimesFile;
+      this.mappingFile = this.root + this.classroom + this.mappingFile + "_" + this.classroom + ".CSV";
+      this.adjustFile = this.root + this.classroom + this.adjustFile + "_" + this.classroom + ".csv";
+      this.ubisenseFileDir = this.root + this.classroom + this.ubisenseFileDir;
+      this.lenaFileDir = this.root + this.classroom + this.lenaFileDir;
+      this.lenaFile = this.root + this.classroom + this.lenaFile;
+      this.syncFilePre = this.root + this.classroom + this.syncFilePre;
     }
+
+    public Config()
+    {
+      this.freePlayTimesFile = this.root + this.classroom + this.freePlayTimesFile;
+      this.extractTimesFile = this.root + this.classroom + this.extractTimesFile;
+      this.mappingFile = this.root + this.classroom + "_" + this.classroom + ".CSV";
+      this.adjustFile = this.root + this.classroom + this.adjustFile + "_" + this.classroom + ".csv";
+      this.ubisenseFileDir = this.root + this.classroom + this.ubisenseFileDir;
+      this.lenaFileDir = this.root + this.classroom + this.lenaFileDir;
+      this.lenaFile = this.root + this.classroom + this.lenaFile;
+      this.syncFilePre = this.root + this.classroom + this.syncFilePre;
+    }
+
+    public void readMappings()
+    {
+      using (StreamReader streamReader = new StreamReader(this.mappingFile))
+      {
+        streamReader.ReadLine();
+        while (!streamReader.EndOfStream)
+        {
+          try
+          {
+            string[] strArray = streamReader.ReadLine().Split(',');
+            if (strArray[7].Trim() == "00:11:CE:00:00:00:02:BE")
+              ;
+            if (strArray.Length > 8 && (strArray[this.mappingUbiIdCol].Trim() != "" && strArray[this.mappingLenaIdCol].Trim() != ""))
+            {
+              MappingRow mappingRow = new MappingRow();
+              mappingRow.LenaId = strArray[this.mappingLenaIdCol].Trim();
+              mappingRow.UbiID = strArray[this.mappingUbiIdCol].Trim();
+              mappingRow.BID = strArray[this.mappingBIdCol].Trim();
+              if (!this.bids.Contains(mappingRow.BID))
+                this.bids.Add(mappingRow.BID);
+              mappingRow.Expiration = Convert.ToDateTime(strArray[this.mappingExpiredCol]);
+              mappingRow.Start = Convert.ToDateTime(strArray[this.mappingStartCol]);
+              mappingRow.absences = this.getAbsentDays(strArray[this.mappingAbsentCol]);
+              mappingRow.aid = strArray[this.mappingAidCol].Trim();
+              mappingRow.sex = strArray[this.mappingSexCol].Trim();
+              mappingRow.leftTag = strArray[5].Trim();
+              mappingRow.rightTag = strArray[7].Trim();
+              mappingRow.sex = strArray[this.mappingSexCol].Trim();
+              mappingRow.aid = strArray[this.mappingAidCol].Trim();
+              mappingRow.type = strArray[this.mappingTypeCol].Trim();
+              if (!this.mapRowsUbi.ContainsKey(mappingRow.UbiID))
+                this.mapRowsUbi.Add(mappingRow.UbiID, new List<MappingRow>());
+              if (!this.mapRowsLena.ContainsKey(mappingRow.LenaId))
+                this.mapRowsLena.Add(mappingRow.LenaId, new List<MappingRow>());
+              if (!this.mapRowsUbiL.ContainsKey(mappingRow.leftTag))
+                this.mapRowsUbiL.Add(mappingRow.leftTag, new List<MappingRow>());
+              if (!this.mapRowsUbiR.ContainsKey(mappingRow.rightTag))
+                this.mapRowsUbiR.Add(mappingRow.rightTag, new List<MappingRow>());
+              if (!this.mapRows.ContainsKey(mappingRow.BID))
+                this.mapRows.Add(mappingRow.BID, new List<MappingRow>());
+              this.mapRowsUbi[mappingRow.UbiID].Add(mappingRow);
+              this.mapRowsUbiL[mappingRow.leftTag].Add(mappingRow);
+              this.mapRowsUbiR[mappingRow.rightTag].Add(mappingRow);
+              this.mapRowsLena[mappingRow.LenaId].Add(mappingRow);
+              this.mapRows[mappingRow.BID].Add(mappingRow);
+            }
+          }
+          catch (Exception ex)
+          {
+          }
+        }
+      }
+      for (int index1 = 0; index1 < this.bids.Count; ++index1)
+      {
+        string bid1 = this.bids[index1];
+        for (int index2 = index1 + 1; index2 < this.bids.Count; ++index2)
+        {
+          string bid2 = this.bids[index2];
+          this.pairs.Add(bid1 + "-" + bid2);
+        }
+      }
+      using (StreamReader streamReader = new StreamReader(this.freePlayTimesFile))
+      {
+        streamReader.ReadLine();
+        while (!streamReader.EndOfStream)
+        {
+          try
+          {
+            string[] strArray = streamReader.ReadLine().Split(',');
+            if (strArray.Length > 2)
+            {
+              string key = Convert.ToDateTime(strArray[0]).ToShortDateString().Trim();
+              string str1 = strArray[1];
+              char[] chArray = new char[1]{ '|' };
+              foreach (string str2 in str1.Split(chArray))
+              {
+                if (str2.Split('-').Length == 2)
+                {
+                  List<string> stringList = new List<string>();
+                  if (!this.freePlayTimes.ContainsKey(key))
+                  {
+                    stringList.Add(str2);
+                    this.freePlayTimes.Add(key, stringList);
+                  }
+                  else
+                    this.freePlayTimes[key].Add(str2);
+                }
+              }
+            }
+          }
+          catch (Exception ex)
+          {
+          }
+        }
+      }
+      if (File.Exists(this.extractTimesFile))
+      {
+        using (StreamReader streamReader = new StreamReader(this.extractTimesFile))
+        {
+          streamReader.ReadLine();
+          while (!streamReader.EndOfStream)
+          {
+            try
+            {
+              string[] strArray = streamReader.ReadLine().Split(',');
+              if (strArray.Length > 2)
+              {
+                string key = Convert.ToDateTime(strArray[0]).ToShortDateString().Trim();
+                string str1 = strArray[1];
+                char[] chArray = new char[1]{ '|' };
+                foreach (string str2 in str1.Split(chArray))
+                {
+                  if (str2.Split('-').Length == 2)
+                  {
+                    List<string> stringList = new List<string>();
+                    if (!this.extractTimes.ContainsKey(key))
+                    {
+                      stringList.Add(str2);
+                      this.extractTimes.Add(key, stringList);
+                    }
+                    else
+                      this.extractTimes[key].Add(str2);
+                  }
+                }
+              }
+            }
+            catch (Exception ex)
+            {
+            }
+          }
+        }
+      }
+      this.getAdjustedTimes();
+    }
+
+    public void getAdjustedTimes()
+    {
+      if (!File.Exists(this.adjustFile))
+        return;
+      using (StreamReader streamReader = new StreamReader(this.adjustFile))
+      {
+        streamReader.ReadLine();
+        while (!streamReader.EndOfStream)
+        {
+          try
+          {
+            string[] strArray = streamReader.ReadLine().Split(',');
+            if (strArray.Length > 5)
+            {
+              string key = strArray[0].Substring(17, 6);
+              if (key.Substring(0, 2) == "00")
+                key = key.Substring(2);
+              else if (key.Substring(0, 1) == "0")
+                key = key.Substring(1);
+              DateTime dateTime = Convert.ToDateTime(strArray[1]);
+              double num = Convert.ToDouble(strArray[4]);
+              if (!this.adjustedTimes.ContainsKey(dateTime))
+                this.adjustedTimes.Add(dateTime, new Dictionary<string, double>());
+              this.adjustedTimes[dateTime].Add(key, num);
+            }
+          }
+          catch (Exception ex)
+          {
+          }
+        }
+      }
+    }
+
+    public MappingRow getMapping(string bid, DateTime d)
+    {
+      MappingRow mappingRow1 = new MappingRow();
+      if (this.mapRows.ContainsKey(bid))
+      {
+        foreach (MappingRow mappingRow2 in this.mapRows[bid])
+        {
+          if (d.CompareTo(mappingRow2.Expiration) < 0 && d.CompareTo(mappingRow2.Start) >= 0)
+          {
+            mappingRow1 = mappingRow2;
+            break;
+          }
+        }
+      }
+      return mappingRow1;
+    }
+
+    public MappingRow getUbiMapping(string ubiId, DateTime d)
+    {
+      MappingRow mappingRow1 = new MappingRow();
+      if (this.mapRowsUbi.ContainsKey(ubiId))
+      {
+        foreach (MappingRow mappingRow2 in this.mapRowsUbi[ubiId])
+        {
+          if (d.CompareTo(mappingRow2.Expiration) < 0 && d.CompareTo(mappingRow2.Start) >= 0)
+          {
+            mappingRow1 = mappingRow2;
+            break;
+          }
+        }
+      }
+      return mappingRow1;
+    }
+
+    public MappingRow getUbiMappingL(string ubiId, DateTime d)
+    {
+      MappingRow mappingRow1 = new MappingRow();
+      if (this.mapRowsUbiL.ContainsKey(ubiId))
+      {
+        foreach (MappingRow mappingRow2 in this.mapRowsUbiL[ubiId])
+        {
+          if (d.CompareTo(mappingRow2.Expiration) < 0 && d.CompareTo(mappingRow2.Start) >= 0)
+          {
+            mappingRow1 = mappingRow2;
+            break;
+          }
+        }
+      }
+      return mappingRow1;
+    }
+
+    public MappingRow getUbiMappingR(string ubiId, DateTime d)
+    {
+      MappingRow mappingRow1 = new MappingRow();
+      if (this.mapRowsUbiR.ContainsKey(ubiId))
+      {
+        foreach (MappingRow mappingRow2 in this.mapRowsUbiR[ubiId])
+        {
+          if (d.CompareTo(mappingRow2.Expiration) < 0 && d.CompareTo(mappingRow2.Start) >= 0)
+          {
+            mappingRow1 = mappingRow2;
+            break;
+          }
+        }
+      }
+      return mappingRow1;
+    }
+
+    public MappingRow getLenaMapping(string lenaId, DateTime d)
+    {
+      MappingRow mappingRow1 = new MappingRow();
+      if (this.mapRowsLena.ContainsKey(lenaId))
+      {
+        foreach (MappingRow mappingRow2 in this.mapRowsLena[lenaId])
+        {
+          if (d.CompareTo(mappingRow2.Expiration) < 0 && d.CompareTo(mappingRow2.Start) >= 0)
+          {
+            mappingRow1 = mappingRow2;
+            break;
+          }
+        }
+      }
+      return mappingRow1;
+    }
+
+    public List<DateTime> getAbsentDays(string absentDays)
+    {
+      List<DateTime> dateTimeList = new List<DateTime>();
+      string str1 = absentDays;
+      char[] chArray = new char[1]{ '|' };
+      foreach (string str2 in str1.Split(chArray))
+      {
+        if (str2.Trim() != "")
+          dateTimeList.Add(Convert.ToDateTime(str2));
+      }
+      return dateTimeList;
+    }
+
+    public bool isThisFreePlay(DateTime date)
+    {
+      bool flag = false;
+      DateTime dateTime1 = date.AddHours((double) -date.Hour);
+      dateTime1 = dateTime1.AddMinutes((double) -date.Minute);
+      string key = dateTime1.AddSeconds((double) -date.Second).ToShortDateString().Trim();
+      if (this.freePlayTimes.ContainsKey(key))
+      {
+        List<string> freePlayTime = this.freePlayTimes[key];
+        foreach (string str in this.freePlayTimes[key])
+        {
+          char[] chArray = new char[1]{ '-' };
+          string[] strArray1 = str.Split(chArray);
+          if (strArray1.Length >= 2)
+          {
+            string[] strArray2 = strArray1[0].Split(':');
+            string[] strArray3 = strArray1[1].Split(':');
+            int int32_1 = Convert.ToInt32(strArray2[0]);
+            int int32_2 = Convert.ToInt32(strArray2[1]);
+            int int32_3 = Convert.ToInt32(strArray3[0]);
+            int int32_4 = Convert.ToInt32(strArray3[1]);
+            DateTime dateTime2 = new DateTime(date.Year, date.Month, date.Day, int32_1, int32_2, 0);
+            DateTime dateTime3 = new DateTime(date.Year, date.Month, date.Day, int32_3, int32_4, 59);
+            if (date >= dateTime2 && date <= dateTime3)
+            {
+              flag = true;
+              break;
+            }
+          }
+        }
+      }
+      return flag;
+    }
+  }
 }
