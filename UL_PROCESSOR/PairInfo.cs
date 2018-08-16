@@ -19,5 +19,10 @@ namespace UL_PROCESSOR
     public double closeAndOrientedTimeInSecs = 0.0;
     public double closeAndOrientedCryInSecs = 0.0;
     public double closeTalkingTimeInSecs = 0.0;
-  }
+        public double closeAndOrientedTalkInSecs = 0.0;
+        public double closeVDTimeInSecs = 0.0;
+        public double closeAndOrienteVDInSecs = 0.0;
+
+
+    }
 }

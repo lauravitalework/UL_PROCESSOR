@@ -36,5 +36,10 @@ namespace UL_PROCESSOR
     public double ry = 0.0;
     public bool isFreePlay = false;
     public bool isCrying = false;
+
+        public double individualTime = 0;
+        public double interactionTime = 0;
+
+
   }
 }
