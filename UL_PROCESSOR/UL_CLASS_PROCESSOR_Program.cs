@@ -18,9 +18,11 @@ namespace UL_PROCESSOR
         public Boolean doSumAllFiles = true;
         public Boolean doAngleFiles = true;
         public Boolean getFromIts = false;
+        public Boolean doGR = true;
+        public Boolean doVel = true;
         public List<String> fileNames = new List<string>();
 
-        public UL_CLASS_PROCESSOR_Program(Config c, List<DateTime> d, String fName, Boolean t, Boolean sd, Boolean s, Boolean a, Boolean its)
+        public UL_CLASS_PROCESSOR_Program(Config c, List<DateTime> d, String fName, Boolean t, Boolean sd, Boolean s, Boolean a, Boolean its, Boolean GR, Boolean VEL)
         {
             doTenFiles = t;
             doSumDayFiles = sd;
@@ -32,6 +34,8 @@ namespace UL_PROCESSOR
             fileName = fName;
             configInfo.version = fileName;
             getFromIts = its;
+            doGR = GR;
+            doVel = VEL;
         }
 
         public void process(Boolean processLast)
@@ -43,24 +47,27 @@ namespace UL_PROCESSOR
 
                 ClassroomDay cd = new ClassroomDay(day, configInfo);
                 Console.WriteLine("PROCESSING " + configInfo.classroom + " " + day.ToShortDateString());
+
+                Console.WriteLine("readLenaFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                Console.WriteLine("getFromIts " + getFromIts);
+                Dictionary<String, List<PersonInfo>> rawLena = getFromIts ? cd.readLenaItsFiles() : cd.readLenaFile();
+
+
                 Console.WriteLine("readUbiFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 Dictionary<String, List<PersonInfo>> rawUbi = cd.readUbiFile();
                 /*Console.WriteLine("readUbiTagFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>> rawTags = cd.readUbiTagFile();
                 */
-                Console.WriteLine("readLenaFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                Console.WriteLine("getFromIts " + getFromIts);
-                Dictionary<String, List<PersonInfo>> rawLena = getFromIts ? cd.readLenaItsFiles():cd.readLenaFile();
                 //Dictionary<String, List<PersonInfo>> rawLenaIts = getFromIts? cd.readLenaItsFiles():new Dictionary<string, List<PersonInfo>>();
                 //cd.readLenaItsFiles();
                 Console.WriteLine("setUbiData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                cd.setUbiData(rawUbi);
+                cd.setUbiData(rawUbi, rawLena);
 
                 DateTime trunkAt = cd.getTrunkTime();//gets first end track time from last ten minutes of tracking.
 
 
                 Console.WriteLine("readUbiTagFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>> rawTags = cd.readUbiTagFile();
+                Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>> rawTags = cd.readUbiTagFile(rawLena, doGR);
 
                 Console.WriteLine("setUbiTagData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 cd.setUbiTagData(rawTags.Item1, rawTags.Item2);
@@ -78,30 +85,37 @@ namespace UL_PROCESSOR
 
 
                 List<String> subs = new List<string>();
-                subs.Add("11A");
-                subs.Add("12A");
-                subs.Add("13A");
-                subs.Add("14A");
-                subs.Add("15A");
-                subs.Add("16A");
-                subs.Add("17A");
-                subs.Add("18A");
-                subs.Add("19A");
-                subs.Add("20A");
+                // subs.Add("11A");
+                //subs.Add("12A");
+                /* subs.Add("13A");
+                 subs.Add("14A");
+                 subs.Add("15A");
+                 subs.Add("16A");
+                 subs.Add("17A");*/
+                //subs.Add("18A");
+                // subs.Add("19A");
+                // subs.Add("20A");
 
-                //if(getFromIts)
-                // cd.countInteractionsIts(trunkAt); //count interactions but no need to write a file
-                //else
-                // cd.countInteractions(subs,doAngleFiles, doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file
-                if (doTenFiles)
+                subs.Add("12A");
+                subs.Add("17A");
+
+                if (doAngleFiles || doTenFiles || doSumAllFiles || doSumDayFiles)
                 {
-                    Console.WriteLine("write10SecTalkingCSV (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                    String fileNameTen = configInfo.root + configInfo.classroom + "/SYNC/" + configInfo.version+"10THOFSECTALKING_" + (configInfo.justFreePlay ? "freeplay_" : "") + (cd.startFromLena ? "wlena_" : "wolena_") + day.Month + "_" + day.Day + "_" + day.Year + ".CSV";
-                     
-                    //cd.write10SecCryCSV(fileNameTen, subs); //write complete data files to disc
-                    cd.write10SecTalkingCSV(fileNameTen); //write complete data files to disc
+                    //if (getFromIts)
+                    //    cd.countInteractionsIts(doAngleFiles, doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file 
+                    //else
+                        cd.countInteractions(doAngleFiles, doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file
+                                                                                                  //cd.countInteractions(subs, doAngleFiles, doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file
+                    if (doTenFiles || doVel)
+                    {
+                        Console.WriteLine("write10SecTalkingCSV (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                        String fileNameTen = configInfo.root + configInfo.classroom + "/SYNC/" + configInfo.version + "10THOFSECTALKING_" + (configInfo.justFreePlay ? "freeplay_" : "") + (cd.startFromLena ? "wlena_" : "wolena_") + day.Month + "_" + day.Day + "_" + day.Year + ".CSV";
+                        subs = new List<string>();
+                        //cd.write10SecCryCSV(fileNameTen, subs); //write complete data files to disc
+                        cd.write10SecTalkingCSV(fileNameTen, subs, doVel); //write complete data files to disc
+                    }
+                    cds.Add(cd);
                 }
-                cds.Add(cd);
             }
             summarize(cds, countSets, processLast);
         }
@@ -244,8 +258,24 @@ namespace UL_PROCESSOR
                                                           prefixpAll + " CRY", info.cry, infoAll.cry, infop.cry, infopAll.cry, absent, absentp);
             setMetrics(ref title, ref values, ref valuesInverse, ms);
 
+            ms = getMetrics(prefix + " AV_DB", prefixAll + " AV_DB", prefixp + " AV_DB",
+                                                          prefixpAll + " AV_DB", getAvDb(info), getAvDb(infoAll), getAvDb(infop), getAvDb(infopAll), absent, absentp);
+            setMetrics(ref title, ref values, ref valuesInverse, ms);
+
+            ms = getMetrics(prefix + " AV_PEAK_DB", prefixAll + " AV_PEAK_DB", prefixp + " AV_PEAK_DB",
+                                                          prefixpAll + " AV_PEAK_DB", getAvPeakvDb(info), getAvPeakvDb(infoAll), getAvPeakvDb(infop), getAvPeakvDb(infopAll), absent, absentp);
+            setMetrics(ref title, ref values, ref valuesInverse, ms);
+
             return new Tuple<string, string, string>(title, values, valuesInverse);
 
+        }
+        public static double getAvDb(PersonInfo p)
+        {
+            return p.avDb != 0 && p.childSegments != 0 ? p.avDb / p.childSegments : 0; ;
+        }
+        public static double getAvPeakvDb(PersonInfo p)
+        {
+            return p.maxDb != 0 && p.childSegments != 0 ? p.maxDb / p.childSegments : 0; ;
         }
         public static Tuple<String, String, String> getMetrics(String prefix, String prefixAll, String prefixp, String prefixpAll, double info, double infoAll, double infop, double infopAll, Boolean absent, Boolean absentp)
         {
@@ -304,12 +334,12 @@ namespace UL_PROCESSOR
                    (statusp) + "," +
                    (nextDay ? "" : (type) + ",") +
                    (nextDay ? "" : (typep) + ",")
-                   + new StringBuilder().Insert(0, "NA,", (nextDay ? 53 : 55)).ToString();
+                   + new StringBuilder().Insert(0, "NA,", (nextDay ? 63 : 63)).ToString();
             lines[1] = (statusp) + "," +
                    (status) + "," +
                    (nextDay ? "" : (typep) + ",") +
                    (nextDay ? "" : (type) + ",")
-                   + new StringBuilder().Insert(0, "NA,", (nextDay ? 53 : 55)).ToString();
+                   + new StringBuilder().Insert(0, "NA,", (nextDay ? 63 : 63)).ToString();
             if (!absent)
             {
 
@@ -498,12 +528,12 @@ namespace UL_PROCESSOR
                    (statusp) + "," +
                    (nextDay ? "" : (type) + ",") +
                    (nextDay ? "" : (typep) + ",")
-                   + new StringBuilder().Insert(0, "NA,", (nextDay ? 55 : 55)).ToString();
+                   + new StringBuilder().Insert(0, "NA,", (nextDay ? 63 : 63)).ToString();
             lines[1] = (statusp) + "," +
                    (status) + "," +
                    (nextDay ? "" : (typep) + ",") +
                    (nextDay ? "" : (type) + ",")
-                   + new StringBuilder().Insert(0, "NA,", (nextDay ? 55 : 55)).ToString();
+                   + new StringBuilder().Insert(0, "NA,", (nextDay ? 63 : 63)).ToString();
             if (!absent)
             {
 
@@ -911,8 +941,8 @@ namespace UL_PROCESSOR
                             String subjectLine = date + "," + subject + "," + partner + "," + adult + "," + lines[0];
                             String partnerLine = date + "," + partner + "," + subject + "," + adult + "," + lines[1];
 
-                            String partnerLine2 = new StringBuilder().Insert(0, "NA,", 57).ToString();
-                            String subjectLine2 = new StringBuilder().Insert(0, "NA,", 57).ToString();
+                            String partnerLine2 = new StringBuilder().Insert(0, "NA,", 65).ToString();
+                            String subjectLine2 = new StringBuilder().Insert(0, "NA,", 65).ToString();
                             if (idx < days.Count)
                             {
                                 ClassroomDay nextDay = days[idx];

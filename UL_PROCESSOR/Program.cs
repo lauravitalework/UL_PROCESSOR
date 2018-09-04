@@ -12,7 +12,7 @@ namespace UL_PROCESSOR
     class UL_PROCESSOR_Program
     {
         public int chunkSize = 4;
-        public void processClassroom(String version, String dir, Boolean doTenFiles, Boolean doSumDayFiles, Boolean doSumAllFiles, Boolean doAnglesFiles, String classroom, String lenaVersion, String szDates, Boolean fromIts)
+        public void processClassroom(String version, String dir, Boolean doTenFiles, Boolean doSumDayFiles, Boolean doSumAllFiles, Boolean doAnglesFiles, String classroom, String lenaVersion, String szDates, Boolean fromIts, Boolean doGR, Boolean doVel)
         {
             ClassroomDay.first = true;
             List<DateTime> dateChunks = new List<DateTime>();
@@ -30,7 +30,7 @@ namespace UL_PROCESSOR
                         dateChunks.Insert(0, lastDateChunks[lastDateChunks.Count-1]);
                     Console.WriteLine("PROCESSING LB"+total);
                     UL_CLASS_PROCESSOR_Program ul0 = new UL_CLASS_PROCESSOR_Program(new Config(dir,classroom),
-                    dateChunks, version + total+"_", doTenFiles, doSumDayFiles, doSumAllFiles, doAnglesFiles,fromIts);
+                    dateChunks, version + total+"_", doTenFiles, doSumDayFiles, doSumAllFiles, doAnglesFiles,fromIts, doGR, doVel);
                     ul0.configInfo.lenaVersion = lenaVersion;
                     Console.WriteLine("PROCESSING LB1 1");
                     ul0.process(false);
@@ -49,7 +49,7 @@ namespace UL_PROCESSOR
 
 
             UL_CLASS_PROCESSOR_Program ull = new UL_CLASS_PROCESSOR_Program(new Config(dir,classroom),
-            dateChunks, version + total+"_", doTenFiles, doSumDayFiles, doSumAllFiles, doAnglesFiles,fromIts);
+            dateChunks, version + total+"_", doTenFiles, doSumDayFiles, doSumAllFiles, doAnglesFiles,fromIts, doGR, doVel);
             ull.configInfo.lenaVersion = lenaVersion;
             ull.process(true);
             fileNames = fileNames.Concat(ull.fileNames).ToList(); 
@@ -108,6 +108,8 @@ namespace UL_PROCESSOR
                 Boolean doSumAllFiles = true;
                 Boolean doAngleFiles = true; //to implement
                 Boolean getFromIts = false;
+                Boolean doGR = false;
+                Boolean doVel = false;
                 for (int a=1;a<settings.Length;a++)
                 {
                     String[] setting = settings[a].Split(':');
@@ -126,6 +128,12 @@ namespace UL_PROCESSOR
                                 break;
                             case "ANGLES":
                                 doAngleFiles = setting[1].Trim().ToUpper() == "YES";
+                                break;
+                            case "GR":
+                                doGR = setting[1].Trim().ToUpper() == "YES";
+                                break;
+                            case "VEL":
+                                doVel = setting[1].Trim().ToUpper() == "YES";
                                 break;
                             case "ITS":
                                 getFromIts = setting[1].Trim().ToUpper() == "YES";
@@ -149,7 +157,7 @@ namespace UL_PROCESSOR
                         String[] vars = arg.Split(' ');
                         UL_PROCESSOR_Program pc = new UL_PROCESSOR_Program();
                         pc = new UL_PROCESSOR_Program();
-                        pc.processClassroom(fileNameVersion, dir, doTenFiles,doSumDayFiles,doSumAllFiles,doAngleFiles, vars[0].Trim(), vars[1].Trim(), vars[2].Trim(), getFromIts);
+                        pc.processClassroom(fileNameVersion, dir, doTenFiles,doSumDayFiles,doSumAllFiles,doAngleFiles, vars[0].Trim(), vars[1].Trim(), vars[2].Trim(), getFromIts, doGR, doVel);
                          
                     }
                 }

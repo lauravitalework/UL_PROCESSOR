@@ -11,7 +11,7 @@ namespace UL_PROCESSOR
     {
         public Boolean doAll10OfSecs = false;//false;//true;
         public Boolean startFromLena = true;//false;//true;
-        public Boolean noLena = false;//true;//false;//true;
+        public Boolean noLena = true;//false;//true;//false;//true;
         private double minDistance = 1.5 * 1.5; //the squared value of g(r) cutoff in meters
 
         public Dictionary<String, double> pairClose = new Dictionary<string, double>();
@@ -183,7 +183,7 @@ namespace UL_PROCESSOR
             return newList;
         }
 
-        public void setUbiData(Dictionary<String, List<PersonInfo>> rawData)
+        public void setUbiData(Dictionary<String, List<PersonInfo>> rawData, Dictionary<String, List<PersonInfo>> rawLena)
         {
             foreach (String person in rawData.Keys)
             {
@@ -197,11 +197,16 @@ namespace UL_PROCESSOR
                     foreach (Tuple<DateTime, PersonInfo> dataLine in cleanedData)
                     {
                         DateTime cur = dataLine.Item1;
-                        if (!activities.ContainsKey(cur))
+                        if (rawLena.ContainsKey(person) &&
+                                                cur >= rawLena[person][0].dt &&
+                                                cur <= rawLena[person][rawLena[person].Count - 1].dt)
                         {
-                            activities.Add(cur, new Dictionary<string, PersonInfo>());
+                            if (!activities.ContainsKey(cur))
+                            {
+                                activities.Add(cur, new Dictionary<string, PersonInfo>());
+                            }
+                            activities[cur].Add(person, dataLine.Item2);
                         }
-                        activities[cur].Add(person, dataLine.Item2);
                     }
                     if (person == "T3A")
                     {
@@ -374,12 +379,7 @@ namespace UL_PROCESSOR
                 }
             }
         }
-        public void setData(Dictionary<String, List<PersonInfo>> rawData, Dictionary<String, List<PersonInfo>> rawLenaData)
-        {
-            setUbiData(rawData);
-            setLenaData(rawLenaData);
-        }
-        
+       
         public Dictionary<String, List<PersonInfo>> readUbiFile()
         {
             Dictionary<String, List<PersonInfo>> rawInfo = new Dictionary<String, List<PersonInfo>>();
@@ -465,10 +465,10 @@ namespace UL_PROCESSOR
         List<String> tagMissing = new List<string>();//test delete
         Dictionary<String,String> tagL = new Dictionary<string, string>();//test delete
         Dictionary<String, String> tagR = new Dictionary<string, string>();//test delete
-        Boolean writeChaomingFile = true;//false;
+       // Boolean writeChaomingFile = true;//false;
         TextWriter swc = null;
            
-        public Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>> readUbiTagFile()
+        public Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>> readUbiTagFile(Dictionary<String, List<PersonInfo>> rawLena, Boolean writeChaomingFile)
         {
             Dictionary<String, List<PersonInfo>> rawInfo = new Dictionary<String, List<PersonInfo>>();
             Dictionary<String, List<PersonInfo>> rawInfoR = new Dictionary<String, List<PersonInfo>>();
@@ -483,7 +483,7 @@ namespace UL_PROCESSOR
                 trunk = getTrunkTime();
             }
 
-                foreach (string folder in folders)
+            foreach (string folder in folders)
             {
                 String folderName = folder.Substring(folder.LastIndexOf("/") + 1);
                 DateTime folderDate;
@@ -538,11 +538,14 @@ namespace UL_PROCESSOR
                                             {
                                                 tagL.Add(tag, tag);
                                             }
-                                            if (writeChaomingFile && (!isThisInTimes(lineTime, cf.extractTimes)))
+                                            if (writeChaomingFile && personId.Trim()!="" && rawLena.ContainsKey(personId) &&
+                                                lineTime>=rawLena[personId][0].dt &&
+                                                lineTime <= rawLena[personId][rawLena[personId].Count-1].dt && 
+                                                (!isThisInTimes(lineTime, cf.extractTimes)))
                                             {
                                                 Boolean sAbsent = cf.getMapping(personId, day).isAbsent(day);//|| (!day.startLenaTimes.ContainsKey(subject));// false;
                                                 if(!sAbsent  && lineTime.CompareTo(trunk) <= 0)
-                                                swc.WriteLine(szLine.Replace(tag, personId + "L"));
+                                                swc.WriteLine(szLine.Replace(tag, personId + "L")+","+tag);
                                             }
                                         }
                                         else if (cf.mapRowsUbiR.ContainsKey(tag))
@@ -554,11 +557,14 @@ namespace UL_PROCESSOR
                                             {
                                                 tagR.Add(tag, tag);
                                             }
-                                            if (writeChaomingFile && (!isThisInTimes(lineTime, cf.extractTimes)))
+                                            if (writeChaomingFile && personId.Trim() != "" && rawLena.ContainsKey(personId) &&
+                                               lineTime >= rawLena[personId][0].dt &&
+                                               lineTime <= rawLena[personId][rawLena[personId].Count - 1].dt &&
+                                               (!isThisInTimes(lineTime, cf.extractTimes)))
                                             {
                                                 Boolean sAbsent = cf.getMapping(personId, day).isAbsent(day);//|| (!day.startLenaTimes.ContainsKey(subject));// false;
                                                 if (!sAbsent && lineTime.CompareTo(trunk) <= 0)
-                                                    swc.WriteLine(szLine.Replace(tag, personId + "R"));
+                                                    swc.WriteLine(szLine.Replace(tag, personId + "R") + "," + tag);
                                             }
                                         }
                                         i.x = xPos;
@@ -604,7 +610,11 @@ namespace UL_PROCESSOR
                 }
             }
             Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>> info = new Tuple<Dictionary<string, List<PersonInfo>>, Dictionary<string, List<PersonInfo>>>(rawInfo, rawInfoR);
-
+            if (writeChaomingFile)
+            {
+                swc.Close();
+                swc.Dispose();
+            }
             return info;
         }
         public double getAdjustedSecs(String lid)
@@ -799,6 +809,18 @@ namespace UL_PROCESSOR
             Tuple<double, double> angles = withinOrientationData(a, b);
             return Math.Abs(angles.Item1) <= angle && Math.Abs(angles.Item2) <= angle;
         }
+        public static double  getAngle(PersonInfo a )
+        {
+             double  r =  180 ;
+            if (a.lx > 0 && a.ly > 0  )
+            {
+                double a_center_x = getCenter(a.rx, a.lx);
+                double a_center_y = getCenter(a.ry, a.ly);
+                r = Math.Atan2(-a_center_x, a_center_y) * (180 / Math.PI);
+
+            }
+            return r;
+        }
         public static Tuple<double, double> withinOrientationData(PersonInfo a, PersonInfo b)
         {
             Tuple<double, double> r = new Tuple<double, double>(180, 180);
@@ -853,6 +875,8 @@ namespace UL_PROCESSOR
         }
         public void countInteractions(Boolean writeFile, Boolean writeDetailFile, Boolean trunkDetailFile, DateTime trunk, Dictionary<String, List<PersonInfo>> lenaInfo)
         {
+            int max = 70000;
+
             try
             {
                 TextWriter sw = null;
@@ -865,6 +889,11 @@ namespace UL_PROCESSOR
                     //{
                     foreach (KeyValuePair<DateTime, Dictionary<String, PersonInfo>> opi in activities.OrderBy(key => key.Key))
                     {
+                        /*if (max < 0)
+                            break;
+
+                        max--;
+                        /////TESTING*/
                         DateTime dt = opi.Key;
 
                         if (trunkDetailFile && dt.CompareTo(trunk) <= 0 && ((!cf.justFreePlay) || (isThisFreePlay(dt))))/////
@@ -1083,10 +1112,8 @@ namespace UL_PROCESSOR
                 Console.WriteLine(e.Message);
             }
         }
-        public void write10SecTalkingCSV(String file_name)
+        public void write10SecTalkingCSV(String file_name, List<String> subs, Boolean doVel)
         {
-            Boolean vel = true;
-            Boolean doDist = true;
             Dictionary<String, double> vels1 = new Dictionary<string, double>();
             Dictionary<String, List<double>> vels = new Dictionary<string, List<double>>();
             Dictionary<String, DateTime> pos = new Dictionary<string,DateTime>();
@@ -1096,7 +1123,7 @@ namespace UL_PROCESSOR
             Dictionary<String, List<double>> distances = new Dictionary<string, List<double>>();
             using (TextWriter sw = new StreamWriter(file_name))
             {
-                sw.WriteLine("BID, DateTime, X, Y, Orientation, Talking, Aid, S, Type,rx,ry,lx,ly");
+                sw.WriteLine("BID, DateTime, X, Y, Orientation, Talking, Aid, S, Type,rx,ry,lx,ly,Crying,Velocity,Distance,Angle Velocity");
                 foreach (KeyValuePair<DateTime, Dictionary<String, PersonInfo>> pi in activities.OrderBy(key => key.Key))
                 {
                     DateTime dt = pi.Key;
@@ -1116,77 +1143,102 @@ namespace UL_PROCESSOR
                         }
                         foreach (String s in activities[dt].Keys)
                         {
-                            //tagInfo ti = tags[s];
-                            MappingRow mr = cf.getMapping(s, day);
-                            if (((!startFromLena) || isWithLenaStart(dt, s))
-                                /*&&
-                                activities[dt][s].rx>0&&
-                                    activities[dt][s].ry>0&&
-                                    activities[dt][s].lx > 0 &&
-                                    activities[dt][s].ly > 0*/)
+                            if (subs.Count == 0 || subs.Contains(s))
                             {
+                                //tagInfo ti = tags[s];
+                                MappingRow mr = cf.getMapping(s, day);
+                                if (((!startFromLena) || isWithLenaStart(dt, s))
+                                            /*&&
+                                            activities[dt][s].rx>0&&
+                                                activities[dt][s].ry>0&&
+                                                activities[dt][s].lx > 0 &&
+                                                activities[dt][s].ly > 0*/)
+                                {
 
-                                if (mr.BID == "Lab3d")  
-                                {
-                                    int stop = 0;
-                                }
-                                sw.WriteLine(s + "," + dt.ToString("hh:mm:ss.fff tt") + "," + activities[dt][s].x + "," + activities[dt][s].y + "," + activities[dt][s].ori + "," + 
-                                    activities[dt][s].wasTalking + "," + mr.aid + "," + mr.sex+","+mr.type+","+
-                                    activities[dt][s].rx+","+
-                                    activities[dt][s].ry + "," +
-                                    activities[dt][s].lx + "," +
-                                    activities[dt][s].ly  );
- 
-                                if (doDist)
-                                {
-                                    if (!pos.ContainsKey(s))
+                                    double pointToPointVel = 0;
+                                    double angleVel = 0;
+                                    double dist = 0;
+                                    if (mr.BID == "Lab3d")
                                     {
-                                        pos.Add(s, dt);
-                                        vels.Add(s, new List<double>());
-                                        velCounts.Add(s, new List<int>());
-                                        vels[s].Add(0);
-                                        velCounts[s].Add(0); distances.Add(s, new List<double>());
-                                        distances[s].Add(0);
+                                        int stop = 0;
                                     }
-                                    else
+                                     
+                                    if (doVel)
                                     {
-
-                                        if ((dt - pos[s]).TotalSeconds <= 60)
+                                        if (!pos.ContainsKey(s))
                                         {
-
-                                            double dist = calcSquaredDist(activities[pos[s]][s], activities[dt][s]) / ((dt - pos[s]).TotalSeconds);
-                                            vels[s][vels[s].Count - 1] += dist;
-                                            velCounts[s][velCounts[s].Count - 1] += 1;
-
-                                            if (setDistance)
-                                            {
-                                                distances[s].Add(0);
-
-                                            }
-                                            distances[s][distances[s].Count - 1] += dist;
-
+                                            pos.Add(s, dt);
+                                            vels.Add(s, new List<double>());
+                                            velCounts.Add(s, new List<int>());
+                                            vels[s].Add(0);
+                                            velCounts[s].Add(0); distances.Add(s, new List<double>());
+                                            distances[s].Add(0);
                                         }
                                         else
-
                                         {
 
-                                            vels[s].Add(0);
-                                            velCounts[s].Add(0);
-                                        }
+                                            if ((dt - pos[s]).TotalSeconds <= 60)
+                                            {
+
+                                                dist = Math.Sqrt(calcSquaredDist(activities[pos[s]][s], activities[dt][s]));// / ((dt - pos[s]).TotalSeconds);
+                                                pointToPointVel = (dist / (dt - pos[s]).TotalSeconds);
+                                                angleVel = (Math.Abs(activities[pos[s]][s].ori - activities[dt][s].ori) / (dt - pos[s]).TotalSeconds);
+                                                vels[s][vels[s].Count - 1] += (dist/(dt-pos[s]).TotalSeconds);
+                                                velCounts[s][velCounts[s].Count - 1] += 1;
+
+                                                if (setDistance)
+                                                {
+                                                    distances[s].Add(0);
+
+                                                }
+                                                distances[s][distances[s].Count - 1] += dist;
+
+                                            }
+                                            else
+
+                                            {
+
+                                                vels[s].Add(0);
+                                                velCounts[s].Add(0);
+                                            }
 
 
+                                            if (s == "8P" && dist > 2 && pointToPointVel > 25)
+                                            {
+                                                dist = dist;
+                                                dist = calcSquaredDist(activities[pos[s]][s], activities[dt][s]);
+                                            }
 
+                                            
                                             pos[s] = dt;
+                                        }
                                     }
+
+                                    
+ 
+                                    //So the angle is arc tan(1.0) = 45°. 
+                                    sw.WriteLine(s + "," + dt.ToString("hh:mm:ss.fff tt") + "," + activities[dt][s].x + "," + activities[dt][s].y + "," + activities[dt][s].ori + "," +
+                                        activities[dt][s].wasTalking + "," +
+                                        mr.aid + "," + mr.sex + "," + mr.type + "," +
+                                        activities[dt][s].rx + "," +
+                                        activities[dt][s].ry + "," +
+                                        activities[dt][s].lx + "," +
+                                        activities[dt][s].ly + "," +
+                                        activities[dt][s].isCrying + "," +
+                                        pointToPointVel + "," +
+                                        dist +","+
+                                        angleVel
+                                        );
+
                                 }
                             }
+                            setDistance = false;
                         }
-                        setDistance = false;
                     }
                 }
             }
         
-             if(doDist)
+             if(doVel)
                 using (TextWriter sw = new StreamWriter(cf.root+"//"+cf.classroom+"//"+ cf.classroom+"_VELOCITY.CSV",!first))
                 {
                     using (TextWriter sw2 = new StreamWriter(cf.root + "//" + cf.classroom + "//" + cf.classroom + "_DISTANCES_v2.CSV", !first))
@@ -1232,7 +1284,6 @@ namespace UL_PROCESSOR
                     }
                     }
 
-                if ((!doDist) && vel)
                     foreach (String s in vels.Keys)
                     {
                         int c = 0;
@@ -1392,156 +1443,201 @@ e20170310_134226_014863.wav	1
         public Dictionary<String, List<PersonInfo>> readLenaItsFiles()
         {
             Dictionary< String, List<PersonInfo>> rawLenaInfo = new Dictionary<String, List<PersonInfo>>();
-
+            //Date	Subject	SubjectType	segmentid	voctype	recstart	startsec	endsec	starttime	endtime	duration	uttlen
             string[] folders = Directory.GetDirectories(cf.lenaFileDir + "//ITS//");
-            foreach (string folder in folders)
+            using (TextWriter sw = new StreamWriter(cf.syncFilePre + day.Month + "_" + day.Day + "_" + day.Year + "_ONSETS.CSV"))
             {
-                String folderName = folder.Substring(folder.LastIndexOf("/") + 1);
-                DateTime folderDate;
-                if (DateTime.TryParse(folderName, out folderDate) && folderDate >= day && folderDate < day.AddDays(1))
+                sw.WriteLine("Date,Subject,SubjectType,segmentid,voctype,recstart,startsec,endsec,starttime,endtime,duration,uttlen");
+                foreach (string folder in folders)
                 {
-                    string[] files = Directory.GetFiles(folder);
-                    foreach (string file in files)
+                    String folderName = folder.Substring(folder.LastIndexOf("/") + 1);
+                    DateTime folderDate;
+                    if (DateTime.TryParse(folderName, out folderDate) && folderDate >= day && folderDate < day.AddDays(1))
                     {
-                        String fileName = Path.GetFileName(file);
+                        string[] files = Directory.GetFiles(folder);
+                        foreach (string file in files)
                         {
-                            Console.WriteLine(file);
-                            String lenaId = file.Substring(file.IndexOf("\\") + 2);
-                            lenaId = lenaId.Substring(16, 6);
-                            if (lenaId.Substring(0, 2) == "00")
-                                lenaId = lenaId.Substring(2);
-                            else if (lenaId.Substring(0, 1) == "0")
-                                lenaId = lenaId.Substring(1);
-                             
-
-                            XmlDocument doc = new XmlDocument();
-                            doc.Load(file);
-                            XmlNodeList rec = doc.ChildNodes[2].SelectNodes("ProcessingUnit/Recording");
-
-                            /*DateTime dt2 = i.dt;
-                                                            DateTime dt3 = i.dt.AddSeconds(i.bd);
-                                                            //////////////
-                                                            int ms = dt2.Millisecond > 0 ? dt2.Millisecond / 100 * 100 : dt2.Millisecond;// + 100;
-                                                            dt2 = new DateTime(dt2.Year, dt2.Month, dt2.Day, dt2.Hour, dt2.Minute, dt2.Second, ms);
-                                                            ms = dt3.Millisecond > 0 ? dt3.Millisecond / 100 * 100 : dt3.Millisecond;// + 100;
-                                                            dt3 = new DateTime(dt3.Year, dt3.Month, dt3.Day, dt3.Hour, dt3.Minute, dt3.Second, ms);
-                                                            i.bd= (dt3 - dt2).Seconds + ((dt3 - dt2).Milliseconds / 1000.00);
-                                                            */
-                            foreach (XmlNode recording in rec)
+                            String fileName = Path.GetFileName(file);
                             {
-                                DateTime recStartTimeOriginal = DateTime.Parse(recording.Attributes["startClockTime"].Value);
-                                XmlNodeList nodes = recording.SelectNodes("Conversation|Pause");
-                                XmlNodeList nodesP = recording.SelectNodes("Conversation");
-                                double adjustedSecs = getAdjustedSecs(lenaId);
-                                DateTime recStartTime = Config.getMsTime(recStartTimeOriginal.AddSeconds(adjustedSecs));
-                                if (recStartTime.Day == day.Day)
+                                Console.WriteLine(file);
+                                String lenaId = file.Substring(file.IndexOf("\\") + 2);
+                                lenaId = lenaId.Substring(16, 6);
+                                if (lenaId.Substring(0, 2) == "00")
+                                    lenaId = lenaId.Substring(2);
+                                else if (lenaId.Substring(0, 1) == "0")
+                                    lenaId = lenaId.Substring(1);
+
+
+                                XmlDocument doc = new XmlDocument();
+                                doc.Load(file);
+                                XmlNodeList rec = doc.ChildNodes[2].SelectNodes("ProcessingUnit/Recording");
+
+                                /*DateTime dt2 = i.dt;
+                                                                DateTime dt3 = i.dt.AddSeconds(i.bd);
+                                                                //////////////
+                                                                int ms = dt2.Millisecond > 0 ? dt2.Millisecond / 100 * 100 : dt2.Millisecond;// + 100;
+                                                                dt2 = new DateTime(dt2.Year, dt2.Month, dt2.Day, dt2.Hour, dt2.Minute, dt2.Second, ms);
+                                                                ms = dt3.Millisecond > 0 ? dt3.Millisecond / 100 * 100 : dt3.Millisecond;// + 100;
+                                                                dt3 = new DateTime(dt3.Year, dt3.Month, dt3.Day, dt3.Hour, dt3.Minute, dt3.Second, ms);
+                                                                i.bd= (dt3 - dt2).Seconds + ((dt3 - dt2).Milliseconds / 1000.00);
+                                                                */
+                                int segmentNumber = 0;
+                                int childSegmentNumber = 0;
+                                foreach (XmlNode recording in rec)
                                 {
-                                    foreach (XmlNode conv in nodes)
+                                    DateTime recStartTimeOriginal = DateTime.Parse(recording.Attributes["startClockTime"].Value);
+                                    XmlNodeList nodes = recording.SelectNodes("Conversation|Pause");
+                                    XmlNodeList nodesP = recording.SelectNodes("Conversation");
+                                    double adjustedSecs = getAdjustedSecs(lenaId);
+                                    DateTime recStartTime = Config.getMsTime(recStartTimeOriginal.AddSeconds(adjustedSecs));
+                                     
+                                     
+                                    if (recStartTime.Day == day.Day)
                                     {
-                                        String num = conv.Attributes["num"].Value;
-                                        XmlNodeList segments = conv.SelectNodes("Segment");
-                                        double startSecs = Convert.ToDouble(conv.Attributes["startTime"].Value.Substring(2, conv.Attributes["startTime"].Value.Length - 3));
-                                        double endSecs = Convert.ToDouble(conv.Attributes["endTime"].Value.Substring(2, conv.Attributes["endTime"].Value.Length - 3));
-                                        DateTime start = Config.getMsTime(recStartTime.AddSeconds(startSecs));
-                                        DateTime end = Config.getMsTime(recStartTime.AddSeconds(endSecs));
-                                        PersonInfo pi = new PersonInfo();
-                                        MappingRow mr = cf.getLenaMapping(lenaId, start);
-                                        if (conv.Name == "Conversation")
+                                        foreach (XmlNode conv in nodes)
                                         {
-                                            double tc = Convert.ToDouble(conv.Attributes["turnTaking"].Value);
-                                            if (tc > 0)
+                                            String num = conv.Attributes["num"].Value;
+                                            XmlNodeList segments = conv.SelectNodes("Segment");
+                                            double startSecs = Convert.ToDouble(conv.Attributes["startTime"].Value.Substring(2, conv.Attributes["startTime"].Value.Length - 3));
+                                            double endSecs = Convert.ToDouble(conv.Attributes["endTime"].Value.Substring(2, conv.Attributes["endTime"].Value.Length - 3));
+                                            DateTime start = Config.getMsTime(recStartTime.AddSeconds(startSecs));
+                                            DateTime end = Config.getMsTime(recStartTime.AddSeconds(endSecs));
+                                            PersonInfo pi = new PersonInfo();
+                                            MappingRow mr = cf.getLenaMapping(lenaId, start);
+                                            if (conv.Name == "Conversation")
                                             {
+                                                double tc = Convert.ToDouble(conv.Attributes["turnTaking"].Value);
+                                                if (tc > 0)
+                                                {
+                                                    pi.dt = start;
+                                                    pi.ubiId = mr.UbiID;// ubiAndBId[0];
+                                                    pi.bid = mr.BID;// ubiAndBId[1];
+                                                    pi.lenaId = lenaId;
+                                                    pi.bd = (end - start).Seconds + ((end - start).Milliseconds / 1000.00); //endSecs - startSecs;
+                                                    pi.tc = tc;
+                                                    addToRawLena(ref rawLenaInfo, pi);
+                                                }
+
+                                            }
+
+                                            foreach (XmlNode seg in segments)
+                                            {
+                                                //startClockTime
+                                                segmentNumber++;
+                                                startSecs = Convert.ToDouble(seg.Attributes["startTime"].Value.Substring(2, seg.Attributes["startTime"].Value.Length - 3));
+                                                endSecs = Convert.ToDouble(seg.Attributes["endTime"].Value.Substring(2, seg.Attributes["endTime"].Value.Length - 3));
+                                                start = Config.getMsTime(recStartTime.AddSeconds(startSecs));
+                                                end = Config.getMsTime(recStartTime.AddSeconds(endSecs));
+                                                pi = new PersonInfo();
                                                 pi.dt = start;
+                                                mr = cf.getLenaMapping(lenaId, start);
                                                 pi.ubiId = mr.UbiID;// ubiAndBId[0];
                                                 pi.bid = mr.BID;// ubiAndBId[1];
                                                 pi.lenaId = lenaId;
+                                                String speaker = seg.Attributes["spkr"].Value;
                                                 pi.bd = (end - start).Seconds + ((end - start).Milliseconds / 1000.00); //endSecs - startSecs;
-                                                pi.tc = tc;
-                                                addToRawLena(ref rawLenaInfo, pi);
-                                            }
-                                        }
-
-                                        foreach (XmlNode seg in segments)
-                                        {
-                                            //startClockTime
-                                            startSecs = Convert.ToDouble(seg.Attributes["startTime"].Value.Substring(2, seg.Attributes["startTime"].Value.Length - 3));
-                                            endSecs = Convert.ToDouble(seg.Attributes["endTime"].Value.Substring(2, seg.Attributes["endTime"].Value.Length - 3));
-                                            start = Config.getMsTime(recStartTime.AddSeconds(startSecs));
-                                            end = Config.getMsTime(recStartTime.AddSeconds(endSecs));
-                                            pi = new PersonInfo();
-                                            pi.dt = start;
-                                            mr = cf.getLenaMapping(lenaId, start);
-                                            pi.ubiId = mr.UbiID;// ubiAndBId[0];
-                                            pi.bid = mr.BID;// ubiAndBId[1];
-                                            pi.lenaId = lenaId;
-                                            String speaker = seg.Attributes["spkr"].Value;
-                                            pi.bd = (end - start).Seconds + ((end - start).Milliseconds / 1000.00); //endSecs - startSecs;
-                                            Boolean add = false;
-                                            switch (speaker)
-                                            {
-                                                case "CHN":
-                                                case "CHF":
-                                                    pi.vd = Convert.ToDouble(seg.Attributes["childUttLen"].Value.Substring(1, seg.Attributes["childUttLen"].Value.Length - 2));
-                                                    pi.vc = Convert.ToDouble(seg.Attributes["childUttCnt"].Value);
-                                                    foreach(XmlAttribute atts in seg.Attributes)
-                                                    {
-                                                        if(atts.Name.IndexOf("startCry")==0)
+                                                Boolean add = false;
+                                                switch (speaker)
+                                                {
+                                                    case "CHN":
+                                                    case "CHF":
+                                                        childSegmentNumber++;
+                                                        pi.vd = Convert.ToDouble(seg.Attributes["childUttLen"].Value.Substring(1, seg.Attributes["childUttLen"].Value.Length - 2));
+                                                        pi.vc = Convert.ToDouble(seg.Attributes["childUttCnt"].Value);
+                                                        pi.avDb = Convert.ToDouble(seg.Attributes["average_dB"].Value) ;
+                                                        pi.maxDb = Convert.ToDouble(seg.Attributes["peak_dB"].Value);
+                                                        pi.childSegments = childSegmentNumber;
+                                                        if (pi.vd>0)
                                                         {
-                                                            String cryStep = atts.Name.Substring(8);
-                                                            String att = atts.Name;
-                                                            double cstartSecs = Convert.ToDouble(seg.Attributes[att].Value.Substring(2, seg.Attributes[att].Value.Length - 3));
-                                                            double cendSecs = Convert.ToDouble(seg.Attributes["endCry"+cryStep].Value.Substring(2, seg.Attributes["endCry" + cryStep].Value.Length - 3));
-                                                            DateTime cstart = Config.getMsTime(recStartTime.AddSeconds(cstartSecs));
-                                                            DateTime cend = Config.getMsTime(recStartTime.AddSeconds(cendSecs));
-                                                            PersonInfo cpi = new PersonInfo();
-                                                            cpi.dt = cstart;
-                                                            mr = cf.getLenaMapping(lenaId, start);
-                                                            cpi.ubiId = mr.UbiID;// ubiAndBId[0];
-                                                            cpi.bid = mr.BID;// ubiAndBId[1];
-                                                            cpi.lenaId = lenaId;
-                                                            cpi.bd = (cend - cstart).Seconds + ((cend - cstart).Milliseconds / 1000.00); //cendSecs - cstartSecs;
-                                                            cpi.cry = cpi.bd;
-                                                            addToRawLena(ref rawLenaInfo, cpi);
+                                                            sw.WriteLine(this.day+","+pi.bid+","+mr.type+","+ segmentNumber + ",SegmentUtt," + recStartTime + "," + startSecs + "," + endSecs + "," + start+","+ end  + "," + pi.vd);
                                                         }
+                                                        pi.vd = 0;
+                                                        //pi.vc = 0;
 
-                                                    }
-                                                    add = true;
-                                                    break;
-                                                case "FAN":
-                                                    pi.ac = Convert.ToDouble(seg.Attributes["femaleAdultWordCnt"].Value);
-                                                    add = true;
-                                                    break;
-                                                case "MAN":
-                                                    pi.ac = Convert.ToDouble(seg.Attributes["maleAdultWordCnt"].Value);
-                                                    add = true;
-                                                    break;
-                                                case "OLN":
-                                                    pi.bd = endSecs - startSecs;
-                                                    pi.oln = pi.bd;
-                                                    add = true;
-                                                    break;
-                                                case "NON":
-                                                    pi.bd = endSecs - startSecs;
-                                                    pi.no = pi.bd;
-                                                    add = true;
-                                                    break;
-                                            }
-                                           
-                                            if (add)
-                                            {
+                                                        foreach (XmlAttribute atts in seg.Attributes)
+                                                        {
 
-                                                addToRawLena(ref rawLenaInfo, pi);
-                                                
+                                                            String newSwLine = "";
+                                                            if (atts.Name.IndexOf("startCry") == 0)
+                                                            {
+                                                                String cryStep = atts.Name.Substring(8);
+                                                                String att = atts.Name;
+                                                                double cstartSecs = Convert.ToDouble(seg.Attributes[att].Value.Substring(2, seg.Attributes[att].Value.Length - 3));
+                                                                double cendSecs = Convert.ToDouble(seg.Attributes["endCry" + cryStep].Value.Substring(2, seg.Attributes["endCry" + cryStep].Value.Length - 3));
+                                                                DateTime cstart = Config.getMsTime(recStartTime.AddSeconds(cstartSecs));
+                                                                DateTime cend = Config.getMsTime(recStartTime.AddSeconds(cendSecs));
+                                                                PersonInfo cpi = new PersonInfo();
+                                                                cpi.dt = cstart;
+                                                                mr = cf.getLenaMapping(lenaId, start);
+                                                                cpi.ubiId = mr.UbiID;// ubiAndBId[0];
+                                                                cpi.bid = mr.BID;// ubiAndBId[1];
+                                                                cpi.lenaId = lenaId;
+                                                                cpi.bd = (cend - cstart).Seconds + ((cend - cstart).Milliseconds / 1000.00); //cendSecs - cstartSecs;
+                                                                cpi.cry = cpi.bd;
+                                                                newSwLine = (this.day + "," + pi.bid + "," + mr.type + "," + segmentNumber + ",Cry," + recStartTime + "," + cstartSecs + "," + cendSecs + "," + cstart + "," + cend + "," + cpi.cry);
+                                                                addToRawLena(ref rawLenaInfo, cpi);
+                                                                 
+                                                            }
+                                                            else if (atts.Name.IndexOf("startUtt") == 0)
+                                                            {
+                                                                String cryStep = atts.Name.Substring(8);
+                                                                String att = atts.Name;
+                                                                double cstartSecs = Convert.ToDouble(seg.Attributes[att].Value.Substring(2, seg.Attributes[att].Value.Length - 3));
+                                                                double cendSecs = Convert.ToDouble(seg.Attributes["endUtt" + cryStep].Value.Substring(2, seg.Attributes["endUtt" + cryStep].Value.Length - 3));
+                                                                DateTime cstart = Config.getMsTime(recStartTime.AddSeconds(cstartSecs));
+                                                                DateTime cend = Config.getMsTime(recStartTime.AddSeconds(cendSecs));
+                                                                PersonInfo cpi = new PersonInfo();
+                                                                cpi.dt = cstart;
+                                                                mr = cf.getLenaMapping(lenaId, start);
+                                                                cpi.ubiId = mr.UbiID;// ubiAndBId[0];
+                                                                cpi.bid = mr.BID;// ubiAndBId[1];
+                                                                cpi.lenaId = lenaId;
+                                                                cpi.bd = (cend - cstart).Seconds + ((cend - cstart).Milliseconds / 1000.00); //cendSecs - cstartSecs;
+                                                                cpi.vd = cpi.bd;
+                                                                //pi.vc = Convert.ToDouble(seg.Attributes["childUttCnt"].Value);
+                                                                //cpi.cry = cpi.bd;
+                                                                newSwLine = (this.day + "," + pi.bid + "," + mr.type + "," + segmentNumber + ",Utt," + recStartTime + "," + cstartSecs + "," + cendSecs + "," + cstart + "," + cend + "," + cpi.vd);
+                                                                addToRawLena(ref rawLenaInfo, cpi);
+                                                            }
+                                                            if (newSwLine != "")
+                                                                sw.WriteLine(newSwLine);
+                                                        }
+                                                        add = true;
+                                                        break;
+                                                    case "FAN":
+                                                        pi.ac = Convert.ToDouble(seg.Attributes["femaleAdultWordCnt"].Value);
+                                                        add = true;
+                                                        break;
+                                                    case "MAN":
+                                                        pi.ac = Convert.ToDouble(seg.Attributes["maleAdultWordCnt"].Value);
+                                                        add = true;
+                                                        break;
+                                                    case "OLN":
+                                                        pi.bd = endSecs - startSecs;
+                                                        pi.oln = pi.bd;
+                                                        add = true;
+                                                        break;
+                                                    case "NON":
+                                                        pi.bd = endSecs - startSecs;
+                                                        pi.no = pi.bd;
+                                                        add = true;
+                                                        break;
+                                                }
+
+                                                if (add)
+                                                {
+                                                    addToRawLena(ref rawLenaInfo, pi);
+                                                }
+
                                             }
-                                            
+
                                         }
-                                      
                                     }
                                 }
+
                             }
-                        
+
                         }
-                             
                     }
                 }
             }
@@ -1700,6 +1796,9 @@ e20170310_134226_014863.wav	1
                      Double n = data.no;
                      Double o = data.oln;
                      Double cry = data.cry;
+                     Double avDb = data.avDb;
+                     Double maxDb = data.maxDb;
+                     double segs = data.childSegments;
                      double turnCount10 = (turnCount / blockDur) / 10;
                      double vocCount10 = (vocCount / blockDur) / 10;
                      double vocDur10 = (vocDur / blockDur) / 10;
@@ -1707,6 +1806,9 @@ e20170310_134226_014863.wav	1
                      double noise10 = (n / blockDur) / 10;
                      double oln10 = (o / blockDur) / 10;
                      double cry10 = (cry / blockDur) / 10;
+                     double avDb10 = (avDb / blockDur) / 10;
+                     double maxDb10 = (maxDb / blockDur) / 10;
+                     double segs10 = (segs / blockDur) / 10;
                      if (personTotalCounts.ContainsKey(person))/////////////////
                      {
                          //Tuple<double, double, double, double, double> totalInfo = personTotalCounts[person];
@@ -1718,7 +1820,13 @@ e20170310_134226_014863.wav	1
                          personTotalCounts[person].no = personTotalCounts[person].no + n;
                          personTotalCounts[person].oln = personTotalCounts[person].oln + o;
                          personTotalCounts[person].cry = personTotalCounts[person].cry + cry;
-
+                         personTotalCounts[person].avDb = personTotalCounts[person].avDb + avDb;
+                         personTotalCounts[person].maxDb = personTotalCounts[person].maxDb + maxDb;
+                         personTotalCounts[person].childSegments = personTotalCounts[person].childSegments + segs;
+                        if(personTotalCounts[person].childSegments>0 && personTotalCounts[person].avDb<0)
+                        {
+                            bool stop = true;
+                        }
                         //personTotalCounts[person] = new Tuple<double, double, double, double, double>(totalInfo.Item1 + vocDur, totalInfo.Item2 + vocCount, totalInfo.Item3 + turnCount, totalInfo.Item4 + a, totalInfo.Item5 + n);
                     }
                     else
@@ -1731,6 +1839,9 @@ e20170310_134226_014863.wav	1
                          pi.no = n;
                          pi.oln = o;
                          pi.cry = cry;
+                         pi.avDb = avDb;
+                         pi.maxDb = maxDb;
+                         pi.childSegments = segs;
                          personTotalCounts.Add(person, pi);
                          personTotalCountsWUbi.Add(person, new PersonInfo());
                          //personTotalCounts.Add(person, new Tuple<double, double, double, double, double>(vocDur, vocCount, turnCount, a, n));
@@ -1753,6 +1864,12 @@ e20170310_134226_014863.wav	1
                                  activities[time][person].no += noise10;
                                  activities[time][person].cry += cry10;
 
+                                 activities[time][person].avDb += avDb10;
+                                 activities[time][person].maxDb += maxDb10;
+                                 activities[time][person].childSegments += segs10;
+                                /*double avDb10 = (avDb / blockDur) / 10;
+                     double maxDb10 = (maxDb / blockDur) / 10;
+                     double segs10 = (segs / blockDur) / 10;*/
                                 if (personTotalCountsWUbi.ContainsKey(person))/////////////////
                                  {
                                      personTotalCountsWUbi[person].vc += vocCount10;
@@ -1761,7 +1878,10 @@ e20170310_134226_014863.wav	1
                                      personTotalCountsWUbi[person].ac += adults10;
                                      personTotalCountsWUbi[person].oln += oln10;
                                      personTotalCountsWUbi[person].no += noise10;
-                                    personTotalCountsWUbi[person].cry += cry10;
+                                     personTotalCountsWUbi[person].cry += cry10;
+                                     personTotalCountsWUbi[person].avDb += avDb10;
+                                     personTotalCountsWUbi[person].maxDb += maxDb10;
+                                     personTotalCountsWUbi[person].childSegments += segs10;
                                 }
 
                              }
@@ -1862,7 +1982,7 @@ e20170310_134226_014863.wav	1
         public Dictionary<string, PairInfo> pairInteractions = new Dictionary<string, PairInfo>();
 
         //public void countInteractions(Config cf, ClassroomDay day, bool writeFile, bool writeDetailFile, DateTime trunk, Dictionary<string, List<PersonInfo>> lenaInfo)
-        public void countInteractionsIts(DateTime trunk)
+        public void countInteractionsIts(Boolean writeFile, Boolean writeDetailFile, Boolean trunkDetailFile, DateTime trunk, Dictionary<String, List<PersonInfo>> lenaInfo)
         {
             foreach (KeyValuePair<DateTime, Dictionary<String, PersonInfo>> opi in this.activities.OrderBy(key => key.Key))
             {
