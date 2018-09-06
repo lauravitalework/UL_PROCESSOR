@@ -42,7 +42,8 @@ namespace UL_PROCESSOR
 
         public double individualTime = 0;
         public double interactionTime = 0;
+        public double cryingTime = 0;
 
 
-  }
+    }
 }

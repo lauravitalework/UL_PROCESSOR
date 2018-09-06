@@ -45,6 +45,12 @@ namespace UL_PROCESSOR
             foreach (DateTime day in days)
             {
 
+                List<String> subs = new List<string>();
+                //subs.Add("1B");
+                //subs.Add("2B");
+                //subs.Add("3B");
+                //subs = new List<string>();
+
                 ClassroomDay cd = new ClassroomDay(day, configInfo);
                 Console.WriteLine("PROCESSING " + configInfo.classroom + " " + day.ToShortDateString());
 
@@ -54,7 +60,7 @@ namespace UL_PROCESSOR
 
 
                 Console.WriteLine("readUbiFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                Dictionary<String, List<PersonInfo>> rawUbi = cd.readUbiFile();
+                Dictionary<String, List<PersonInfo>> rawUbi = cd.readUbiFile(new List<string>());
                 /*Console.WriteLine("readUbiTagFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>> rawTags = cd.readUbiTagFile();
                 */
@@ -67,7 +73,7 @@ namespace UL_PROCESSOR
 
 
                 Console.WriteLine("readUbiTagFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>> rawTags = cd.readUbiTagFile(rawLena, doGR);
+                Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>> rawTags = cd.readUbiTagFile(rawLena, doGR, new List<string>());//, subs);
 
                 Console.WriteLine("setUbiTagData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 cd.setUbiTagData(rawTags.Item1, rawTags.Item2);
@@ -84,33 +90,19 @@ namespace UL_PROCESSOR
                 Console.WriteLine("countInteractions (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
 
 
-                List<String> subs = new List<string>();
-                // subs.Add("11A");
-                //subs.Add("12A");
-                /* subs.Add("13A");
-                 subs.Add("14A");
-                 subs.Add("15A");
-                 subs.Add("16A");
-                 subs.Add("17A");*/
-                //subs.Add("18A");
-                // subs.Add("19A");
-                // subs.Add("20A");
-
-                subs.Add("12A");
-                subs.Add("17A");
-
+               
                 if (doAngleFiles || doTenFiles || doSumAllFiles || doSumDayFiles)
                 {
                     //if (getFromIts)
                     //    cd.countInteractionsIts(doAngleFiles, doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file 
                     //else
-                        cd.countInteractions(doAngleFiles, doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file
+                        cd.countInteractionsNew(subs,doAngleFiles, doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file
                                                                                                   //cd.countInteractions(subs, doAngleFiles, doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file
                     if (doTenFiles || doVel)
                     {
                         Console.WriteLine("write10SecTalkingCSV (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                         String fileNameTen = configInfo.root + configInfo.classroom + "/SYNC/" + configInfo.version + "10THOFSECTALKING_" + (configInfo.justFreePlay ? "freeplay_" : "") + (cd.startFromLena ? "wlena_" : "wolena_") + day.Month + "_" + day.Day + "_" + day.Year + ".CSV";
-                        subs = new List<string>();
+                        //subs = new List<string>();
                         //cd.write10SecCryCSV(fileNameTen, subs); //write complete data files to disc
                         cd.write10SecTalkingCSV(fileNameTen, subs, doVel); //write complete data files to disc
                     }
@@ -410,6 +402,215 @@ namespace UL_PROCESSOR
                     proximityTime = Math.Round(pi.closeTimeInSecs, 2)  ;
                     proximityOrientationTime = Math.Round(pi.closeAndOrientedTimeInSecs, 2)  ;
                     sharedTime = Math.Round(pi.sharedTimeInSecs, 2); //check on this. correct. 
+                    recordingTime = (day.endTime.Hour - day.startTime.Hour) * 60 * 60 + (day.endTime.Minute - day.startTime.Minute) * 60 + (day.endTime.Second - day.startTime.Second) + (day.endTime.Millisecond - day.startTime.Millisecond) / 1000;
+                }
+
+
+                PersonInfo s = day.personTotalCounts.ContainsKey(subject) ? day.personTotalCounts[subject] : new PersonInfo();
+                PersonInfo sUbi = day.personTotalCountsWUbi.ContainsKey(subject) ? day.personTotalCountsWUbi[subject] : new PersonInfo();
+                PersonInfo p = day.personTotalCounts.ContainsKey(partner) ? day.personTotalCounts[partner] : new PersonInfo();
+                PersonInfo pUbi = day.personTotalCountsWUbi.ContainsKey(partner) ? day.personTotalCountsWUbi[partner] : new PersonInfo();
+
+
+                Tuple<String, String, String> metrics = getMetrics("WUBI Total ", "Total", "Partner WUBI Total ", "Partner Total",
+                    sUbi,
+                    s,
+                    pUbi,
+                    p, absent, absent);////
+
+                subjectLine = (
+                       (status) + "," +
+                       (statusp) + "," +
+                       (nextDay ? "" : (type) + ",") +
+                       (nextDay ? "" : (typep) + ",") +
+                       (absent ? "NA" : VD.ToString()) + "," +
+                       (absent ? "NA" : interactionTime.ToString()) + "," +
+                       (sAbsent ? "NA" : subjectInteractionTime.ToString()) + "," +
+                       (pAbsent ? "NA" : partnerInteractionTime.ToString()) + "," +
+                       (sAbsent ? "NA" : subjectVocDur.ToString()) + "," +
+                       (pAbsent ? "NA" : partnerVocDur.ToString()) + "," +
+                       (sAbsent ? "NA" : subjectTurnCount.ToString()) + "," +
+                       (pAbsent ? "NA" : partnerTurnCount.ToString()) + "," +
+                       (sAbsent ? "NA" : subjectVocCount.ToString()) + "," +
+                       (pAbsent ? "NA" : partnerVocCount.ToString()) + "," +
+                       (sAbsent ? "NA" : subjectAdCount.ToString()) + "," +
+                       (pAbsent ? "NA" : partnerAdCount.ToString()) + "," +
+                       (sAbsent ? "NA" : subjectNoise.ToString()) + "," +
+                       (pAbsent ? "NA" : partnerNoise.ToString()) + "," +
+                       (sAbsent ? "NA" : subjectOln.ToString()) + "," +
+                       (pAbsent ? "NA" : partnerOln.ToString()) + "," +
+                       (sAbsent ? "NA" : subjectCry.ToString()) + "," +
+                       (pAbsent ? "NA" : partnerCry.ToString()) + "," +
+                       (sAbsent ? "NA" : subjectJoinedCry.ToString()) + "," +
+                       (pAbsent ? "NA" : partnerJoinedCry.ToString()) + "," +
+                       (absent ? "NA" : joinedCry.ToString()) + "," +
+                       (absent ? "NA" : proximityTime.ToString()) + "," +
+                       (absent ? "NA" : proximityOrientationTime.ToString()) + "," +
+                       (absent ? "NA" : sharedTime.ToString()) + "," +
+                       (sAbsent ? "NA" : subjectTime.ToString()) + "," +
+                       (pAbsent ? "NA" : partnerTime.ToString()) + "," +
+                       (absent ? "NA" : recordingTime.ToString()) + "," +
+                        metrics.Item2);
+
+                partnerLine = (
+                    (statusp) + "," +
+                    (status) + "," +
+                    (nextDay ? "" : (typep) + ",") +
+                    (nextDay ? "" : (type) + ",") +
+                    (absent ? "NA" : VD.ToString()) + "," +
+                    (absent ? "NA" : interactionTime.ToString()) + "," +
+                    (pAbsent ? "NA" : partnerInteractionTime.ToString()) + "," +
+                    (sAbsent ? "NA" : subjectInteractionTime.ToString()) + "," +
+                    (pAbsent ? "NA" : partnerVocDur.ToString()) + "," +
+                    (sAbsent ? "NA" : subjectVocDur.ToString()) + "," +
+                    (pAbsent ? "NA" : partnerTurnCount.ToString()) + "," +
+                    (sAbsent ? "NA" : subjectTurnCount.ToString()) + "," +
+                    (pAbsent ? "NA" : partnerVocCount.ToString()) + "," +
+                    (sAbsent ? "NA" : subjectVocCount.ToString()) + "," +
+                    (pAbsent ? "NA" : partnerAdCount.ToString()) + "," +
+                    (sAbsent ? "NA" : subjectAdCount.ToString()) + "," +
+                    (pAbsent ? "NA" : partnerNoise.ToString()) + "," +
+                    (sAbsent ? "NA" : subjectNoise.ToString()) + "," +
+                    (pAbsent ? "NA" : partnerOln.ToString()) + "," +
+                    (sAbsent ? "NA" : subjectOln.ToString()) + "," +
+                    (pAbsent ? "NA" : partnerCry.ToString()) + "," +
+                    (sAbsent ? "NA" : subjectCry.ToString()) + "," +
+                    (pAbsent ? "NA" : partnerJoinedCry.ToString()) + "," +
+                    (sAbsent ? "NA" : subjectJoinedCry.ToString()) + "," +
+                    (absent ? "NA" : joinedCry.ToString()) + "," +
+                    (absent ? "NA" : proximityTime.ToString()) + "," +
+                    (absent ? "NA" : proximityOrientationTime.ToString()) + "," +
+                    (absent ? "NA" : sharedTime.ToString()) + "," +
+                    (pAbsent ? "NA" : partnerTime.ToString()) + "," +
+                    (sAbsent ? "NA" : subjectTime.ToString()) + "," +
+                    (absent ? "NA" : recordingTime.ToString()) + "," +
+                     metrics.Item3);
+
+                lines[0] = subjectLine;
+                lines[1] = partnerLine;
+            }
+            return lines;
+        }
+        public static String[] writePairLineNew(ClassroomDay day, String pair, String date, Boolean nextDay)
+        {
+            String[] lines = new String[2];
+            String subject = pair.Split('-')[0];
+            String partner = pair.Split('-')[1];
+            String status = "present";
+            String statusp = "present";
+            Boolean sAbsent = day.cf.getMapping(subject, day.day).isAbsent(day.day);//|| (!day.startLenaTimes.ContainsKey(subject));// false;
+            Boolean pAbsent = day.cf.getMapping(partner, day.day).isAbsent(day.day);//|| (!day.startLenaTimes.ContainsKey(partner)); ;
+            Boolean lAbsent = (!day.startLenaTimes.ContainsKey(subject)) || (!day.startLenaTimes.ContainsKey(partner));
+            Boolean dAbsent = !day.pairInteractions.ContainsKey(pair);
+            status = sAbsent ? "absent" : ((!day.startLenaTimes.ContainsKey(subject)) || dAbsent ? "No Data" : "present");
+            statusp = pAbsent ? "absent" : ((!day.startLenaTimes.ContainsKey(partner)) || dAbsent ? "No Data" : "present");
+            Boolean absent = sAbsent || pAbsent || dAbsent || lAbsent;
+            String type = subject.IndexOf("Lab") == 0 ? "Lab" : subject.IndexOf("T") == 0 ? "Teacher" : "Child";
+            String typep = partner.IndexOf("Lab") == 0 ? "Lab" : partner.IndexOf("T") == 0 ? "Teacher" : "Child";
+            sAbsent = absent;
+            pAbsent = absent;
+            dAbsent = absent;
+            lAbsent = absent;
+
+            if (pair == "1B-2B")
+            {
+                int stop = 1;
+            }
+            lines[0] = (status) + "," +
+                   (statusp) + "," +
+                   (nextDay ? "" : (type) + ",") +
+                   (nextDay ? "" : (typep) + ",")
+                   + new StringBuilder().Insert(0, "NA,", (nextDay ? 63 : 63)).ToString();
+            lines[1] = (statusp) + "," +
+                   (status) + "," +
+                   (nextDay ? "" : (typep) + ",") +
+                   (nextDay ? "" : (type) + ",")
+                   + new StringBuilder().Insert(0, "NA,", (nextDay ? 63 : 63)).ToString();
+            if (!absent)
+            {
+
+                double interactionTime = 0;
+                double VD = 0;
+                double subjectTurnCount = 0;
+                double partnerTurnCount = 0;
+                double subjectVocCount = 0;
+                double partnerVocCount = 0;
+                double subjectVocDur = 0;
+                double partnerVocDur = 0;
+                double subjectAdCount = 0;
+                double partnerAdCount = 0; //Math.Round(day.pairStatsSep[pair].p2.ac, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                double subjectNoise = 0; //Math.Round(day.pairStatsSep[pair].p1.no, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
+                double partnerNoise = 0; //Math.Round(day.pairStatsSep[pair].p2.no, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                double subjectOln = 0; //Math.Round(day.pairStatsSep[pair].p1.oln, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
+                double partnerOln = 0; // Math.Round(day.pairStatsSep[pair].p2.oln, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                double subjectCry = 0; //Math.Round(day.pairStatsSep[pair].p1.oln, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
+                double partnerCry = 0; // Math.Round(day.pairStatsSep[pair].p2.oln, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                double joinedCry = 0; // Math.Round(day.pairStatsSep[pair].p2.oln, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                double subjectJoinedCry = 0; // Math.Round(day.pairStatsSep[pair].p2.oln, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                double partnerJoinedCry = 0; // Math.Round(day.pairStatsSep[pair].p2.oln, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                double subjectInteractionTime = 0; //Math.Round(day.pairStatsSeparated[pair].Item1, 2);
+                double partnerInteractionTime = 0; //Math.Round(day.pairStatsSeparated[pair].Item2, 2);
+                double proximityTime = 0; //Math.Round(day.pairClose[pair], 2) / 2;
+                double proximityOrientationTime = 0; // Math.Round(day.pairCloseOrientation[pair], 2) / 2;
+                double sharedTime = 0; // Math.Round(day.pairTime[pair], 2) / 2; //check on this. correct. 
+                double subjectTime = 0; // Math.Round(day.individualTime[subject], 2);
+                double partnerTime = 0; //Math.Round(day.individualTime[partner], 2);
+                double recordingTime = (day.endTime.Hour - day.startTime.Hour) * 60 * 60 + (day.endTime.Minute - day.startTime.Minute) * 60 + (day.endTime.Second - day.startTime.Second) + (day.endTime.Millisecond - day.startTime.Millisecond) / 1000;
+
+                String subjectLine = "";
+                String partnerLine = "";
+
+                if (!absent)
+                {
+                    /*if (day.individualTime.ContainsKey(subject))
+                        subjectTime = Math.Round(day.individualTime[subject], 2);
+                    else
+                    {
+                        subjectTime = 0;
+                    }
+
+                    if (day.individualTime.ContainsKey(partner))
+                        partnerTime = Math.Round(day.individualTime[partner], 2);
+                    else
+                    {
+                        partnerTime = 0;
+                        //absent = true;
+
+                    }*/
+                    subjectTime= Math.Round(day.pairInteractions[pair].subject.individualTime, 2);
+                    partnerTime = Math.Round(day.pairInteractions[pair].partner.individualTime, 2);
+
+                    subjectTurnCount = Math.Round(day.pairInteractions[pair].subject.tc, 2); //Math.Round(day.pairStatsSep[pair].p1.tc, 2);
+                    subjectVocCount = Math.Round(day.pairInteractions[pair].subject.vc, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
+                    subjectVocDur = Math.Round(day.pairInteractions[pair].subject.vd, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
+                    subjectAdCount = Math.Round(day.pairInteractions[pair].subject.ac, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
+                    subjectNoise = Math.Round(day.pairInteractions[pair].subject.no, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
+                    subjectOln = Math.Round(day.pairInteractions[pair].subject.oln, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
+                    subjectCry = Math.Round(day.pairInteractions[pair].subject.cry, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
+                    subjectInteractionTime = Math.Round(day.pairInteractions[pair].subject.interactionTime, 2);
+                    partnerTurnCount = Math.Round(day.pairInteractions[pair].partner.tc, 2);
+                    subjectJoinedCry = Math.Round(day.pairInteractions[pair].subject.cryingTime, 2);
+
+                    if (subject == "17A" && partner == "14A" || subject == "14A" && partner == "17A")
+                    {
+                        subject = subject;
+                    }
+                    partnerVocCount = Math.Round(day.pairInteractions[pair].partner.vc, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                    partnerVocDur = Math.Round(day.pairInteractions[pair].partner.vd, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                    partnerAdCount = Math.Round(day.pairInteractions[pair].partner.ac, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                    partnerNoise = Math.Round(day.pairInteractions[pair].partner.no, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                    partnerOln = Math.Round(day.pairInteractions[pair].partner.oln, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                    partnerCry = Math.Round(day.pairInteractions[pair].partner.cry, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                    partnerInteractionTime = Math.Round(day.pairInteractions[pair].partner.interactionTime, 2);
+                    partnerJoinedCry = Math.Round(day.pairInteractions[pair].partner.cryingTime, 2);
+
+                    interactionTime = Math.Round(day.pairInteractions[pair].partner.interactionTime, 2);
+                    joinedCry = Math.Round(day.pairInteractions[pair].closeAndOrientedCryInSecs, 2) / 2;
+                    VD = day.pairInteractions[pair].subject.vd + day.pairInteractions[pair].partner.vd;
+
+                    proximityTime = Math.Round(day.pairInteractions[pair].closeTimeInSecs, 2) / 2;
+                    proximityOrientationTime = Math.Round(day.pairInteractions[pair].closeAndOrientedTimeInSecs, 2) / 2;
+                    sharedTime = Math.Round(day.pairInteractions[pair].sharedTimeInSecs, 2) / 2; //check on this. correct. 
                     recordingTime = (day.endTime.Hour - day.startTime.Hour) * 60 * 60 + (day.endTime.Minute - day.startTime.Minute) * 60 + (day.endTime.Second - day.startTime.Second) + (day.endTime.Millisecond - day.startTime.Millisecond) / 1000;
                 }
 
@@ -926,7 +1127,7 @@ namespace UL_PROCESSOR
                             }
                             String subject = pair.Split('-')[0];
                             String partner = pair.Split('-')[1];
-                            String[] lines = writePairLine(day, pair, date, false); ;/// getFromIts? writePairInteractionLine(day, pair, date, false) : writePairLine(day, pair, date, false);
+                            String[] lines = writePairLineNew(day, pair, date, false); ;/// getFromIts? writePairInteractionLine(day, pair, date, false) : writePairLine(day, pair, date, false);
                             if (pair == "12A-13A")
                             {
                                 int stop = 1;
@@ -949,19 +1150,19 @@ namespace UL_PROCESSOR
                                 String pairN = pair.Split('-')[1] + "-" + pair.Split('-')[0];
                                 Boolean inversePair = true;
 
-                                if (nextDay.pairStatsSep.ContainsKey(pair))
+                                if (nextDay.pairStatsSep.ContainsKey(pair) || nextDay.pairInteractions.ContainsKey(pair))
                                 {
                                     pairN = pair;
                                     inversePair = false;
                                 }
-                                else if (!nextDay.pairStatsSep.ContainsKey(pairN))
+                                else if ((!nextDay.pairStatsSep.ContainsKey(pairN)) && (!nextDay.pairInteractions.ContainsKey(pairN)))
                                 {
                                     pairN = "";
                                 }
                                 if (pairN.Trim() != "")
                                 {
 
-                                    String[] linesN = writePairLine(nextDay, pairN, nextDay.startTime.ToShortDateString(), true);
+                                    String[] linesN = writePairLineNew(nextDay, pairN, nextDay.startTime.ToShortDateString(), true);
 
                                     if (!inversePair)
                                     {

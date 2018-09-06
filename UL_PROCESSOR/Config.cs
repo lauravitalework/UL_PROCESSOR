@@ -393,11 +393,40 @@ namespace UL_PROCESSOR
             return absentDaysArr;
 
         }
-        public static DateTime getMsTime(DateTime t)
+        public static DateTime getMsTime(DateTime first)
         {
-            int ms = t.Millisecond > 0 ? t.Millisecond / 100 * 100 : t.Millisecond;// + 100;
-            return new DateTime(t.Year, t.Month, t.Day, t.Hour, t.Minute, t.Second, ms);
+            //int ms = t.Millisecond > 0 ? t.Millisecond / 100 * 100 : t.Millisecond;// + 100;
+            //return new DateTime(t.Year, t.Month, t.Day, t.Hour, t.Minute, t.Second, ms);
+
+            //targets will begin at closest 100 ms multiple of start
+            int ms = first.Millisecond / 100 * 100 + 100;
+            if (first.Millisecond % 100 == 0)
+            {
+                ms -= 100;
+            }
+            DateTime target = new DateTime();//will be next .1 sec
+            if (ms == 1000)
+            {
+                if (first.Minute == 59)
+                {
+                    target = new DateTime(first.Year, first.Month, first.Day, first.Hour+1, 0, 0, 0);
+                }
+                else if (first.Second == 59)
+                {
+                    target = new DateTime(first.Year, first.Month, first.Day, first.Hour, first.Minute + 1, 0, 0);
+                }
+                else
+                {
+                    target = new DateTime(first.Year, first.Month, first.Day, first.Hour, first.Minute, first.Second + 1, 0);
+                }
+            }
+            else
+            {
+                target = new DateTime(first.Year, first.Month, first.Day, first.Hour, first.Minute, first.Second, ms);
+            }
+            return target;
         }
+
 
     }
 }

@@ -23,6 +23,9 @@ namespace UL_PROCESSOR
         public double closeVDTimeInSecs = 0.0;
         public double closeAndOrienteVDInSecs = 0.0;
 
+        public bool subjectSet = false;
+        public bool partnerSet = false;
+
 
     }
 }

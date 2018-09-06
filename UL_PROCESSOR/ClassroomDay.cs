@@ -380,7 +380,7 @@ namespace UL_PROCESSOR
             }
         }
        
-        public Dictionary<String, List<PersonInfo>> readUbiFile()
+        public Dictionary<String, List<PersonInfo>> readUbiFile(List<String> subs)
         {
             Dictionary<String, List<PersonInfo>> rawInfo = new Dictionary<String, List<PersonInfo>>();
             string[] folders = Directory.GetDirectories(cf.ubisenseFileDir);
@@ -433,11 +433,11 @@ namespace UL_PROCESSOR
                                             
                                             MappingRow mr = cf.getUbiMapping(ubiId, time);
                                             info.bid = mr.BID;
-                                            if (info.bid == "20A")// && time.Day!=day.Day)
+                                            if (info.bid == "2B")// && time.Day!=day.Day)
                                             {
                                                 int stophere = 1;
                                             }
-                                            if (mr.BID != "" && (!mr.isAbsent(day)) && time.Day == day.Day)
+                                            if ((subs.Count==0 || subs.Contains(info.bid)) && (mr.BID != "" && (!mr.isAbsent(day)) && time.Day == day.Day))
                                             {
 
                                                 info.isFreePlay = isThisFreePlay(time);
@@ -468,7 +468,7 @@ namespace UL_PROCESSOR
        // Boolean writeChaomingFile = true;//false;
         TextWriter swc = null;
            
-        public Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>> readUbiTagFile(Dictionary<String, List<PersonInfo>> rawLena, Boolean writeChaomingFile)
+        public Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>> readUbiTagFile(Dictionary<String, List<PersonInfo>> rawLena, Boolean writeChaomingFile, List<String> subs)
         {
             Dictionary<String, List<PersonInfo>> rawInfo = new Dictionary<String, List<PersonInfo>>();
             Dictionary<String, List<PersonInfo>> rawInfoR = new Dictionary<String, List<PersonInfo>>();
@@ -569,7 +569,7 @@ namespace UL_PROCESSOR
                                         }
                                         i.x = xPos;
                                         i.y = yPos;
-                                        if (personId != "")
+                                        if ((subs.Count == 0 || subs.Contains(personId)) && (personId != ""))
                                         {
                                             if (i.rx == 0)
                                             {
@@ -873,7 +873,7 @@ namespace UL_PROCESSOR
             return startLenaTimes.ContainsKey(p) &&
                 startLenaTimes[p].CompareTo(d) <= 0;
         }
-        public void countInteractions(Boolean writeFile, Boolean writeDetailFile, Boolean trunkDetailFile, DateTime trunk, Dictionary<String, List<PersonInfo>> lenaInfo)
+        public void countInteractions(List<String> subs,Boolean writeFile, Boolean writeDetailFile, Boolean trunkDetailFile, DateTime trunk, Dictionary<String, List<PersonInfo>> lenaInfo)
         {
             int max = 70000;
 
@@ -901,181 +901,183 @@ namespace UL_PROCESSOR
 
                             foreach (String person in activities[dt].Keys)
                             {
-
-                                if (noLena || (!startFromLena) || isWithLenaStart(dt, person))
+                                if (subs.Count == 0 || subs.Contains(person))
                                 {
-                                    if (!individualTime.ContainsKey(person))
+                                    if (noLena || (!startFromLena) || isWithLenaStart(dt, person))
                                     {
-                                        individualTime.Add(person, 0.0);
-                                    }
-                                    else
-                                    {
-                                        individualTime[person] += 0.1;
-                                    }
-
-                                    //LQ: why 0 for ind time and pairtime.1
-                                    foreach (String p in activities[dt].Keys)
-                                    {
-                                        if (!p.Equals(person))
+                                        if (!individualTime.ContainsKey(person))
                                         {
-                                            String pair = p + "-" + person;
-                                            if ((!cf.pairs.Contains(pair)) && cf.pairs.Contains(person + "-" + p))
-                                                pair = person + "-" + p;
+                                            individualTime.Add(person, 0.0);
+                                        }
+                                        else
+                                        {
+                                            individualTime[person] += 0.1;
+                                        }
 
-                                            if (!pairTime.ContainsKey(pair))
+                                        //LQ: why 0 for ind time and pairtime.1
+                                        foreach (String p in activities[dt].Keys)
+                                        {
+                                            if (!p.Equals(person) && (subs.Count == 0 || subs.Contains(p)))
                                             {
-                                                pairTime.Add(pair, 0);///////
-                                                pairClose.Add(pair, 0);
-                                                pairCloseOrientation.Add(pair, 0);
-                                                pairStats.Add(pair, 0);
-                                                pairStatsSep.Add(pair, new PairInfo());
-                                                pairStatsSeparated.Add(pair, new Tuple<double, double, double, double>(0, 0, 0, 0));
-                                                pairCry.Add(pair, 0);
-                                            }
+                                                String pair = p + "-" + person;
+                                                if ((!cf.pairs.Contains(pair)) && cf.pairs.Contains(person + "-" + p))
+                                                    pair = person + "-" + p;
 
-
-
-                                            pairTime[pair] += .1;
-                                            double dist = calcSquaredDist(activities[dt][person], activities[dt][p]);
-                                            if (dist <= minDistance)
-                                            {
-                                                pairClose[pair] += .1;
-                                                Tuple<double, double> angles = withinOrientationData(activities[dt][p], activities[dt][person]);
-                                                Boolean orientedCloseness = Math.Abs(angles.Item1) <= 45 && Math.Abs(angles.Item2) <= 45;
-                                                if (writeDetailFile)
+                                                if (!pairTime.ContainsKey(pair))
                                                 {
-                                                    sw.WriteLine(person + "," + p + "," + dt.ToLongTimeString() + ",0.1," + (orientedCloseness ? "0.1," : "0,") + (angles.Item1) + "," + (angles.Item2) + "," + activities[dt][person].lx + "," + activities[dt][person].ly + "," + activities[dt][person].rx + "," + activities[dt][person].ry + "," + activities[dt][p].lx + "," + activities[dt][p].ly + "," + activities[dt][p].rx + "," + activities[dt][p].ry);
+                                                    pairTime.Add(pair, 0);///////
+                                                    pairClose.Add(pair, 0);
+                                                    pairCloseOrientation.Add(pair, 0);
+                                                    pairStats.Add(pair, 0);
+                                                    pairStatsSep.Add(pair, new PairInfo());
+                                                    pairStatsSeparated.Add(pair, new Tuple<double, double, double, double>(0, 0, 0, 0));
+                                                    pairCry.Add(pair, 0);
                                                 }
-                                                if (orientedCloseness)
-                                                {
-                                                    pairCloseOrientation[pair] += .1;
 
+
+
+                                                pairTime[pair] += .1;
+                                                double dist = calcSquaredDist(activities[dt][person], activities[dt][p]);
+                                                if (dist <= minDistance)
+                                                {
+                                                    pairClose[pair] += .1;
+                                                    Tuple<double, double> angles = withinOrientationData(activities[dt][p], activities[dt][person]);
+                                                    Boolean orientedCloseness = Math.Abs(angles.Item1) <= 45 && Math.Abs(angles.Item2) <= 45;
+                                                    if (writeDetailFile)
+                                                    {
+                                                        sw.WriteLine(person + "," + p + "," + dt.ToLongTimeString() + ",0.1," + (orientedCloseness ? "0.1," : "0,") + (angles.Item1) + "," + (angles.Item2) + "," + activities[dt][person].lx + "," + activities[dt][person].ly + "," + activities[dt][person].rx + "," + activities[dt][person].ry + "," + activities[dt][p].lx + "," + activities[dt][p].ly + "," + activities[dt][p].rx + "," + activities[dt][p].ry);
+                                                    }
+                                                    if (orientedCloseness)
+                                                    {
+                                                        pairCloseOrientation[pair] += .1;
+
+                                                    }
                                                 }
                                             }
                                         }
-                                    }
-                                    //if (activities[dt][person].wasTalking)
-                                    Boolean wasTalking = activities[dt][person].wasTalking;
-                                    Double tc = activities[dt][person].tc;
-                                    Double vc = activities[dt][person].vc;
-                                    Double vd = activities[dt][person].vd;
-                                    Double a = activities[dt][person].ac;
-                                    Double n = activities[dt][person].no;
-                                    Double o = activities[dt][person].oln;
-                                    Double c = activities[dt][person].cry;
+                                        //if (activities[dt][person].wasTalking)
+                                        Boolean wasTalking = activities[dt][person].wasTalking;
+                                        Double tc = activities[dt][person].tc;
+                                        Double vc = activities[dt][person].vc;
+                                        Double vd = activities[dt][person].vd;
+                                        Double a = activities[dt][person].ac;
+                                        Double n = activities[dt][person].no;
+                                        Double o = activities[dt][person].oln;
+                                        Double c = activities[dt][person].cry;
 
-                                    if (wasTalking || vd > 0 || tc > 0 || a > 0 || n > 0 || vc > 0 || o > 0 || c > 0)
-                                    {
-                                        foreach (String p in activities[dt].Keys)
+                                        if (wasTalking || vd > 0 || tc > 0 || a > 0 || n > 0 || vc > 0 || o > 0 || c > 0)
                                         {
-                                            if (!p.Equals(person))
+                                            foreach (String p in activities[dt].Keys)
                                             {
-                                                double dist = calcSquaredDist(activities[dt][p], activities[dt][person]);
-                                                if (dist <= minDistance)
+                                                if (!p.Equals(person) && (subs.Count == 0 || subs.Contains(p)))
                                                 {
-                                                    if (Math.Round(dist, 2) == 0.63 && p == "Lab2D" && person == "2D")
+                                                    double dist = calcSquaredDist(activities[dt][p], activities[dt][person]);
+                                                    if (dist <= minDistance)
                                                     {
-                                                        int t = 0;
-                                                    }
-                                                    if (justProx || withinOrientation(activities[dt][p], activities[dt][person], 45))
-                                                    {
-                                                        String pair = p + "-" + person;
-                                                        if (!pairStats.ContainsKey(pair))
+                                                        if (Math.Round(dist, 2) == 0.63 && p == "Lab2D" && person == "2D")
                                                         {
-                                                            if (pairStats.ContainsKey(person + "-" + p))
-                                                            {
-                                                                pair = person + "-" + p;
-                                                            }
-                                                            else
-                                                            {
-                                                                pairStats.Add(pair, 0);
-                                                                pairStatsSep.Add(pair, new PairInfo());
-                                                                pairStatsSeparated.Add(pair, new Tuple<double, double, double, double>(0, 0, 0, 0));
-                                                                pairCry.Add(pair, 0);
-                                                            }
+                                                            int t = 0;
                                                         }
-                                                        if (activities[dt][person].cry > 0 && activities[dt][p].cry > 0)
+                                                        if (justProx || withinOrientation(activities[dt][p], activities[dt][person], 45))
                                                         {
-                                                            if (pair == "T2A-17A" || pair == "17A-T2A")
+                                                            String pair = p + "-" + person;
+                                                            if (!pairStats.ContainsKey(pair))
                                                             {
-                                                                int stop = 1;
-                                                            }
-
-                                                            if (person.Equals(pair.Split('-')[0]))
-                                                            {
-                                                                pairCry[pair] += (activities[dt][person].cry);
-                                                                pairStatsSeparated[pair] = new Tuple<double, double, double, double>(pairStatsSeparated[pair].Item1, pairStatsSeparated[pair].Item2, pairStatsSeparated[pair].Item3 + activities[dt][person].cry, pairStatsSeparated[pair].Item4);// + activities[dt][p].cry);
-                                                            }
-                                                            else
-                                                            {//p is in the first part of the pair
-                                                                pairCry[pair] += (activities[dt][p].cry);
-                                                                pairStatsSeparated[pair] = new Tuple<double, double, double, double>(pairStatsSeparated[pair].Item1, pairStatsSeparated[pair].Item2, pairStatsSeparated[pair].Item3, pairStatsSeparated[pair].Item4 + activities[dt][p].cry);
-                                                            }
-                                                        }
-
-
-                                                        //if (tc > 0)
-                                                        {
-                                                            List<PersonInfo> pi = lenaInfo[person];
-                                                            foreach (PersonInfo i in pi)
-                                                            {
-                                                                DateTime dt2 = i.dt;
-                                                                DateTime dt3 = i.dt.AddSeconds(i.bd);
-                                                                //////////////
-                                                                int ms = dt2.Millisecond > 0 ? dt2.Millisecond / 100 * 100 : dt2.Millisecond;// + 100;
-                                                                dt2 = new DateTime(dt2.Year, dt2.Month, dt2.Day, dt2.Hour, dt2.Minute, dt2.Second, ms);
-                                                                ms = dt3.Millisecond > 0 ? dt3.Millisecond / 100 * 100 : dt3.Millisecond;// + 100;
-                                                                dt3 = new DateTime(dt3.Year, dt3.Month, dt3.Day, dt3.Hour, dt3.Minute, dt3.Second, ms);
-                                                                i.bd = (dt3 - dt2).Seconds + ((dt3 - dt2).Milliseconds / 1000.00);
-                                                                if (dt >= dt2 && dt <= dt3)
+                                                                if (pairStats.ContainsKey(person + "-" + p))
                                                                 {
-                                                                    tc = i.tc > 0 && i.bd > 0 ? (i.tc / i.bd) / 10 : 0;
-                                                                    a = i.ac > 0 && i.bd > 0 ? (i.ac / i.bd) / 10 : 0;
-                                                                    n = i.no > 0 && i.bd > 0 ? (i.no / i.bd) / 10 : 0;
-                                                                    vc = i.vc > 0 && i.bd > 0 ? (i.vc / i.bd) / 10 : 0;
-                                                                    o = i.oln > 0 && i.bd > 0 ? (i.oln / i.bd) / 10 : 0;
-                                                                    c = i.cry > 0 && i.bd > 0 ? (i.cry / i.bd) / 10 : 0;
-                                                                    //vd = i.vd > 0 && i.bd > 0 ? (i.vd / i.bd) / 10 : 0;
-                                                                    double vd2 = i.vd > 0 && i.bd > 0 ? (i.vd / i.bd) / 10 : 0;
-                                                                    PairInfo pairInfo = pairStatsSep[pair];
-                                                                    if (person.Equals(pair.Split('-')[0]))
-                                                                    {
+                                                                    pair = person + "-" + p;
+                                                                }
+                                                                else
+                                                                {
+                                                                    pairStats.Add(pair, 0);
+                                                                    pairStatsSep.Add(pair, new PairInfo());
+                                                                    pairStatsSeparated.Add(pair, new Tuple<double, double, double, double>(0, 0, 0, 0));
+                                                                    pairCry.Add(pair, 0);
+                                                                }
+                                                            }
+                                                            if (activities[dt][person].cry > 0 && activities[dt][p].cry > 0)
+                                                            {
+                                                                if (pair == "T2A-17A" || pair == "17A-T2A")
+                                                                {
+                                                                    int stop = 1;
+                                                                }
 
-                                                                        pairInfo.p1.vd += vd2;
-                                                                        pairInfo.p1.vc += vc;
-                                                                        pairInfo.p1.tc += tc;
-                                                                        pairInfo.p1.ac += a;
-                                                                        pairInfo.p1.no += n;
-                                                                        pairInfo.p1.oln += o;
-                                                                        pairInfo.p1.cry += c;
-                                                                    }
-                                                                    else //p is in the first part of the pair
-                                                                    {
-                                                                        pairInfo.p2.vd += vd2;
-                                                                        pairInfo.p2.vc += vc;
-                                                                        pairInfo.p2.tc += tc;
-                                                                        pairInfo.p2.ac += a;
-                                                                        pairInfo.p2.no += n;
-                                                                        pairInfo.p2.oln += o;
-                                                                        pairInfo.p2.cry += c;
-                                                                    }///
-
+                                                                if (person.Equals(pair.Split('-')[0]))
+                                                                {
+                                                                    pairCry[pair] += (activities[dt][person].cry);
+                                                                    pairStatsSeparated[pair] = new Tuple<double, double, double, double>(pairStatsSeparated[pair].Item1, pairStatsSeparated[pair].Item2, pairStatsSeparated[pair].Item3 + activities[dt][person].cry, pairStatsSeparated[pair].Item4);// + activities[dt][p].cry);
+                                                                }
+                                                                else
+                                                                {//p is in the first part of the pair
+                                                                    pairCry[pair] += (activities[dt][p].cry);
+                                                                    pairStatsSeparated[pair] = new Tuple<double, double, double, double>(pairStatsSeparated[pair].Item1, pairStatsSeparated[pair].Item2, pairStatsSeparated[pair].Item3, pairStatsSeparated[pair].Item4 + activities[dt][p].cry);
                                                                 }
                                                             }
 
 
+                                                            //if (tc > 0)
+                                                            {
+                                                                List<PersonInfo> pi = lenaInfo[person];
+                                                                foreach (PersonInfo i in pi)
+                                                                {
+                                                                    DateTime dt2 = i.dt;
+                                                                    DateTime dt3 = i.dt.AddSeconds(i.bd);
+                                                                    //////////////
+                                                                    int ms = dt2.Millisecond > 0 ? dt2.Millisecond / 100 * 100 : dt2.Millisecond;// + 100;
+                                                                    dt2 = new DateTime(dt2.Year, dt2.Month, dt2.Day, dt2.Hour, dt2.Minute, dt2.Second, ms);
+                                                                    ms = dt3.Millisecond > 0 ? dt3.Millisecond / 100 * 100 : dt3.Millisecond;// + 100;
+                                                                    dt3 = new DateTime(dt3.Year, dt3.Month, dt3.Day, dt3.Hour, dt3.Minute, dt3.Second, ms);
+                                                                    i.bd = (dt3 - dt2).Seconds + ((dt3 - dt2).Milliseconds / 1000.00);
+                                                                    if (dt >= dt2 && dt <= dt3)
+                                                                    {
+                                                                        tc = i.tc > 0 && i.bd > 0 ? (i.tc / i.bd) / 10 : 0;
+                                                                        a = i.ac > 0 && i.bd > 0 ? (i.ac / i.bd) / 10 : 0;
+                                                                        n = i.no > 0 && i.bd > 0 ? (i.no / i.bd) / 10 : 0;
+                                                                        vc = i.vc > 0 && i.bd > 0 ? (i.vc / i.bd) / 10 : 0;
+                                                                        o = i.oln > 0 && i.bd > 0 ? (i.oln / i.bd) / 10 : 0;
+                                                                        c = i.cry > 0 && i.bd > 0 ? (i.cry / i.bd) / 10 : 0;
+                                                                        //vd = i.vd > 0 && i.bd > 0 ? (i.vd / i.bd) / 10 : 0;
+                                                                        double vd2 = i.vd > 0 && i.bd > 0 ? (i.vd / i.bd) / 10 : 0;
+                                                                        PairInfo pairInfo = pairStatsSep[pair];
+                                                                        if (person.Equals(pair.Split('-')[0]))
+                                                                        {
 
-                                                        }
-                                                        if (wasTalking)
-                                                        {
-                                                            pairStats[pair] += 0.1;
-                                                            if (person.Equals(pair.Split('-')[0]))
-                                                            {
-                                                                pairStatsSeparated[pair] = new Tuple<double, double, double, double>(pairStatsSeparated[pair].Item1 + 0.1, pairStatsSeparated[pair].Item2, pairStatsSeparated[pair].Item3, pairStatsSeparated[pair].Item4);
+                                                                            pairInfo.p1.vd += vd2;
+                                                                            pairInfo.p1.vc += vc;
+                                                                            pairInfo.p1.tc += tc;
+                                                                            pairInfo.p1.ac += a;
+                                                                            pairInfo.p1.no += n;
+                                                                            pairInfo.p1.oln += o;
+                                                                            pairInfo.p1.cry += c;
+                                                                        }
+                                                                        else //p is in the first part of the pair
+                                                                        {
+                                                                            pairInfo.p2.vd += vd2;
+                                                                            pairInfo.p2.vc += vc;
+                                                                            pairInfo.p2.tc += tc;
+                                                                            pairInfo.p2.ac += a;
+                                                                            pairInfo.p2.no += n;
+                                                                            pairInfo.p2.oln += o;
+                                                                            pairInfo.p2.cry += c;
+                                                                        }///
+
+                                                                    }
+                                                                }
+
+
+
                                                             }
-                                                            else //p is in the first part of the pair
+                                                            if (wasTalking)
                                                             {
-                                                                pairStatsSeparated[pair] = new Tuple<double, double, double, double>(pairStatsSeparated[pair].Item1, pairStatsSeparated[pair].Item2 + 0.1, pairStatsSeparated[pair].Item3, pairStatsSeparated[pair].Item4);
+                                                                pairStats[pair] += 0.1;
+                                                                if (person.Equals(pair.Split('-')[0]))
+                                                                {
+                                                                    pairStatsSeparated[pair] = new Tuple<double, double, double, double>(pairStatsSeparated[pair].Item1 + 0.1, pairStatsSeparated[pair].Item2, pairStatsSeparated[pair].Item3, pairStatsSeparated[pair].Item4);
+                                                                }
+                                                                else //p is in the first part of the pair
+                                                                {
+                                                                    pairStatsSeparated[pair] = new Tuple<double, double, double, double>(pairStatsSeparated[pair].Item1, pairStatsSeparated[pair].Item2 + 0.1, pairStatsSeparated[pair].Item3, pairStatsSeparated[pair].Item4);
+                                                                }
                                                             }
                                                         }
                                                     }
@@ -1083,10 +1085,10 @@ namespace UL_PROCESSOR
                                             }
                                         }
                                     }
-                                }
-                                else
-                                {
-                                    bool stop = true;
+                                    else
+                                    {
+                                        bool stop = true;
+                                    }
                                 }
                             }
                         }
@@ -1443,6 +1445,9 @@ e20170310_134226_014863.wav	1
         public Dictionary<String, List<PersonInfo>> readLenaItsFiles()
         {
             Dictionary< String, List<PersonInfo>> rawLenaInfo = new Dictionary<String, List<PersonInfo>>();
+
+
+
             //Date	Subject	SubjectType	segmentid	voctype	recstart	startsec	endsec	starttime	endtime	duration	uttlen
             string[] folders = Directory.GetDirectories(cf.lenaFileDir + "//ITS//");
             using (TextWriter sw = new StreamWriter(cf.syncFilePre + day.Month + "_" + day.Day + "_" + day.Year + "_ONSETS.CSV"))
@@ -1513,8 +1518,12 @@ e20170310_134226_014863.wav	1
                                                     pi.ubiId = mr.UbiID;// ubiAndBId[0];
                                                     pi.bid = mr.BID;// ubiAndBId[1];
                                                     pi.lenaId = lenaId;
-                                                    pi.bd = (end - start).Seconds + ((end - start).Milliseconds / 1000.00); //endSecs - startSecs;
+                                                    pi.bd = (end - start).Seconds + ((end - start).Milliseconds>0?((end - start).Milliseconds / 1000.00):0.00); //endSecs - startSecs;
                                                     pi.tc = tc;
+                                                    if(pi.bd==0)
+                                                    {
+                                                        bool stop = true;
+                                                    }
                                                     addToRawLena(ref rawLenaInfo, pi);
                                                 }
 
@@ -1526,8 +1535,8 @@ e20170310_134226_014863.wav	1
                                                 segmentNumber++;
                                                 startSecs = Convert.ToDouble(seg.Attributes["startTime"].Value.Substring(2, seg.Attributes["startTime"].Value.Length - 3));
                                                 endSecs = Convert.ToDouble(seg.Attributes["endTime"].Value.Substring(2, seg.Attributes["endTime"].Value.Length - 3));
-                                                start = Config.getMsTime(recStartTime.AddSeconds(startSecs));
-                                                end = Config.getMsTime(recStartTime.AddSeconds(endSecs));
+                                                start = Config.getMsTime(recStartTime.AddMilliseconds(startSecs*1000));
+                                                end = Config.getMsTime(recStartTime.AddMilliseconds(endSecs*1000));
                                                 pi = new PersonInfo();
                                                 pi.dt = start;
                                                 mr = cf.getLenaMapping(lenaId, start);
@@ -1535,7 +1544,7 @@ e20170310_134226_014863.wav	1
                                                 pi.bid = mr.BID;// ubiAndBId[1];
                                                 pi.lenaId = lenaId;
                                                 String speaker = seg.Attributes["spkr"].Value;
-                                                pi.bd = (end - start).Seconds + ((end - start).Milliseconds / 1000.00); //endSecs - startSecs;
+                                                pi.bd = (end - start).Seconds + ((end - start).Milliseconds>0?((end - start).Milliseconds / 1000.00):0); //endSecs - startSecs;
                                                 Boolean add = false;
                                                 switch (speaker)
                                                 {
@@ -1564,17 +1573,21 @@ e20170310_134226_014863.wav	1
                                                                 String att = atts.Name;
                                                                 double cstartSecs = Convert.ToDouble(seg.Attributes[att].Value.Substring(2, seg.Attributes[att].Value.Length - 3));
                                                                 double cendSecs = Convert.ToDouble(seg.Attributes["endCry" + cryStep].Value.Substring(2, seg.Attributes["endCry" + cryStep].Value.Length - 3));
-                                                                DateTime cstart = Config.getMsTime(recStartTime.AddSeconds(cstartSecs));
-                                                                DateTime cend = Config.getMsTime(recStartTime.AddSeconds(cendSecs));
+                                                                DateTime cstart = Config.getMsTime(recStartTime.AddMilliseconds(cstartSecs*1000));
+                                                                DateTime cend = Config.getMsTime(recStartTime.AddMilliseconds(cendSecs*1000));
                                                                 PersonInfo cpi = new PersonInfo();
                                                                 cpi.dt = cstart;
                                                                 mr = cf.getLenaMapping(lenaId, start);
                                                                 cpi.ubiId = mr.UbiID;// ubiAndBId[0];
                                                                 cpi.bid = mr.BID;// ubiAndBId[1];
                                                                 cpi.lenaId = lenaId;
-                                                                cpi.bd = (cend - cstart).Seconds + ((cend - cstart).Milliseconds / 1000.00); //cendSecs - cstartSecs;
+                                                                cpi.bd = (cend - cstart).Seconds + ((cend - cstart).Milliseconds>0?(cend - cstart).Milliseconds / 1000.00:0); //cendSecs - cstartSecs;
                                                                 cpi.cry = cpi.bd;
                                                                 newSwLine = (this.day + "," + pi.bid + "," + mr.type + "," + segmentNumber + ",Cry," + recStartTime + "," + cstartSecs + "," + cendSecs + "," + cstart + "," + cend + "," + cpi.cry);
+                                                                if (cpi.bd == 0)
+                                                                {
+                                                                    bool stop = true;
+                                                                }
                                                                 addToRawLena(ref rawLenaInfo, cpi);
                                                                  
                                                             }
@@ -1584,19 +1597,23 @@ e20170310_134226_014863.wav	1
                                                                 String att = atts.Name;
                                                                 double cstartSecs = Convert.ToDouble(seg.Attributes[att].Value.Substring(2, seg.Attributes[att].Value.Length - 3));
                                                                 double cendSecs = Convert.ToDouble(seg.Attributes["endUtt" + cryStep].Value.Substring(2, seg.Attributes["endUtt" + cryStep].Value.Length - 3));
-                                                                DateTime cstart = Config.getMsTime(recStartTime.AddSeconds(cstartSecs));
-                                                                DateTime cend = Config.getMsTime(recStartTime.AddSeconds(cendSecs));
+                                                                DateTime cstart = Config.getMsTime(recStartTime.AddMilliseconds(cstartSecs*1000));
+                                                                DateTime cend = Config.getMsTime(recStartTime.AddMilliseconds(cendSecs*1000));
                                                                 PersonInfo cpi = new PersonInfo();
                                                                 cpi.dt = cstart;
                                                                 mr = cf.getLenaMapping(lenaId, start);
                                                                 cpi.ubiId = mr.UbiID;// ubiAndBId[0];
                                                                 cpi.bid = mr.BID;// ubiAndBId[1];
                                                                 cpi.lenaId = lenaId;
-                                                                cpi.bd = (cend - cstart).Seconds + ((cend - cstart).Milliseconds / 1000.00); //cendSecs - cstartSecs;
+                                                                cpi.bd = (cend - cstart).Seconds + ((cend - cstart).Milliseconds>0?(cend - cstart).Milliseconds / 1000.00:0); //cendSecs - cstartSecs;
                                                                 cpi.vd = cpi.bd;
                                                                 //pi.vc = Convert.ToDouble(seg.Attributes["childUttCnt"].Value);
                                                                 //cpi.cry = cpi.bd;
                                                                 newSwLine = (this.day + "," + pi.bid + "," + mr.type + "," + segmentNumber + ",Utt," + recStartTime + "," + cstartSecs + "," + cendSecs + "," + cstart + "," + cend + "," + cpi.vd);
+                                                                if (cpi.bd == 0)
+                                                                {
+                                                                    bool stop = true;
+                                                                }
                                                                 addToRawLena(ref rawLenaInfo, cpi);
                                                             }
                                                             if (newSwLine != "")
@@ -1626,6 +1643,10 @@ e20170310_134226_014863.wav	1
 
                                                 if (add)
                                                 {
+                                                    if (pi.bd == 0)
+                                                    {
+                                                        bool stop = true;
+                                                    }
                                                     addToRawLena(ref rawLenaInfo, pi);
                                                 }
 
@@ -1651,6 +1672,11 @@ e20170310_134226_014863.wav	1
                 rl.Add(lpi.bid, new List<PersonInfo>());
             }
             rl[lpi.bid].Add(lpi);
+
+            if(lpi.bd==0)
+            {
+                bool stop = true;
+            }
         }
          public void setLenaData1(Dictionary<String, List<PersonInfo>> lenadata)
          {
@@ -1789,108 +1815,127 @@ e20170310_134226_014863.wav	1
                      
                      Double vocDur = data.vd;
                      Double blockDur = data.bd;
-                     blockDur = (timeEnd - time).Seconds+((timeEnd - time).Milliseconds/1000.00);
-                     Double vocCount = data.vc;
-                     Double turnCount = data.tc;
-                     Double a = data.ac;
-                     Double n = data.no;
-                     Double o = data.oln;
-                     Double cry = data.cry;
-                     Double avDb = data.avDb;
-                     Double maxDb = data.maxDb;
-                     double segs = data.childSegments;
-                     double turnCount10 = (turnCount / blockDur) / 10;
-                     double vocCount10 = (vocCount / blockDur) / 10;
-                     double vocDur10 = (vocDur / blockDur) / 10;
-                     double adults10 = (a / blockDur) / 10;
-                     double noise10 = (n / blockDur) / 10;
-                     double oln10 = (o / blockDur) / 10;
-                     double cry10 = (cry / blockDur) / 10;
-                     double avDb10 = (avDb / blockDur) / 10;
-                     double maxDb10 = (maxDb / blockDur) / 10;
-                     double segs10 = (segs / blockDur) / 10;
-                     if (personTotalCounts.ContainsKey(person))/////////////////
-                     {
-                         //Tuple<double, double, double, double, double> totalInfo = personTotalCounts[person];
-
-                         personTotalCounts[person].vd = personTotalCounts[person].vd + vocDur;
-                         personTotalCounts[person].vc = personTotalCounts[person].vc + vocCount;
-                         personTotalCounts[person].tc = personTotalCounts[person].tc + turnCount;
-                         personTotalCounts[person].ac = personTotalCounts[person].ac + a;
-                         personTotalCounts[person].no = personTotalCounts[person].no + n;
-                         personTotalCounts[person].oln = personTotalCounts[person].oln + o;
-                         personTotalCounts[person].cry = personTotalCounts[person].cry + cry;
-                         personTotalCounts[person].avDb = personTotalCounts[person].avDb + avDb;
-                         personTotalCounts[person].maxDb = personTotalCounts[person].maxDb + maxDb;
-                         personTotalCounts[person].childSegments = personTotalCounts[person].childSegments + segs;
-                        if(personTotalCounts[person].childSegments>0 && personTotalCounts[person].avDb<0)
+                     blockDur = (timeEnd - time).Seconds+ (timeEnd - time).Milliseconds>0?((timeEnd - time).Milliseconds/1000.00):0;
+                    //if (blockDur > 0)
+                    {
+                        Double vocCount = data.vc;
+                        Double turnCount = data.tc;
+                        Double a = data.ac;
+                        Double n = data.no;
+                        Double o = data.oln;
+                        Double cry = data.cry;
+                        Double avDb = data.avDb;
+                        Double maxDb = data.maxDb;
+                        double segs = data.childSegments;
+                         
+                        if (person == "2B")
                         {
                             bool stop = true;
                         }
-                        //personTotalCounts[person] = new Tuple<double, double, double, double, double>(totalInfo.Item1 + vocDur, totalInfo.Item2 + vocCount, totalInfo.Item3 + turnCount, totalInfo.Item4 + a, totalInfo.Item5 + n);
-                    }
-                    else
-                     {
-                         PersonInfo pi = new PersonInfo();
-                         pi.vd = vocDur;
-                         pi.vc = vocCount;
-                         pi.tc = turnCount;
-                         pi.ac = a;
-                         pi.no = n;
-                         pi.oln = o;
-                         pi.cry = cry;
-                         pi.avDb = avDb;
-                         pi.maxDb = maxDb;
-                         pi.childSegments = segs;
-                         personTotalCounts.Add(person, pi);
-                         personTotalCountsWUbi.Add(person, new PersonInfo());
-                         //personTotalCounts.Add(person, new Tuple<double, double, double, double, double>(vocDur, vocCount, turnCount, a, n));
-                     }
-                     do
-                     {
-                         if (activities.ContainsKey(time))
-                         {
-                             if (activities[time].ContainsKey(person))
-                             {
-                                 //activities[time][person] = new PersonInfo(activities[time][person].xPos, activities[time][person].yPos, activities[time][person].lx, activities[time][person].ly, activities[time][person].rx, activities[time][person].ry, activities[time][person].orientation, 
-                                 //vocDur > 0, vocCount10, turnCount10, vocDur10, adults10, noise10);
-                                 activities[time][person].wasTalking = vocDur>0 || activities[time][person].wasTalking ;//, vocCount10, turnCount10, vocDur10, adults10, noise10;
-                                 activities[time][person].isCrying = cry > 0 || activities[time][person].isCrying;//, vocCount10, turnCount10, vocDur10, adults10, noise10;
-                                 activities[time][person].vc += vocCount10;
-                                 activities[time][person].tc += turnCount10;
-                                 activities[time][person].vd += vocDur10;
-                                 activities[time][person].ac += adults10;
-                                 activities[time][person].oln += oln10;
-                                 activities[time][person].no += noise10;
-                                 activities[time][person].cry += cry10;
+                        if (personTotalCounts.ContainsKey(person))/////////////////
+                        {
+                            //Tuple<double, double, double, double, double> totalInfo = personTotalCounts[person];
+                            if (person == "2B" && Double.IsNaN(turnCount))
+                            {
+                                bool stop = true;
+                            }
+                            personTotalCounts[person].vd = personTotalCounts[person].vd + vocDur;
+                            personTotalCounts[person].vc = personTotalCounts[person].vc + vocCount;
+                            personTotalCounts[person].tc = personTotalCounts[person].tc + turnCount;
+                            personTotalCounts[person].ac = personTotalCounts[person].ac + a;
+                            personTotalCounts[person].no = personTotalCounts[person].no + n;
+                            personTotalCounts[person].oln = personTotalCounts[person].oln + o;
+                            personTotalCounts[person].cry = personTotalCounts[person].cry + cry;
+                            personTotalCounts[person].avDb = personTotalCounts[person].avDb + avDb;
+                            personTotalCounts[person].maxDb = personTotalCounts[person].maxDb + maxDb;
+                            personTotalCounts[person].childSegments = personTotalCounts[person].childSegments + segs;
+                            if (personTotalCounts[person].childSegments > 0 && personTotalCounts[person].avDb < 0)
+                            {
+                                bool stop = true;
+                            }
+                            //personTotalCounts[person] = new Tuple<double, double, double, double, double>(totalInfo.Item1 + vocDur, totalInfo.Item2 + vocCount, totalInfo.Item3 + turnCount, totalInfo.Item4 + a, totalInfo.Item5 + n);
+                        }
+                        else
+                        {
+                            PersonInfo pi = new PersonInfo();
+                            pi.vd = vocDur;
+                            pi.vc = vocCount;
+                            pi.tc = turnCount;
+                            pi.ac = a;
+                            pi.no = n;
+                            pi.oln = o;
+                            pi.cry = cry;
+                            pi.avDb = avDb;
+                            pi.maxDb = maxDb;
+                            pi.childSegments = segs;
+                            personTotalCounts.Add(person, pi);
+                            personTotalCountsWUbi.Add(person, new PersonInfo());
+                            //personTotalCounts.Add(person, new Tuple<double, double, double, double, double>(vocDur, vocCount, turnCount, a, n));
+                        }
+                        if (blockDur > 0)
+                        {
+                            double turnCount10 = (turnCount / blockDur) / 10;
+                            double vocCount10 = (vocCount / blockDur) / 10;
+                            double vocDur10 = (vocDur / blockDur) / 10;
+                            double adults10 = (a / blockDur) / 10;
+                            double noise10 = (n / blockDur) / 10;
+                            double oln10 = (o / blockDur) / 10;
+                            double cry10 = (cry / blockDur) / 10;
+                            double avDb10 = (avDb / blockDur) / 10;
+                            double maxDb10 = (maxDb / blockDur) / 10;
+                            double segs10 = (segs / blockDur) / 10;
+                            do
+                            {
+                                if (activities.ContainsKey(time))
+                                {
+                                    if (activities[time].ContainsKey(person))
+                                    {
+                                        //activities[time][person] = new PersonInfo(activities[time][person].xPos, activities[time][person].yPos, activities[time][person].lx, activities[time][person].ly, activities[time][person].rx, activities[time][person].ry, activities[time][person].orientation, 
+                                        //vocDur > 0, vocCount10, turnCount10, vocDur10, adults10, noise10);
+                                        if (person == "2B" && Double.IsNaN(turnCount10))
+                                        {
+                                            bool stop = true;
+                                        }
 
-                                 activities[time][person].avDb += avDb10;
-                                 activities[time][person].maxDb += maxDb10;
-                                 activities[time][person].childSegments += segs10;
-                                /*double avDb10 = (avDb / blockDur) / 10;
-                     double maxDb10 = (maxDb / blockDur) / 10;
-                     double segs10 = (segs / blockDur) / 10;*/
-                                if (personTotalCountsWUbi.ContainsKey(person))/////////////////
-                                 {
-                                     personTotalCountsWUbi[person].vc += vocCount10;
-                                     personTotalCountsWUbi[person].tc += turnCount10;
-                                     personTotalCountsWUbi[person].vd += vocDur10;
-                                     personTotalCountsWUbi[person].ac += adults10;
-                                     personTotalCountsWUbi[person].oln += oln10;
-                                     personTotalCountsWUbi[person].no += noise10;
-                                     personTotalCountsWUbi[person].cry += cry10;
-                                     personTotalCountsWUbi[person].avDb += avDb10;
-                                     personTotalCountsWUbi[person].maxDb += maxDb10;
-                                     personTotalCountsWUbi[person].childSegments += segs10;
+                                        activities[time][person].wasTalking = vocDur > 0 || activities[time][person].wasTalking;//, vocCount10, turnCount10, vocDur10, adults10, noise10;
+                                        activities[time][person].isCrying = cry > 0 || activities[time][person].isCrying;//, vocCount10, turnCount10, vocDur10, adults10, noise10;
+                                        activities[time][person].vc += vocCount10;
+                                        activities[time][person].tc += turnCount10;
+                                        activities[time][person].vd += vocDur10;
+                                        activities[time][person].ac += adults10;
+                                        activities[time][person].oln += oln10;
+                                        activities[time][person].no += noise10;
+                                        activities[time][person].cry += cry10;
+
+                                        activities[time][person].avDb += avDb10;
+                                        activities[time][person].maxDb += maxDb10;
+                                        activities[time][person].childSegments += segs10;
+                                        /*double avDb10 = (avDb / blockDur) / 10;
+                             double maxDb10 = (maxDb / blockDur) / 10;
+                             double segs10 = (segs / blockDur) / 10;*/
+                                        if (personTotalCountsWUbi.ContainsKey(person))/////////////////
+                                        {
+                                            personTotalCountsWUbi[person].vc += vocCount10;
+                                            personTotalCountsWUbi[person].tc += turnCount10;
+                                            personTotalCountsWUbi[person].vd += vocDur10;
+                                            personTotalCountsWUbi[person].ac += adults10;
+                                            personTotalCountsWUbi[person].oln += oln10;
+                                            personTotalCountsWUbi[person].no += noise10;
+                                            personTotalCountsWUbi[person].cry += cry10;
+                                            personTotalCountsWUbi[person].avDb += avDb10;
+                                            personTotalCountsWUbi[person].maxDb += maxDb10;
+                                            personTotalCountsWUbi[person].childSegments += segs10;
+                                        }
+
+                                    }
                                 }
 
-                             }
-                         }
-
-                         time = time.AddMilliseconds(100);
-                         vocDur -= 0.1;
-                         blockDur -= 0.1;
-                     } while (blockDur > 0);
+                                time = time.AddMilliseconds(100);
+                                vocDur -= 0.1;
+                                blockDur -= 0.1;
+                            } while (blockDur > 0);
+                        }
+                    }
                  }
              }
          }public void setLenaData2(Dictionary<String, List<PersonInfo>> lenadata)
@@ -1980,7 +2025,282 @@ e20170310_134226_014863.wav	1
          }
         /********************************INTERACTIONS NEW ***************************************************/
         public Dictionary<string, PairInfo> pairInteractions = new Dictionary<string, PairInfo>();
+        public void countInteractionsNew(List<String> subs,Boolean writeFile, Boolean writeDetailFile, Boolean trunkDetailFile, DateTime trunk, Dictionary<String, List<PersonInfo>> lenaInfo)
+        {
+            int max = 70000;
 
+            try
+            {
+                TextWriter sw = null;
+                if (writeDetailFile)
+                    sw = new StreamWriter(cf.root + cf.classroom + "/SYNC/" + cf.version + "interaction_angles_xy_output_" + (trunkDetailFile ? "trunk_" : "") + (cf.justFreePlay ? "freeplay_" : "") + day.Month + "_" + day.Day + "_" + day.Year + ".csv");
+                {
+                    if (writeDetailFile)
+                        sw.WriteLine("Person 1, Person2, Interaction Time, Interaction, 45Interaction, Angle1, Angle2, Leftx,Lefty,Rightx,Righty, Leftx2,Lefty2,Rightx2,Righty2");
+                    //foreach (DateTime dt in activities.Keys)
+                    //{
+                    foreach (KeyValuePair<DateTime, Dictionary<String, PersonInfo>> opi in activities.OrderBy(key => key.Key))
+                    {
+                        /*if (max < 0)
+                            break;
+
+                        max--;
+                        /////TESTING*/
+                        DateTime dt = opi.Key;
+
+                        if (trunkDetailFile && dt.CompareTo(trunk) <= 0 && ((!cf.justFreePlay) || (isThisFreePlay(dt))))/////
+                        {
+
+                            foreach (String person in activities[dt].Keys)
+                            {
+                                if (subs.Count == 0 || subs.Contains(person))
+                                {
+                                    if (noLena || (!startFromLena) || isWithLenaStart(dt, person))
+                                    {
+                                        /*if (!individualTime.ContainsKey(person))
+                                        {
+                                            individualTime.Add(person, 0.0);
+                                        }
+                                        else
+                                        {
+                                            individualTime[person] += 0.1;
+                                        }*/
+
+                                        //LQ: why 0 for ind time and pairtime.1
+                                        foreach (String p in activities[dt].Keys)
+                                        {
+
+                                            if (!p.Equals(person) && (subs.Count == 0 || subs.Contains(p)))
+                                            {
+                                                Boolean inversePair = false;
+                                                String subject = p;
+                                                String partner = person;
+                                                String pair = p + "-" + person;
+                                                if ((!cf.pairs.Contains(pair)) && cf.pairs.Contains(person + "-" + p))
+                                                {
+                                                    inversePair = true;
+                                                    pair = person + "-" + p;
+                                                    subject = person;
+                                                    partner = p;
+                                                }
+
+                                                if (!pairInteractions.ContainsKey(pair))
+                                                    pairInteractions.Add(pair, new PairInfo());
+
+                                                if (!inversePair)
+                                                {
+                                                    if (!pairInteractions[pair].subjectSet)
+                                                    {
+                                                        pairInteractions[pair].subjectSet = true;
+                                                    }
+                                                    else
+                                                    {
+                                                        pairInteractions[pair].subject.individualTime += 0.1;
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    if (!pairInteractions[pair].partnerSet)
+                                                    {
+                                                        pairInteractions[pair].partnerSet = true;
+                                                    }
+                                                    else
+                                                    {
+                                                        pairInteractions[pair].partner.individualTime += 0.1;
+                                                    }
+                                                }
+
+                                                pairInteractions[pair].sharedTimeInSecs += .1;
+                                                double dist = calcSquaredDist(activities[dt][person], activities[dt][p]);
+                                                if (dist <= minDistance)
+                                                {
+                                                    pairInteractions[pair].closeTimeInSecs += .1;
+                                                    Tuple<double, double> angles = withinOrientationData(activities[dt][p], activities[dt][person]);
+                                                    Boolean orientedCloseness = Math.Abs(angles.Item1) <= 45 && Math.Abs(angles.Item2) <= 45;
+                                                    if (writeDetailFile)
+                                                    {
+                                                        sw.WriteLine(person + "," + p + "," + dt.ToLongTimeString() + ",0.1," + (orientedCloseness ? "0.1," : "0,") + (angles.Item1) + "," + (angles.Item2) + "," + activities[dt][person].lx + "," + activities[dt][person].ly + "," + activities[dt][person].rx + "," + activities[dt][person].ry + "," + activities[dt][p].lx + "," + activities[dt][p].ly + "," + activities[dt][p].rx + "," + activities[dt][p].ry);
+                                                    }
+                                                    if (orientedCloseness)
+                                                    {
+                                                        pairInteractions[pair].closeAndOrientedTimeInSecs += .1;
+
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        //if (activities[dt][person].wasTalking)
+                                        Boolean wasTalking = activities[dt][person].wasTalking;
+                                        Double tc = activities[dt][person].tc;
+                                        Double vc = activities[dt][person].vc;
+                                        Double vd = activities[dt][person].vd;
+                                        Double a = activities[dt][person].ac;
+                                        Double n = activities[dt][person].no;
+                                        Double o = activities[dt][person].oln;
+                                        Double c = activities[dt][person].cry;
+
+                                        if (wasTalking || vd > 0 || tc > 0 || a > 0 || n > 0 || vc > 0 || o > 0 || c > 0)
+                                        {
+                                            foreach (String p in activities[dt].Keys)
+                                            {
+                                                if (!p.Equals(person) && (subs.Count == 0 || subs.Contains(p)))
+                                                {
+                                                    double dist = calcSquaredDist(activities[dt][p], activities[dt][person]);
+                                                    if (dist <= minDistance)
+                                                    {
+                                                        if (Math.Round(dist, 2) == 0.63 && p == "Lab2D" && person == "2D")
+                                                        {
+                                                            int t = 0;
+                                                        }
+                                                        if (justProx || withinOrientation(activities[dt][p], activities[dt][person], 45))
+                                                        {
+                                                            String pair = p + "-" + person;
+                                                            Boolean inversePair = false;
+                                                            if (!pairInteractions.ContainsKey(pair))
+                                                            {
+                                                                if (pairInteractions.ContainsKey(person + "-" + p))
+                                                                {
+                                                                    pair = person + "-" + p;
+                                                                    inversePair = true;
+                                                                }
+
+                                                            }
+                                                            if (activities[dt][person].cry > 0 && activities[dt][p].cry > 0)
+                                                            {
+                                                                if (person.Equals(pair.Split('-')[0]))
+                                                                {
+                                                                    pairInteractions[pair].closeAndOrientedCryInSecs += (activities[dt][person].cry);
+                                                                    pairInteractions[pair].subject.cryingTime += (activities[dt][person].cryingTime);
+                                                                    //pairCry[pair] += (activities[dt][person].cry);
+                                                                    //pairStatsSeparated[pair] = new Tuple<double, double, double, double>(pairStatsSeparated[pair].Item1, pairStatsSeparated[pair].Item2, pairStatsSeparated[pair].Item3 + activities[dt][person].cry, pairStatsSeparated[pair].Item4);// + activities[dt][p].cry);
+                                                                }
+                                                                else
+                                                                {//p is in the first part of the pair
+                                                                    pairInteractions[pair].closeAndOrientedCryInSecs += (activities[dt][p].cry);
+                                                                    pairInteractions[pair].subject.cryingTime += (activities[dt][p].cryingTime);
+                                                                    //pairCry[pair] += (activities[dt][p].cry);
+                                                                    //pairStatsSeparated[pair] = new Tuple<double, double, double, double>(pairStatsSeparated[pair].Item1, pairStatsSeparated[pair].Item2, pairStatsSeparated[pair].Item3, pairStatsSeparated[pair].Item4 + activities[dt][p].cry);
+                                                                }
+                                                            }
+
+
+                                                            //if (tc > 0)
+                                                            {
+                                                                List<PersonInfo> pi = lenaInfo[person];
+                                                                foreach (PersonInfo i in pi)
+                                                                {
+                                                                    DateTime dt2 = i.dt;
+                                                                    DateTime dt3 = i.dt.AddSeconds(i.bd);
+                                                                    //////////////
+                                                                    int ms = dt2.Millisecond > 0 ? dt2.Millisecond / 100 * 100 : dt2.Millisecond;// + 100;
+                                                                    dt2 = new DateTime(dt2.Year, dt2.Month, dt2.Day, dt2.Hour, dt2.Minute, dt2.Second, ms);
+                                                                    ms = dt3.Millisecond > 0 ? dt3.Millisecond / 100 * 100 : dt3.Millisecond;// + 100;
+                                                                    dt3 = new DateTime(dt3.Year, dt3.Month, dt3.Day, dt3.Hour, dt3.Minute, dt3.Second, ms);
+                                                                    i.bd = (dt3 - dt2).Seconds + ((dt3 - dt2).Milliseconds / 1000.00);
+                                                                    if (dt >= dt2 && dt <= dt3)
+                                                                    {
+                                                                        tc = i.tc > 0 && i.bd > 0 ? (i.tc / i.bd) / 10 : 0;
+                                                                        a = i.ac > 0 && i.bd > 0 ? (i.ac / i.bd) / 10 : 0;
+                                                                        n = i.no > 0 && i.bd > 0 ? (i.no / i.bd) / 10 : 0;
+                                                                        vc = i.vc > 0 && i.bd > 0 ? (i.vc / i.bd) / 10 : 0;
+                                                                        o = i.oln > 0 && i.bd > 0 ? (i.oln / i.bd) / 10 : 0;
+                                                                        c = i.cry > 0 && i.bd > 0 ? (i.cry / i.bd) / 10 : 0;
+                                                                        //vd = i.vd > 0 && i.bd > 0 ? (i.vd / i.bd) / 10 : 0;
+                                                                        double vd2 = i.vd > 0 && i.bd > 0 ? (i.vd / i.bd) / 10 : 0;
+                                                                        //PairInfo pairInfo = pairStatsSep[pair];
+                                                                        if (person.Equals(pair.Split('-')[0]))
+                                                                        {
+
+                                                                            /*pairInfo.p1.vd += vd2;
+                                                                            pairInfo.p1.vc += vc;
+                                                                            pairInfo.p1.tc += tc;
+                                                                            pairInfo.p1.ac += a;
+                                                                            pairInfo.p1.no += n;
+                                                                            pairInfo.p1.oln += o;
+                                                                            pairInfo.p1.cry += c;*/
+                                                                            pairInteractions[pair].subject.vd += vd2;
+                                                                            pairInteractions[pair].subject.vc += vc;
+                                                                            pairInteractions[pair].subject.tc += tc;
+                                                                            pairInteractions[pair].subject.ac += a;
+                                                                            pairInteractions[pair].subject.no += n;
+                                                                            pairInteractions[pair].subject.oln += o;
+                                                                            pairInteractions[pair].subject.cry += c;
+                                                                        }
+                                                                        else //p is in the first part of the pair
+                                                                        {
+                                                                            /*pairInfo.p2.vd += vd2;
+                                                                            pairInfo.p2.vc += vc;
+                                                                            pairInfo.p2.tc += tc;
+                                                                            pairInfo.p2.ac += a;
+                                                                            pairInfo.p2.no += n;
+                                                                            pairInfo.p2.oln += o;
+                                                                            pairInfo.p2.cry += c;*/
+
+                                                                            pairInteractions[pair].partner.vd += vd2;
+                                                                            pairInteractions[pair].partner.vc += vc;
+                                                                            pairInteractions[pair].partner.tc += tc;
+                                                                            pairInteractions[pair].partner.ac += a;
+                                                                            pairInteractions[pair].partner.no += n;
+                                                                            pairInteractions[pair].partner.oln += o;
+                                                                            pairInteractions[pair].partner.cry += c;
+                                                                        }///
+
+                                                                    }
+                                                                }
+
+
+
+                                                            }
+                                                            if (wasTalking)
+                                                            {
+                                                                //pairStats[pair] += 0.1;
+                                                                pairInteractions[pair].closeAndOrientedTalkInSecs += 0.1;
+                                                                if (person.Equals(pair.Split('-')[0]))
+                                                                {
+                                                                    pairInteractions[pair].subject.interactionTime += 0.1;
+                                                                    //pairStatsSeparated[pair] = new Tuple<double, double, double, double>(pairStatsSeparated[pair].Item1 + 0.1, pairStatsSeparated[pair].Item2, pairStatsSeparated[pair].Item3, pairStatsSeparated[pair].Item4);
+                                                                }
+                                                                else //p is in the first part of the pair
+                                                                {
+                                                                    pairInteractions[pair].partner.interactionTime += 0.1;
+                                                                    //pairStatsSeparated[pair] = new Tuple<double, double, double, double>(pairStatsSeparated[pair].Item1, pairStatsSeparated[pair].Item2 + 0.1, pairStatsSeparated[pair].Item3, pairStatsSeparated[pair].Item4);
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        bool stop = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (writeFile)
+                {
+                    using (sw = new StreamWriter(cf.version + "interaction_output_" + (trunkDetailFile ? "trunk_" : "") + (cf.justFreePlay ? "freeplay_" : "") + day.Month + "_" + day.Day + "_" + day.Year + ".csv"))
+                    {
+                        sw.WriteLine("Person 1, Person2, Interaction Time, Total Time, Interaction Normalized");
+                        foreach (String s in pairStats.Keys)
+                        {
+                            double interactionTime = Math.Round(pairStats[s], 1);
+                            double totalTime = Math.Round(pairTime[s], 1);
+                            double interactionNormalized = interactionTime / totalTime;
+                            sw.WriteLine(s.Split('-')[0] + "," + s.Split('-')[1] + "," + interactionTime + "," + totalTime + "," + interactionNormalized);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
         //public void countInteractions(Config cf, ClassroomDay day, bool writeFile, bool writeDetailFile, DateTime trunk, Dictionary<string, List<PersonInfo>> lenaInfo)
         public void countInteractionsIts(Boolean writeFile, Boolean writeDetailFile, Boolean trunkDetailFile, DateTime trunk, Dictionary<String, List<PersonInfo>> lenaInfo)
         {
