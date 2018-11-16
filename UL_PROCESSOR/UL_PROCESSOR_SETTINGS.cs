@@ -8,17 +8,23 @@ namespace UL_PROCESSOR
 {
     class UL_PROCESSOR_SETTINGS
     {
+        public Boolean doUbiChildFiles = false;
         public Boolean doTenFiles = true;
         public Boolean doSumDayFiles = true;
         public Boolean doSumAllFiles = true;
         public Boolean doAngleFiles = true; //to implement
         public Boolean getFromIts = false;
-        public Boolean doGR = false;
-        public Boolean doVel = false;
-        public Boolean doOnsets = false;
-        public Boolean doDbs = false;
+        public Boolean doGR = true;
+        public Boolean doVel = true;
+        public Boolean doOnsets = true;
+        public Boolean doDbs = true;
         public String dir;
-
+        public Boolean doAll10OfSecs = false;//false;//true;
+        public Boolean startFromLena = true;//false;//true;
+        public Boolean noLena = true;//false;//true;//false;//true;
+        public double minDistance = 1.5 * 1.5; //the squared value of g(r) cutoff in meters
+        public String fileNameVersion = DateTime.Now.Month + "_" + DateTime.Now.Day + "_" + DateTime.Now.Year + "_" + new Random().Next();
+        public List<String> subs = new List<string>();
         public void from(String[] args)
         {
             String[] settings = args[0].Split(' ');
@@ -51,10 +57,10 @@ namespace UL_PROCESSOR
                             doVel = setting[1].Trim().ToUpper() == "YES";
                             break;
                         case "ONSETS":
-                            doVel = setting[1].Trim().ToUpper() == "YES";
+                            doOnsets = setting[1].Trim().ToUpper() == "YES";
                             break;
-                        case "DB":
-                            doVel = setting[1].Trim().ToUpper() == "YES";
+                        case "DBS":
+                            doDbs = setting[1].Trim().ToUpper() == "YES";
                             break;
                         case "ITS":
                             getFromIts = setting[1].Trim().ToUpper() == "YES";
@@ -72,11 +78,20 @@ namespace UL_PROCESSOR
         public String classroom;
         public String lenaVersion;
         public String szDates;
+        public String mappingBy = "CLASS";//"CLASS";"DAY"
         public void from(String[] vars)
         {
             classroom = vars[0].Trim();
             lenaVersion = vars[1].Trim();
-            szDates = vars[2].Trim();
+             
+            if(vars.Length>3)
+            {
+                szDates = vars[3].Trim();
+                mappingBy = vars[2].Trim();
+            }
+            else
+                szDates = vars[2].Trim();
+
         }
     }
 }

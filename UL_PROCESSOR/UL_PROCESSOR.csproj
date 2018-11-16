@@ -75,6 +75,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PersonDistAndVel.cs" />
     <Compile Include="UL_CLASS_PROCESSOR_Program.cs" />
     <Compile Include="ClassroomDay.cs" />
     <Compile Include="Compares.cs" />

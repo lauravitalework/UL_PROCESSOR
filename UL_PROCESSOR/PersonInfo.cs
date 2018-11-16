@@ -21,7 +21,7 @@ namespace UL_PROCESSOR
     public double y = 0.0;
     public double z = 0.0;
     public double ori = 0.0;
-    public double ori2 = 0.0;
+    public double ori_chaoming = 0.0;
     public double vd = 0.0;
     public double vc = 0.0;
     public double tc = 0.0;
@@ -48,6 +48,11 @@ namespace UL_PROCESSOR
         public String szLineData = "";
         public String tagType = "";
         public String tag = "";
+
+
+        public double meters = 0;
+        public double secs = 0;
+
 
     }
 }

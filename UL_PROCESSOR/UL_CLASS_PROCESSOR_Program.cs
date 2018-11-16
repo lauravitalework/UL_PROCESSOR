@@ -16,93 +16,100 @@ namespace UL_PROCESSOR
         {
             days = d;
             configInfo = c;
-            configInfo.readMappings();
+            //configInfo.readMappings();
         }
 
-        public void process(Boolean processLast)
+        public void process(Boolean processLast, int grp)
         {
             List<ClassroomDay> cds = new List<ClassroomDay>();
             int countSets = 0;
             int countDays = 0;
-            int r = new Random().Next();
+
+            /************ 1)READ MAPPINGS*******************/
+            configInfo.readClassroomMappings();
+
+            /********B)	FOR EACH DAY IN CLASSROOM: ********/
             foreach (DateTime day in days)
             {
+                //configInfo.settings.subs.Add("12P");
 
-                List<String> subs = new List<string>();
-                //subs.Add("1B");
-                //subs.Add("2B");
-                //subs.Add("3B");
-                //subs = new List<string>();
-                //subs.Add("4P");
+                /************ 1)READ DAY MAPPINGS*******************/
+                configInfo.readDayMappings(day);
+
                 ClassroomDay cd = new ClassroomDay(day, configInfo);
                 Console.WriteLine("PROCESSING " + configInfo.classroom + " " + day.ToShortDateString());
 
-                Console.WriteLine("readLenaFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                Console.WriteLine("getFromIts " + configInfo.settings.getFromIts);
+
+                /************ 1)READ LENA FILE*******************/
+                Console.WriteLine("readLenaFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + " getFromIts " + configInfo.settings.getFromIts +"):");
                 Dictionary<String, List<PersonInfo>> rawLena = configInfo.settings.getFromIts ? cd.readLenaItsFiles(countDays) : cd.readLenaFile();
 
 
-                Console.WriteLine("readUbiFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                Dictionary<String, List<PersonInfo>> rawUbi = cd.readUbiFile(new List<string>());
-                Console.WriteLine("setUbiData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                cd.setUbiData(rawUbi, rawLena);
+                if (configInfo.settings.doUbiChildFiles)
+                {
+                    Console.WriteLine("readUbiFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                    Dictionary<String, List<PersonInfo>> rawUbi = cd.readUbiFile(new List<string>());
 
-                DateTime trunkAt = cd.getTrunkTime();//gets first end track time from last ten minutes of tracking.
+                    Console.WriteLine("setUbiData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                    cd.setUbiData(rawUbi, rawLena);
+                }
 
+                /************ 2)READ UBI TAG FILE*******************/
                 Console.WriteLine("readUbiTagFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>, List<PersonInfo>> rawTags = cd.readUbiTagFile(rawLena, configInfo.settings.doGR, subs);// new List<string>());//, subs);
+                Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>, List<PersonInfo>> rawTags = cd.readUbiTagFile(rawLena, configInfo.settings.doGR);// new List<string>());//, subs);
 
+                /************ 3)SET UBI TAG DATA*******************/
                 Console.WriteLine("setUbiTagData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 cd.setUbiTagData(rawTags.Item1, rawTags.Item2);
 
+                /************ 4)WRITE GR BASE FILES*******************/
                 if (configInfo.settings.doGR)
                 {
                     Console.WriteLine("GR (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                    cd.writeGR(rawTags.Item3, rawLena, subs); 
+                    cd.writeGR(rawTags.Item3, rawLena ); 
                 }
 
+                /************ 5)SET LENA DATA*******************/
                 Console.WriteLine("setLenaData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                
-                if(configInfo.settings.getFromIts)
-                cd.setLenaItsData(rawLena);
-                else
                 cd.setLenaData(rawLena);
-                Console.WriteLine("setLenaData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                 
-                trunkAt = cd.getTrunkTime();//gets first end track time from last ten minutes of tracking.
-                Console.WriteLine("countInteractions (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
 
 
-               
+                /************ 6)GET TRUNK TIME*******************/
+                DateTime trunkAt = cd.getTrunkTime();//gets first end track time from last ten minutes of tracking.
+
+
+                /************ 8)GET REPORTS*******************/
                 if (configInfo.settings.doAngleFiles || configInfo.settings.doTenFiles || configInfo.settings.doSumAllFiles || configInfo.settings.doSumDayFiles)
                 {
-                    //if (getFromIts)
-                    //    cd.countInteractionsIts(doAngleFiles, doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file 
-                    //else
-                        cd.countInteractionsNew(subs, configInfo.settings.doAngleFiles, configInfo.settings.doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file
-                                                                                                  //cd.countInteractions(subs, doAngleFiles, doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file
+                    /************ I)COUNT INTERACTIONS*******************/
+                    if (!configInfo.justUbi)
+                    {
+                        Console.WriteLine("countInteractions (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                        cd.countInteractionsNew(trunkAt, rawLena); //count interactions but no need to write a file
+                    }
+                    //cd.countInteractions(subs, doAngleFiles, doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file
                     if (configInfo.settings.doTenFiles || configInfo.settings.doVel)
                     {
+                        /************ II)10TH SEC AND VEL REPORT*******************/
                         Console.WriteLine("write10SecTalkingCSV (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                        String fileNameTen = configInfo.root + configInfo.classroom + "/SYNC/" + configInfo.version + "10THOFSECTALKING_" + (configInfo.justFreePlay ? "freeplay_" : "") + (cd.startFromLena ? "wlena_" : "wolena_") + day.Month + "_" + day.Day + "_" + day.Year + ".CSV";
-                        //subs = new List<string>();
-                        //cd.write10SecCryCSV(fileNameTen, subs); //write complete data files to disc
-                        cd.write10SecTalkingCSV(fileNameTen, subs, configInfo.settings.doVel); //write complete data files to disc
+                        cd.write10SecTalkingCSV(  ); //write complete data files to disc
                     }
+                    cd.activities.Clear();
+                    cd.activities = null;
                     cds.Add(cd);
                 }
                 countDays++;
             }
-            summarize(cds, countSets, processLast);
+            /************ C)SUMMARY REPORTS*******************/
+            summarize(cds, countSets, processLast, grp);
         }
         public Boolean doTotals = false;
-        public void summarize(List<ClassroomDay> cds, int c, Boolean processLast)
+        public void summarize(List<ClassroomDay> cds, int c, Boolean processLast, int grp)
         {
             if (configInfo.settings.doSumAllFiles || configInfo.settings.doSumDayFiles)
             {
                 foreach (ClassroomDay cd in cds)
                 {
-
                     try
                     {
                         Console.WriteLine("Summarizing " + cd.day.Month + " " + cd.day.Year + " " + cd.day.Day + " (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
@@ -111,7 +118,8 @@ namespace UL_PROCESSOR
                         Console.WriteLine("Summarizing ONE");
                         if (configInfo.settings.doSumDayFiles)
                         {
-                             writeDataSummary(configInfo.settings.getFromIts, false, configInfo.root + configInfo.classroom + "/SYNC/"+ configInfo.version+"PAIRACTIVITY_"+ c.ToString() + "_" + configInfo.classroom + "_" + (cd.justProx ? "no_" : "") + (configInfo.justFreePlay ? "freeplay_" : "") + cd.day.Month + "_" + cd.day.Day + "_" + cd.day.Year + ".csv", oneDay, true); //write summary data
+                            /************ 1)SUMMARY DAY REPORT*******************/
+                            writeDataSummary(configInfo.settings.getFromIts, false, configInfo.root + configInfo.classroom + "/SYNC/PAIRACTIVITY_"+ c.ToString() + "_" + configInfo.classroom + "_" + (cd.justProx ? "no_" : "") + (configInfo.justFreePlay ? "freeplay_" : "") + cd.day.Month + "_" + cd.day.Day + "_" + cd.day.Year + "_" + configInfo.settings.fileNameVersion + ".csv", oneDay, true); //write summary data
                         }
                     }
                     catch (Exception e)
@@ -123,8 +131,9 @@ namespace UL_PROCESSOR
 
                 if (configInfo.settings.doSumAllFiles)
                 {
-                    String fileNameSum = configInfo.root + configInfo.classroom + "/SYNC/"+ configInfo.version+"PAIRACTIVITY_ALL_" + configInfo.classroom + (configInfo.justFreePlay ? "_freeplay" : "") + ".CSV";
+                    String fileNameSum = configInfo.root + configInfo.classroom + "/SYNC/PAIRACTIVITY_ALL_"+ grp + configInfo.classroom + (configInfo.justFreePlay ? "_freeplay" : "") + "_" + configInfo.settings.fileNameVersion + ".CSV";
 
+                    /************ 2)SUMMARY ALL REPORT*******************/
                     writeDataSummary(configInfo.settings.getFromIts, c > 0, fileNameSum, cds, processLast); //write summary data
                     fileNames.Add(fileNameSum);
                 }
@@ -479,40 +488,40 @@ namespace UL_PROCESSOR
             }
             return lines;
         }
-         public static void writeDataSummary(Boolean getFromIts, Boolean append, String file_name, List<ClassroomDay> days, Boolean processLast)
+        public static void writeDataSummary(Boolean getFromIts, Boolean append, String file_name, List<ClassroomDay> days, Boolean processLast)
         {
             
             using (TextWriter sw = new StreamWriter(file_name, append: append))
             {
                 //String title = ",Pair Talking Duration, Subject Talking Duration, Partner Talking Duration,Pair Turn Count, Subject Turn Count, Partner Turn Count, Pair Proximity Duration, Pair Orientation-Proximity Duration, Shared Time in Classroom, Subject Time, Partner Time, Total Recording Time, Total Voc Duration, Total Voc Count, Total Turn Count, Total Partner Voc Duration, Total Partner Voc Count, Total Partner Turn Count";
                 String title =
-                    "Pair Block Talking," +
-                    "Pair Talking Duration, " +
-                    "Subject-Talking-Duration-From_Start," +
-                    "Partner-Talking-Duration-From-Start, " +
-                    "Subject-Talking-Duration-Evenly-Spread," +
-                    "Partner-Talking-Duration-Evenly-Spread, " +
-                    "Subject Turn Count, " +
-                    "Partner Turn Count, " +
-                    "Subject Voc Count, " +
-                    "Partner Voc Count, " +
-                    "Subject Adult Count, " +
-                    "Partner Adult Count, " +
-                    "Subject Noise, " +
-                    "Partner Noise, " +
-                    "Subject OLN, " +
-                    "Partner OLN, " +
-                    "Subject Cry, " +
-                    "Partner Cry, " +
-                    "Subject Joined Cry, " +
-                    "Partner Joined Cry, " +
-                    "Joined Cry, " +
-                    "Pair Proximity Duration, " +
-                    "Pair Orientation-Proximity Duration, " +
-                    "Shared Time in Classroom, " +
-                    "Subject Time, " +
-                    "Partner Time, " +
-                    "Total Recording Time,";//, "+
+                    "Pair Block Talking,"+
+                    "Pair Talking Duration,"+ 
+                    "Subject-Talking-Duration-From_Start,"+
+                    "Partner-Talking-Duration-From-Start,"+ 
+                    "Subject-Talking-Duration-Evenly-Spread,"+
+                    "Partner-Talking-Duration-Evenly-Spread,"+ 
+                    "Subject Turn Count,"+ 
+                    "Partner Turn Count,"+ 
+                    "Subject Voc Count,"+ 
+                    "Partner Voc Count,"+ 
+                    "Subject Adult Count,"+ 
+                    "Partner Adult Count,"+ 
+                    "Subject Noise,"+ 
+                    "Partner Noise,"+ 
+                    "Subject OLN,"+ 
+                    "Partner OLN,"+ 
+                    "Subject Cry,"+ 
+                    "Partner Cry,"+ 
+                    "Subject Joined Cry,"+ 
+                    "Partner Joined Cry,"+ 
+                    "Joined Cry,"+ 
+                    "Pair Proximity Duration,"+ 
+                    "Pair Orientation-Proximity Duration,"+ 
+                    "Shared Time in Classroom,"+ 
+                    "Subject Time,"+ 
+                    "Partner Time,"+ 
+                    "Total Recording Time," ;//, "+
                                             /* "WUBI Total VD " +","+
                                              "Total VD" +","+
                                              "Partner WUBI Total VD " +","+

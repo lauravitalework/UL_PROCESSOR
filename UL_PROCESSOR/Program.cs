@@ -31,7 +31,7 @@ namespace UL_PROCESSOR
                     Console.WriteLine("PROCESSING LB"+total);
                     UL_CLASS_PROCESSOR_Program ul0 = new UL_CLASS_PROCESSOR_Program(new Config(settings , classSettings),dateChunks);
                     Console.WriteLine("PROCESSING LB1 1");
-                    ul0.process(false);
+                    ul0.process(false,total);
                     lastDateChunks = dateChunks;
                     dateChunks = new List<DateTime>();
                     count = 1;
@@ -47,7 +47,7 @@ namespace UL_PROCESSOR
 
 
             UL_CLASS_PROCESSOR_Program ull = new UL_CLASS_PROCESSOR_Program(new Config(settings, classSettings), dateChunks);
-            ull.process(true);
+            ull.process(true,total);
             fileNames = fileNames.Concat(ull.fileNames).ToList(); 
             if(settings.doSumAllFiles)
             MergeCsvs(fileNames, fileNames[fileNames.Count - 1].Replace(".", "ALL."));
@@ -90,11 +90,7 @@ namespace UL_PROCESSOR
             //fc.compareFiles(new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59 },
             //    "C://LVL//LADYBUGS1//SYNC//ADEX_07242018_267290963_2_PAIRACTIVITY_ALL_LADYBUGS1_TOTALSALL.CSV", "C://LVL//LADYBUGS1//SYNC//ITS_07242018_900772189_2_PAIRACTIVITY_ALL_LADYBUGS1_TOTALSALL.CSV", false,80,false);
 
-            DateTime n = DateTime.Now;
-            String fileNameVersion = (n.Month > 10 ? n.Month.ToString() : "0" + n.Month.ToString()) +
-                                     (n.Day > 10 ? n.Day.ToString() : "0" + n.Day.ToString()) +
-                                     n.Year + "_" + new Random().Next()+"_";
-
+            
             if(args.Length>1)
             {
                 String[] settings = args[0].Split(' ');
@@ -109,6 +105,9 @@ namespace UL_PROCESSOR
                     argCount++;
                     if (argCount > 1)
                     {
+                        /******** A)FOR EACH CLASSROOM:********/
+
+
                         UL_PROCESSOR_CLASS_SETTINGS classSettings = new UL_PROCESSOR_CLASS_SETTINGS();
                         classSettings.from(arg.Split(' '));
                         UL_PROCESSOR_Program pc = new UL_PROCESSOR_Program();
