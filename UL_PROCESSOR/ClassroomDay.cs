@@ -89,8 +89,11 @@ namespace UL_PROCESSOR
         {
             if(addTagTimes)
             {
-                maxPersonTimes.Add(new Tuple<DateTime, String>(raw.Last().dt, person));
-                maxTimes.Add(raw.Last().dt);
+                if (!cf.getMapping(person, this.day).isAbsent(day))
+                {
+                    maxPersonTimes.Add(new Tuple<DateTime, String>(raw.Last().dt, person));
+                    maxTimes.Add(raw.Last().dt);
+                }
             }
                  
             List<Tuple<DateTime, PersonInfo>> newList = new List<Tuple<DateTime, PersonInfo>>();
@@ -179,9 +182,9 @@ namespace UL_PROCESSOR
                     foreach (Tuple<DateTime, PersonInfo> dataLine in cleanedData)
                     {
                         DateTime cur = dataLine.Item1;
-                        if (rawLena.ContainsKey(person) &&
+                        if ( (cf.justUbi) || ( rawLena.ContainsKey(person) &&
                                                 cur >= rawLena[person][0].dt &&
-                                                cur <= rawLena[person][rawLena[person].Count - 1].dt)
+                                                cur <= rawLena[person][rawLena[person].Count - 1].dt) )
                         {
                             if (!activities.ContainsKey(cur))
                             {
@@ -315,6 +318,10 @@ namespace UL_PROCESSOR
             int c = 0; int c2 = 0;
             foreach (String person in rawData.Keys)
             {
+                if(person=="10D")
+                {
+                    bool stop = true;
+                }
                 try
                 {
                     List<Tuple<DateTime, PersonInfo>> cleanedData = clean(person, rawData[person], false, !cf.settings.doUbiChildFiles);
@@ -332,6 +339,11 @@ namespace UL_PROCESSOR
                         {
                             dataLine.Item2.lx = dataLine.Item2.x;
                             dataLine.Item2.ly = dataLine.Item2.y;
+                            if(cf.makeRL)
+                            {
+                                dataLine.Item2.rx = dataLine.Item2.lx+0.15;
+                                dataLine.Item2.ry = dataLine.Item2.ly;
+                            }
                             dataLine.Item2.x = 0;
                             dataLine.Item2.y = 0;
                             activities[cur].Add(person, dataLine.Item2);
@@ -350,11 +362,13 @@ namespace UL_PROCESSOR
                      
                     foreach (Tuple<DateTime, PersonInfo> dataLine in cleanedDataR)
                     {
-                        if (c == 139582)
+                        
+                        DateTime cur = dataLine.Item1;
+
+                        if (cur.Minute == 44)
                         {
                             c = c;
                         }
-                        DateTime cur = dataLine.Item1;
                         if (!activities.ContainsKey(cur))
                         {
                             activities.Add(cur, new Dictionary<string, PersonInfo>());
@@ -365,6 +379,11 @@ namespace UL_PROCESSOR
                             dataLine.Item2.ry = dataLine.Item2.y;
                             dataLine.Item2.x = 0;
                             dataLine.Item2.y = 0;
+                            if (cf.makeRL)
+                            {
+                                dataLine.Item2.lx = dataLine.Item2.rx + 0.15;
+                                dataLine.Item2.ly = dataLine.Item2.ry;
+                            }
                             activities[cur].Add(person,dataLine.Item2);
                         }
                         else// if (activities[cur].ContainsKey(person))
@@ -663,11 +682,13 @@ namespace UL_PROCESSOR
         {
             //adjustedTimes
             double adjustedSecs = 0;
+            String msg = "ADJUST TIME NOT FOUND FOR "+lid +" ( "+day.ToShortDateString()+" ) ";
             if (cf.adjustedTimes.ContainsKey(day))
             {
                 if (cf.adjustedTimes[day].ContainsKey(lid))
                 {
                     adjustedSecs = cf.adjustedTimes[day][lid];
+                    msg = adjustedSecs+" Adjust secs " + lid + " ( " + day.ToShortDateString() + " ) ";
                 }
             }
             /*if (adjustTimes.ContainsKey(day))
@@ -677,7 +698,8 @@ namespace UL_PROCESSOR
                     adjustedSecs = adjustTimes[day][lid];
                 }
             }*/
-                                        return adjustedSecs;
+            Console.WriteLine(msg);
+           return adjustedSecs;
         }
         public Dictionary<String, List<PersonInfo>> readLenaFile()
         {
@@ -917,7 +939,7 @@ namespace UL_PROCESSOR
         }
         public void write10SecTalkingCSV()
         {
-            String file_name = cf.root + cf.classroom + "/SYNC/"+( cf.justUbi?"JUSTUBI":"")+ "10THOFSECTALKING_" + szDay + "_" + cf.settings.fileNameVersion + ".CSV";
+            String file_name = cf.root + cf.classroom + "/SYNC/"+( cf.justUbi?"JUSTUBI":"") + (cf.makeRL ? "MAKERL" : "") + "10THOFSECTALKING_" + szDay + "_" + cf.settings.fileNameVersion + ".CSV";
 
             Dictionary<String, PersonInfo> lastPersonInfo = new Dictionary<string, PersonInfo>();
             Dictionary<String, Tuple<double, double>> personVel = new Dictionary<string, Tuple<double, double>>();
@@ -929,6 +951,7 @@ namespace UL_PROCESSOR
                     foreach (KeyValuePair<DateTime, Dictionary<String, PersonInfo>> pi in activities.OrderBy(key => key.Key))
                     {
                         DateTime dt = pi.Key;
+                         
                         if ((!cf.justFreePlay) || (isThisFreePlay(dt)))
                         {
                          
@@ -1376,7 +1399,7 @@ e20170310_134226_014863.wav	1
         public Tuple<String, double> maxVD = new Tuple<string, double>("", 0);
         public Tuple<String, double> maxVD2 = new Tuple<string, double>("", 0);
         public Tuple<String, double> maxVD3 = new Tuple<string, double>("", 0);
-
+        
         public Dictionary<String, List<PersonInfo>> readLenaItsFiles(int countDays)
         {
             Dictionary< String, List<PersonInfo>> rawLenaInfo = new Dictionary<String, List<PersonInfo>>();
@@ -1384,10 +1407,13 @@ e20170310_134226_014863.wav	1
 
 
             //Date	Subject	SubjectType	segmentid	voctype	recstart	startsec	endsec	starttime	endtime	duration	uttlen
-            string[] folders = Directory.GetDirectories(cf.lenaFileDir + "//ITS//");
+            string[] folders = Directory.GetDirectories(cf.lenaFileDir + "/ITS/");
+            if (cf.classSettings.mappingBy != "CLASS")
+                folders = new string[] { cf.lenaFileDir + "/ITS/" };
+
             TextWriter sw=null;
             if (cf.settings.doOnsets)
-                sw = new StreamWriter(cf.syncFilePre + "_ONSETS" + cf.settings.fileNameVersion + ".CSV", countDays > 0);
+                sw = new StreamWriter(cf.syncFilePre + "_ONSETS" + cf.settings.fileNameVersion + ".CSV", true);// countDays > 0);
             //using (sw = new StreamWriter(cf.syncFilePre + DateTime.Now.Month + "_" + DateTime.Now.Day + "_" + DateTime.Now.Year + "_" + cf.version + "_ONSETS.CSV", countDays > 0))
             {
                 TextWriter swd=null;
@@ -1399,14 +1425,15 @@ e20170310_134226_014863.wav	1
                     if (cf.settings.doDbs)
                         swd.WriteLine("Date,Subject,SubjectType,Conv_avg_db,Conv_avg_peak,Child_avg_db,Child_avg_peak");
                     if (cf.settings.doOnsets)
-                        sw.WriteLine("Date,Subject,SubjectType,segmentid,voctype,recstart,startsec,endsec,starttime,endtime,duration,seg_duration,wordcount,avg_db,avg_peak");
+                        sw.WriteLine("File,Date,Subject,LenaID,SubjectType,segmentid,voctype,recstart,startsec,endsec,starttime,endtime,duration,seg_duration,wordcount,avg_db,avg_peak");
                 }
 
                 foreach (string folder in folders)
                 {
                     String folderName = folder.Substring(folder.LastIndexOf("/") + 1);
                     DateTime folderDate;
-                    if (DateTime.TryParse(folderName, out folderDate) && folderDate >= day && folderDate < day.AddDays(1))
+                    if (cf.classSettings.mappingBy != "CLASS" ||
+                        (DateTime.TryParse(folderName, out folderDate) && folderDate >= day && folderDate < day.AddDays(1)))
                     {
                         string[] files = Directory.GetFiles(folder);
                         foreach (string file in files)
@@ -1421,7 +1448,7 @@ e20170310_134226_014863.wav	1
                                 else if (lenaId.Substring(0, 1) == "0")
                                     lenaId = lenaId.Substring(1);
 
-
+                                double at = getAdjustedSecs(lenaId);
                                 XmlDocument doc = new XmlDocument();
                                 doc.Load(file);
                                 XmlNodeList rec =  cf.lenaVersion=="SP"? doc.ChildNodes[0].SelectNodes("ProcessingUnit/Recording"):doc.ChildNodes[2].SelectNodes("ProcessingUnit/Recording");
@@ -1499,6 +1526,10 @@ e20170310_134226_014863.wav	1
                                                 end = Config.getMsTime(recStartTime.AddMilliseconds(endSecs*1000));
                                                 pi = new PersonInfo();
                                                 pi.dt = start;
+                                                if(lenaId== "7539" && start.Month==11 && start.Day==17 && cf.getLenaMapping(lenaId, start).BID=="")
+                                                {
+                                                    lenaId = lenaId;
+                                                }
                                                 mr = cf.getLenaMapping(lenaId, start);
                                                 pi.ubiId = mr.UbiID;// ubiAndBId[0];
                                                 pi.bid = mr.BID;// ubiAndBId[1];
@@ -1511,23 +1542,30 @@ e20170310_134226_014863.wav	1
                                                     case "CHN":
                                                     case "CHF":
                                                         childSegmentNumber++;
-                                                        if (mr.type == "Child")
+                                                        //if (mr.type == "Child")
                                                         {
                                                             pi.vd = Convert.ToDouble(seg.Attributes["childUttLen"].Value.Substring(1, seg.Attributes["childUttLen"].Value.Length - 2));
                                                             pi.vc = Convert.ToDouble(seg.Attributes["childUttCnt"].Value);
                                                             pi.avDb = Convert.ToDouble(seg.Attributes["average_dB"].Value);
                                                             pi.maxDb = Convert.ToDouble(seg.Attributes["peak_dB"].Value);
                                                             pi.childSegments = childSegmentNumber;
+                                                            if(pi.vd<0 || pi.bd<0)
+                                                            {
+                                                                bool stop = true;
+                                                                start = Config.getMsTime(recStartTime.AddMilliseconds(startSecs * 1000));
+                                                                end = Config.getMsTime(recStartTime.AddMilliseconds(endSecs * 1000));
+                                                            }
                                                             if (cf.settings.doOnsets)
                                                             {
-                                                                sw.WriteLine(this.day + "," + pi.bid + "," + mr.type + "," + segmentNumber + ",CHN_CHF SegmentUtt," + recStartTime + "," + startSecs + "," + endSecs + "," + start + "," + end + "," + pi.vd + "," + pi.bd + ",," + pi.avDb + "," + pi.maxDb);
+                                                                sw.WriteLine(file+","+this.day + "," + pi.bid + "," + pi.lenaId + "," + mr.type + "," + segmentNumber + ",CHN_CHF SegmentUtt," + recStartTime + "," + startSecs + "," + endSecs + "," + start + "," + end + "," + pi.vd + "," + pi.bd + ",," + pi.avDb + "," + pi.maxDb);
                                                             }
                                                             pi.vd = 0;
                                                             //pi.vc = 0;
-
-                                                            subjectAvgDb = subjectAvgDb == 1 ? pi.avDb : (subjectAvgDb + pi.avDb) != 0 ? (subjectAvgDb + pi.avDb) / 2 : 0;
-                                                            subjectMaxDb = subjectMaxDb == 1 ? pi.maxDb : (subjectMaxDb + pi.maxDb) != 0 ? (subjectMaxDb + pi.maxDb) / 2 : 0;
-
+                                                            if (mr.type == "Child")
+                                                            {
+                                                                subjectAvgDb = subjectAvgDb == 1 ? pi.avDb : (subjectAvgDb + pi.avDb) != 0 ? (subjectAvgDb + pi.avDb) / 2 : 0;
+                                                                subjectMaxDb = subjectMaxDb == 1 ? pi.maxDb : (subjectMaxDb + pi.maxDb) != 0 ? (subjectMaxDb + pi.maxDb) / 2 : 0;
+                                                            }
 
                                                             foreach (XmlAttribute atts in seg.Attributes)
                                                             {
@@ -1549,9 +1587,9 @@ e20170310_134226_014863.wav	1
                                                                     cpi.lenaId = lenaId;
                                                                     cpi.bd = (cend - cstart).Seconds + ((cend - cstart).Milliseconds > 0 ? (cend - cstart).Milliseconds / 1000.00 : 0); //cendSecs - cstartSecs;
                                                                     cpi.cry = cpi.bd;
-                                                                    newSwLine = (this.day + "," + pi.bid + "," + mr.type + "," + segmentNumber + ",CHN_CHF Cry," + recStartTime + "," + cstartSecs + "," + cendSecs + "," + cstart + "," + cend + "," + cpi.cry+","+pi.bd);
-
-                                                                    addToRawLena(ref rawLenaInfo, cpi);
+                                                                    newSwLine = (file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," + mr.type + "," + segmentNumber + ",CHN_CHF Cry," + recStartTime + "," + cstartSecs + "," + cendSecs + "," + cstart + "," + cend + "," + cpi.cry+","+pi.bd);
+                                                                    if (mr.type == "Child")
+                                                                        addToRawLena(ref rawLenaInfo, cpi);
 
                                                                 }
                                                                 else if (atts.Name.IndexOf("startUtt") == 0)
@@ -1572,9 +1610,9 @@ e20170310_134226_014863.wav	1
                                                                     cpi.vd = cpi.bd;
                                                                     //pi.vc = Convert.ToDouble(seg.Attributes["childUttCnt"].Value);
                                                                     //cpi.cry = cpi.bd;
-                                                                    newSwLine = (this.day + "," + pi.bid + "," + mr.type + "," + segmentNumber + ",CHN_CHF Utt," + recStartTime + "," + cstartSecs + "," + cendSecs + "," + cstart + "," + cend + "," + cpi.vd + "," + pi.bd);
-
-                                                                    addToRawLena(ref rawLenaInfo, cpi);
+                                                                    newSwLine = (file + "," + this.day + "," + pi.bid + "," + pi.lenaId  + "," + mr.type + "," + segmentNumber + ",CHN_CHF Utt," + recStartTime + "," + cstartSecs + "," + cendSecs + "," + cstart + "," + cend + "," + cpi.vd + "," + pi.bd);
+                                                                    if (mr.type == "Child")
+                                                                        addToRawLena(ref rawLenaInfo, cpi);
                                                                 }
                                                                 if (newSwLine != "" && cf.settings.doOnsets)
                                                                     sw.WriteLine(newSwLine);
@@ -1584,7 +1622,7 @@ e20170310_134226_014863.wav	1
                                                         break;
                                                     case "FAN":
                                                         pi.ac = Convert.ToDouble(seg.Attributes["femaleAdultWordCnt"].Value);
-                                                        if (mr.type == "Lab" || mr.type == "Teacher")
+                                                        //if (mr.type == "Lab" || mr.type == "Teacher")
                                                         {
                                                             pi.vd = Convert.ToDouble(seg.Attributes["femaleAdultUttLen"].Value.Substring(1, seg.Attributes["femaleAdultUttLen"].Value.Length - 2));
                                                             pi.vc = Convert.ToDouble(seg.Attributes["femaleAdultWordCnt"].Value);
@@ -1593,14 +1631,15 @@ e20170310_134226_014863.wav	1
                                                             pi.childSegments = childSegmentNumber;
                                                             if (cf.settings.doOnsets)
                                                             {
-                                                                sw.WriteLine(this.day + "," + pi.bid + "," + mr.type + "," + segmentNumber + ",FAN SegmentUtt," + recStartTime + "," + startSecs + "," + endSecs + "," + start + "," + end + "," + pi.vd + "," + pi.bd + "," + pi.vc + "," + pi.avDb + "," + pi.maxDb);
+                                                                sw.WriteLine(file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," + mr.type + "," + segmentNumber + ",FAN SegmentUtt," + recStartTime + "," + startSecs + "," + endSecs + "," + start + "," + end + "," + pi.vd + "," + pi.bd + "," + pi.vc + "," + pi.avDb + "," + pi.maxDb);
                                                             }
                                                         }
-                                                        add = true;
+                                                        if (mr.type == "Lab" || mr.type == "Teacher")
+                                                            add = true;
                                                         break;
                                                     case "MAN":
                                                         pi.ac = Convert.ToDouble(seg.Attributes["maleAdultWordCnt"].Value);
-                                                        if (mr.type == "Lab" || mr.type == "Teacher")
+                                                       // if (mr.type == "Lab" || mr.type == "Teacher")
                                                         {
                                                             pi.vd = Convert.ToDouble(seg.Attributes["maleAdultUttLen"].Value.Substring(1, seg.Attributes["maleAdultUttLen"].Value.Length - 2));
                                                             pi.vc = Convert.ToDouble(seg.Attributes["maleAdultWordCnt"].Value);
@@ -1609,10 +1648,11 @@ e20170310_134226_014863.wav	1
                                                             pi.childSegments = childSegmentNumber;
                                                             if (cf.settings.doOnsets)
                                                             {
-                                                                sw.WriteLine(this.day + "," + pi.bid + "," + mr.type + "," + segmentNumber + ",MAN SegmentUtt," + recStartTime + "," + startSecs + "," + endSecs + "," + start + "," + end + "," + pi.vd + "," + pi.bd + "," + pi.vc + "," + pi.avDb + "," + pi.maxDb);
+                                                                sw.WriteLine(file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," + mr.type + "," + segmentNumber + ",MAN SegmentUtt," + recStartTime + "," + startSecs + "," + endSecs + "," + start + "," + end + "," + pi.vd + "," + pi.bd + "," + pi.vc + "," + pi.avDb + "," + pi.maxDb);
                                                             }
                                                         }
-                                                        add = true;
+                                                        if (mr.type == "Lab" || mr.type == "Teacher")
+                                                            add = true;
                                                         break;
                                                     case "OLN":
                                                         pi.bd = endSecs - startSecs;
@@ -1783,6 +1823,10 @@ e20170310_134226_014863.wav	1
          {
              foreach (String person in lenadata.Keys)
              {
+                if(person=="10D")
+                {
+                    bool stop = true;
+                }
                 Boolean startSet = false;
                 List<PersonInfo> dataLine = lenadata[person];
                  foreach (PersonInfo data in dataLine)
@@ -2064,8 +2108,9 @@ e20170310_134226_014863.wav	1
 
                             foreach (String person in activities[dt].Keys)
                             {
+                               // if((person=="10D" || person=="1D" )&& isWithLenaStart(dt, person))
                                 if ((cf.settings.subs.Count == 0 || cf.settings.subs.Contains(person)) &&
-                                    ((cf.settings.noLena || (!cf.settings.startFromLena) || isWithLenaStart(dt, person))))
+                                    ((cf.justUbi || (!cf.settings.startFromLena) || isWithLenaStart(dt, person))))
                                 {
                                      
                                         if ((!double.IsNaN(activities[dt][person].x)) &&
@@ -2316,7 +2361,7 @@ e20170310_134226_014863.wav	1
                             {
                                 if (subs.Count == 0 || subs.Contains(person))
                                 {
-                                    if (cf.settings.noLena || (!cf.settings.startFromLena) || isWithLenaStart(dt, person))
+                                    if (cf.justUbi || (!cf.settings.startFromLena) || isWithLenaStart(dt, person))
                                     {
                                         /*if (!individualTime.ContainsKey(person))
                                         {

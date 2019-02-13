@@ -32,8 +32,11 @@ namespace UL_PROCESSOR
             foreach (DateTime day in days)
             {
                 //configInfo.settings.subs.Add("12P");
+                //configInfo.settings.subs.Add("4D");
+                //configInfo.settings.subs.Add("10D");
 
                 /************ 1)READ DAY MAPPINGS*******************/
+                if(configInfo.classSettings.mappingBy!="CLASS")
                 configInfo.readDayMappings(day);
 
                 ClassroomDay cd = new ClassroomDay(day, configInfo);
@@ -297,8 +300,16 @@ namespace UL_PROCESSOR
             Boolean pAbsent = day.cf.getMapping(partner, day.day).isAbsent(day.day);//|| (!day.startLenaTimes.ContainsKey(partner)); ;
             Boolean lAbsent = (!day.startLenaTimes.ContainsKey(subject)) || (!day.startLenaTimes.ContainsKey(partner));
             Boolean dAbsent = !day.pairInteractions.ContainsKey(pair);
+           
             status = sAbsent ? "absent" : ((!day.startLenaTimes.ContainsKey(subject)) || dAbsent ? "No Data" : "present");
             statusp = pAbsent ? "absent" : ((!day.startLenaTimes.ContainsKey(partner)) || dAbsent ? "No Data" : "present");
+            if ((!day.startLenaTimes.ContainsKey(subject)) || dAbsent ||
+               (!day.startLenaTimes.ContainsKey(partner)) || dAbsent
+               )
+            {
+                dAbsent = dAbsent;
+            }
+
             Boolean absent = sAbsent || pAbsent || dAbsent || lAbsent;
             String type = subject.IndexOf("Lab") == 0 ? "Lab" : subject.IndexOf("T") == 0 ? "Teacher" : "Child";
             String typep = partner.IndexOf("Lab") == 0 ? "Lab" : partner.IndexOf("T") == 0 ? "Teacher" : "Child";

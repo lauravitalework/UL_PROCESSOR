@@ -21,10 +21,11 @@ namespace UL_PROCESSOR
         public String dir;
         public Boolean doAll10OfSecs = false;//false;//true;
         public Boolean startFromLena = true;//false;//true;
-        public Boolean noLena = true;//false;//true;//false;//true;
+        //public Boolean noLena = true;//false;//true;//false;//true;
         public double minDistance = 1.5 * 1.5; //the squared value of g(r) cutoff in meters
         public String fileNameVersion = DateTime.Now.Month + "_" + DateTime.Now.Day + "_" + DateTime.Now.Year + "_" + new Random().Next();
         public List<String> subs = new List<string>();
+        public Boolean qaHoles = false;
         public void from(String[] args)
         {
             String[] settings = args[0].Split(' ');
@@ -64,6 +65,9 @@ namespace UL_PROCESSOR
                             break;
                         case "ITS":
                             getFromIts = setting[1].Trim().ToUpper() == "YES";
+                            break;
+                        case "HOLES":
+                            qaHoles = setting[1].Trim().ToUpper() == "YES";
                             break;
 
                     }

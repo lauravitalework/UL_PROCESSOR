@@ -13,7 +13,8 @@ namespace UL_PROCESSOR
 
 
         public Boolean allLena = false;
-        public Boolean justUbi = false;//true;
+        public Boolean justUbi = false;//false;//false;//true;
+        public Boolean makeRL = false;//true;//false;
 
         public String szVersion = "V18"; 
         public String root = "C://LVL/";//"D://"
@@ -141,16 +142,14 @@ namespace UL_PROCESSOR
         }
         public void readDayMappings(DateTime dt)
         {
-            String mappingFolderName = root + classroom + "/MAPPINGS/" + (dt.Month < 10 ? "0" + dt.Month : dt.Month.ToString()) + "-" + (dt.Day < 10 ? "0" + dt.Day : dt.Day.ToString()) + "-" + dt.Year;
 
-            String dayFileSuffix = "_"+(dt.Month < 10 ? "0" + dt.Month : dt.Month.ToString())   + (dt.Day < 10 ? "0" + dt.Day : dt.Day.ToString()) + dt.Year.ToString().Substring(2);
-            if (this.classSettings.mappingBy == "DAY" &&
-                File.Exists(mappingFolderName + "/MAPPING_" + classroom + dayFileSuffix+ ".CSV"))
-            {
-                mappingFile = mappingFolderName + "/MAPPING_" + classroom+ dayFileSuffix + ".CSV";
-                readMappings(dt, dt.AddDays(1));
+            String dayFileSuffix = (dt.Month < 10 ? "0" + dt.Month : dt.Month.ToString())+"-" + (dt.Day < 10 ? "0" + dt.Day : dt.Day.ToString()) + "-" + dt.Year.ToString();
+            //mappingFile = root + classroom + mappingFile + "_" + classroom + ".CSV";
+            ubisenseFileDir = root + classroom+"/" + dayFileSuffix+ "/Ubisense_Data/";
+            lenaFileDir = root + classroom + "/" + dayFileSuffix+ "/LENA_Data/";
+            mappingFile = root + classroom + "/" + dayFileSuffix + "/MAPPING" + "_" + classroom + ".CSV";
+            readMappings(dt, dt.AddDays(1));
 
-            }
 
         }
         public void readClassroomMappings()
@@ -226,11 +225,14 @@ namespace UL_PROCESSOR
                             }
                         }
                         catch (Exception e)
-                        { }
+                        {
+                            Console.WriteLine(e.Message);
+                        }
 
                     }
 
                 }
+
                 bids.Sort();
                 for (int b = 0; b < bids.Count; b++)
                 {
@@ -244,6 +246,7 @@ namespace UL_PROCESSOR
                 }
                 if (!mappingStarted)
                 {
+                    if(File.Exists(freePlayTimesFile))
                     using (StreamReader sr = new StreamReader(freePlayTimesFile))
                     {
                         sr.ReadLine();
@@ -278,7 +281,9 @@ namespace UL_PROCESSOR
                                 }
                             }
                             catch (Exception e)
-                            { }
+                            {
+                                Console.WriteLine(e.Message);
+                            }
 
                         }
                     }
@@ -317,7 +322,9 @@ namespace UL_PROCESSOR
                                     }
                                 }
                                 catch (Exception e)
-                                { }
+                                {
+                                    Console.WriteLine(e.Message);
+                                }
 
                             }
                         }
@@ -325,7 +332,9 @@ namespace UL_PROCESSOR
                 }
             }
             catch (Exception e)
-            { }
+            {
+                Console.WriteLine(e.Message);
+            }
             mappingStarted = true;
         }
         /*OLD public void readMappings()
@@ -514,7 +523,11 @@ namespace UL_PROCESSOR
 
                                 DateTime rowDay = Convert.ToDateTime(line[1]);
                                 double adjSecs = Convert.ToDouble(line[4]);
-                                if(!adjustedTimes.ContainsKey(rowDay))
+                                if (line.Length >=7 && line[6].Trim()!="")
+                                {
+                                    adjSecs+= Convert.ToDouble(line[6]);
+                                }
+                                if (!adjustedTimes.ContainsKey(rowDay))
                                 {
                                     adjustedTimes.Add(rowDay, new Dictionary<string, double>());
                                 }
@@ -643,6 +656,25 @@ namespace UL_PROCESSOR
             DateTime target = new DateTime();//will be next .1 sec
             if (ms == 1000)
             {
+                if (first.Second <59)
+                {
+                    target = new DateTime(first.Year, first.Month, first.Day, first.Hour, first.Minute, first.Second + 1, 0);
+                }
+                else if (first.Minute < 59)
+                {
+                    target = new DateTime(first.Year, first.Month, first.Day, first.Hour, first.Minute + 1, 0, 0);
+                }
+                else
+                {
+                    target = new DateTime(first.Year, first.Month, first.Day, first.Hour + 1, 0, 0, 0);
+                }
+            }
+            else
+            {
+                target = new DateTime(first.Year, first.Month, first.Day, first.Hour, first.Minute, first.Second, ms);
+            }
+            /*if (ms == 1000)
+            {
                 if (first.Minute == 59)
                 {
                     target = new DateTime(first.Year, first.Month, first.Day, first.Hour+1, 0, 0, 0);
@@ -659,7 +691,7 @@ namespace UL_PROCESSOR
             else
             {
                 target = new DateTime(first.Year, first.Month, first.Day, first.Hour, first.Minute, first.Second, ms);
-            }
+            }*/
             return target;
         }
 
