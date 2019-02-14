@@ -26,7 +26,8 @@ namespace UL_PROCESSOR
             int countDays = 0;
 
             /************ 1)READ MAPPINGS*******************/
-            configInfo.readClassroomMappings();
+            if (configInfo.classSettings.mappingBy == "CLASS")
+                configInfo.readClassroomMappings();
 
             /********B)	FOR EACH DAY IN CLASSROOM: ********/
             foreach (DateTime day in days)
@@ -48,6 +49,7 @@ namespace UL_PROCESSOR
                 Dictionary<String, List<PersonInfo>> rawLena = configInfo.settings.getFromIts ? cd.readLenaItsFiles(countDays) : cd.readLenaFile();
 
 
+                //OLD VERSION
                 if (configInfo.settings.doUbiChildFiles)
                 {
                     Console.WriteLine("readUbiFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");

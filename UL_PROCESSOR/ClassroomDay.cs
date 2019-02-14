@@ -569,7 +569,10 @@ namespace UL_PROCESSOR
             Dictionary < String, List<PersonInfo>> rawInfo = new Dictionary<String, List<PersonInfo>>();
             Dictionary<String, List<PersonInfo>> rawInfoR = new Dictionary<String, List<PersonInfo>>();
             List<PersonInfo> rawInfoAll = new List<PersonInfo> ();
-            string[] folders = Directory.GetDirectories(cf.ubisenseFileDir);
+            string[] folders = { cf.ubisenseFileDir };//
+
+            if (cf.classSettings.mappingBy == "CLASS")
+                folders=Directory.GetDirectories(cf.ubisenseFileDir);
 
           
 
@@ -579,7 +582,8 @@ namespace UL_PROCESSOR
                 DateTime folderDate;
                 Boolean firstRow = true;
                 
-                if (DateTime.TryParse(folderName, out folderDate) && folderDate >= day && folderDate < day.AddDays(1))
+                if (cf.classSettings.mappingBy != "CLASS" ||
+                    (DateTime.TryParse(folderName, out folderDate) && folderDate >= day && folderDate < day.AddDays(1)))
                 {
                     string[] files = Directory.GetFiles(folder);
                     foreach (string file in files)
@@ -1407,9 +1411,10 @@ e20170310_134226_014863.wav	1
 
 
             //Date	Subject	SubjectType	segmentid	voctype	recstart	startsec	endsec	starttime	endtime	duration	uttlen
-            string[] folders = Directory.GetDirectories(cf.lenaFileDir + "/ITS/");
-            if (cf.classSettings.mappingBy != "CLASS")
-                folders = new string[] { cf.lenaFileDir + "/ITS/" };
+            string[] folders = { cf.lenaFileDir + "/ITS/" };// Directory.GetDirectories(cf.lenaFileDir + "/ITS/");
+
+            if (cf.classSettings.mappingBy == "CLASS")
+                folders = Directory.GetDirectories(cf.lenaFileDir + "/ITS/");
 
             TextWriter sw=null;
             if (cf.settings.doOnsets)
@@ -1441,8 +1446,8 @@ e20170310_134226_014863.wav	1
                             String fileName = Path.GetFileName(file);
                             {
                                 Console.WriteLine(file);
-                                String lenaId = file.Substring(file.IndexOf("\\") + 2);
-                                lenaId = lenaId.Substring( cf.lenaVersion=="SP"?15: 16, 6);
+                                String lenaId = fileName;// file.Substring(file.IndexOf("\\") + 1);
+                                lenaId = lenaId.Substring( cf.lenaVersion=="SP"?16: 17, 6);
                                 if (lenaId.Substring(0, 2) == "00")
                                     lenaId = lenaId.Substring(2);
                                 else if (lenaId.Substring(0, 1) == "0")
