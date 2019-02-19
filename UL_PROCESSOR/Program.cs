@@ -15,14 +15,21 @@ namespace UL_PROCESSOR
         public int chunkSize = 4;
         public void processClassroom(UL_PROCESSOR_SETTINGS settings, UL_PROCESSOR_CLASS_SETTINGS classSettings)
         {
+
             ClassroomDay.first = true;
             List<DateTime> dateChunks = new List<DateTime>();
             List<DateTime> lastDateChunks = new List<DateTime>();
             List<String> fileNames=new List<string>();
             int count = 0;
             int total = 0;
+            Console.WriteLine(classSettings.szDates);
+
+            Console.WriteLine("PROCESS "+classSettings.classroom);
             foreach (String szDay in classSettings.szDates.Split(','))
             {
+                Console.WriteLine(szDay);
+                Console.ReadLine();
+
                 count++;
                 total++;
                 if (count>chunkSize)
@@ -443,21 +450,48 @@ namespace UL_PROCESSOR
          //   napOnset();
 
 
-            if (args.Length>1)
+            if (args.Length>0)
             {
-                 
+
+                Console.WriteLine(args[0]);
+               // Console.ReadLine();
                 UL_PROCESSOR_SETTINGS settingParams = new UL_PROCESSOR_SETTINGS();
                 settingParams.from(args);
+
+                String[] settings = args[0].Split(' ');
                
+                for (int a=1;a< settings.Length;a++)
+                {
+                    if(settings[a].Split('|').Length>1)
+                    {
+                        /******** A)FOR EACH CLASSROOM:********/
+                        UL_PROCESSOR_CLASS_SETTINGS classSettings = new UL_PROCESSOR_CLASS_SETTINGS();
+                        classSettings.from(settings[a].Split('|'));
+                        UL_PROCESSOR_Program pc = new UL_PROCESSOR_Program();
+                        pc = new UL_PROCESSOR_Program();
+
+                        pc.processClassroom(settingParams, classSettings);
+                    }
+
+                }
+
                 int argCount = 0;
-                foreach (String arg in args)
+
+                /*String[] settings = args[0].Split(' ');
+            dir = settings[0];
+
+            UL_PROCESSOR_SETTINGS settingParams = new UL_PROCESSOR_SETTINGS();
+            for (int a = 1; a < settings.Length; a++)
+            {
+                String[] setting = settings[a].Split(':');*/
+                /******** A)FOR EACH CLASSROOM:********/
+
+
+               /* foreach (String arg in args)
                 {
                     argCount++;
                     if (argCount > 1)
                     {
-                        /******** A)FOR EACH CLASSROOM:********/
-
-
                         UL_PROCESSOR_CLASS_SETTINGS classSettings = new UL_PROCESSOR_CLASS_SETTINGS();
                         classSettings.from(arg.Split(' '));
                         UL_PROCESSOR_Program pc = new UL_PROCESSOR_Program();
@@ -465,7 +499,7 @@ namespace UL_PROCESSOR
                         pc.processClassroom(settingParams, classSettings);
                          
                     }
-                }
+                }*/
 
             }
             Console.ReadLine();
