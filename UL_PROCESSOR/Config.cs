@@ -82,13 +82,13 @@ namespace UL_PROCESSOR
         public Dictionary<String, List<String>> freePlayTimes = new Dictionary<String, List<String>>();
         public Dictionary<String, List<String>> extractTimes = new Dictionary<String, List<String>>();
         public Dictionary<String, Boolean> tagTest = new Dictionary<string, bool>();//test delete
-
+        public double gOfR = 1.5;
         //public Boolean mappingSet = false;
         public Config(UL_PROCESSOR_SETTINGS s, UL_PROCESSOR_CLASS_SETTINGS cs)
         {
             settings = s;
             classSettings = cs;
-
+            gOfR = cs.gOfR;
             classroom = cs.classroom;
             root = s.dir;
             freePlayTimesFile = root + classroom + freePlayTimesFile;
@@ -366,21 +366,27 @@ namespace UL_PROCESSOR
                         try
                         {
                             String[] line = sr.ReadLine().Split(',');
-
+                             
                             if (line.Length > 8 && (line[mappingUbiIdCol].Trim() != "" && line[mappingLenaIdCol].Trim() != ""))
                             {
-                                if (line.Length <= 18 ||
-                                    (line.Length > 18 && line[mappingUbiIdCol].Trim().ToUpper() != "ABSENT"))
-                                {
+                                //if (line.Length <= 18 ||
+                                //    (line.Length > 18 && line[mappingUbiIdCol].Trim().ToUpper() != "ABSENT"))
+                                //{
+                                    Boolean absent = line.Length > 18 && line[mappingUbiIdCol].Trim().ToUpper() == "ABSENT";
+                                //if(!absent)
+                                { 
                                     MappingRow mr = new MappingRow();
                                     mr.LenaId = line[mappingLenaIdCol].Trim();
+                                    
                                     mr.UbiID = line[mappingUbiIdCol].Trim();
                                     mr.BID = line[mappingBIdCol].Trim();
                                     if (!bids.Contains(mr.BID))
                                         bids.Add(mr.BID);
-                                    mr.Expiration = this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingExpiredCol]) : dt2;
-                                    mr.Start = this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingStartCol]) : dt;
+                                    mr.Expiration = absent?new DateTime(1,2,1900):this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingExpiredCol]) : dt2;
+                                    mr.Start = absent ? new DateTime(1, 1, 1900) : this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingStartCol]) : dt;
                                     mr.absences = getAbsentDays(line[mappingAbsentCol]);
+                                    if (absent)
+                                        mr.absences.Add(dt);
                                     mr.aid = line[mappingAidCol].Trim();
                                     mr.sex = line[mappingSexCol].Trim();
                                     mr.leftTag = line[mappingLeftTagCol].Trim();
@@ -451,7 +457,7 @@ namespace UL_PROCESSOR
                                 try
                                 {
                                     String[] line = sr.ReadLine().Split(',');
-                                    if (line.Length > 2)
+                                    if (line.Length > 2 && line[0].Trim()!="")
                                     {
                                         String date = Convert.ToDateTime(line[0]).ToShortDateString().Trim();
                                         foreach (String timeFrame in line[1].Split('|'))
@@ -478,7 +484,7 @@ namespace UL_PROCESSOR
                                 }
                                 catch (Exception e)
                                 {
-                                    Console.WriteLine(e.Message);
+                                    Console.WriteLine("freePlayTimesFile "+e.Message);
                                 }
 
                             }
@@ -519,7 +525,7 @@ namespace UL_PROCESSOR
                                 }
                                 catch (Exception e)
                                 {
-                                    Console.WriteLine(e.Message);
+                                    Console.WriteLine("extractTimesFile "+e.Message);
                                 }
 
                             }
@@ -721,7 +727,9 @@ namespace UL_PROCESSOR
                                 double adjSecs = Convert.ToDouble(line[4]);
                                 if (line.Length >=7 && line[6].Trim()!="")
                                 {
-                                    adjSecs+= Convert.ToDouble(line[6]);
+                                    double ubiSecs = 0;
+                                    if(Double.TryParse(line[6], out ubiSecs))
+                                    adjSecs += ubiSecs;
                                 }
                                 if (!adjustedTimes.ContainsKey(rowDay))
                                 {
@@ -890,7 +898,22 @@ namespace UL_PROCESSOR
             }*/
             return target;
         }
-
+        public static DateTime geFullTime(DateTime first)
+        {
+            int ms = first.Millisecond;
+            return new DateTime(first.Year, first.Month, first.Day, first.Hour, first.Minute, first.Second, ms);
+           
+        }
+        public static String getDateTimeStr(DateTime t)
+        {
+            return t.Month + "/" + t.Date + "/" + t.Year + "/" + " " + getTimeStr( t);
+        }
+        public static String getTimeStr(DateTime t)
+        {
+            return t.Hour + ":" + (t.Minute<10?"0"+ t.Minute: t.Minute.ToString()) + ":" +
+                (t.Second < 10 ? "0" + t.Second : t.Second.ToString())  + "." +
+                (t.Millisecond < 10 ? "00" + t.Millisecond : t.Millisecond < 100 ? "0" + t.Millisecond: t.Millisecond.ToString()) ;
+        }
 
     }
 }

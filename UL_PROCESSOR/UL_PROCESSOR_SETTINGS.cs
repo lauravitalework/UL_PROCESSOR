@@ -17,12 +17,13 @@ namespace UL_PROCESSOR
         public Boolean doGR = true;
         public Boolean doVel = true;
         public Boolean doOnsets = true;
+        public Boolean doMinVocs = true;
         public Boolean doDbs = true;
         public String dir;
         public Boolean doAll10OfSecs = false;//false;//true;
         public Boolean startFromLena = true;//false;//true;
         //public Boolean noLena = true;//false;//true;//false;//true;
-        public double minDistance = 1.5 * 1.5; //the squared value of g(r) cutoff in meters
+        //public double minDistance = 1.5 * 1.5; //the squared value of g(r) cutoff in meters
         public String fileNameVersion = DateTime.Now.Month + "_" + DateTime.Now.Day + "_" + DateTime.Now.Year + "_" + new Random().Next();
         public List<String> subs = new List<string>();
         public Boolean qaHoles = false;
@@ -44,7 +45,7 @@ namespace UL_PROCESSOR
                             break;
                         case "SUMDAY":
                             doSumDayFiles = setting[1].Trim().ToUpper() == "YES";
-                            break;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               break;
                         case "SUMALL":
                             doSumAllFiles = setting[1].Trim().ToUpper() == "YES";
                             break;
@@ -83,6 +84,7 @@ namespace UL_PROCESSOR
         public String lenaVersion;
         public String szDates;
         public String mappingBy = "CLASS";//"CLASS";"DAY"
+        public double gOfR = 1.5;
         public void from(String[] vars)
         {
             classroom = vars[0].Trim();
@@ -90,7 +92,8 @@ namespace UL_PROCESSOR
              
             if(vars.Length>3)
             {
-                szDates = vars[3].Trim();
+                gOfR = double.TryParse(vars[3].Trim(), out gOfR) ? gOfR : 1.5;
+                szDates = vars[4].Trim();
                 mappingBy = vars[2].Trim();
             }
             else

@@ -28,7 +28,7 @@ namespace UL_PROCESSOR
             foreach (String szDay in classSettings.szDates.Split(','))
             {
                 Console.WriteLine(szDay);
-                Console.ReadLine();
+                //Console.ReadLine();
 
                 count++;
                 total++;

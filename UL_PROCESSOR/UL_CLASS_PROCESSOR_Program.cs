@@ -36,8 +36,12 @@ namespace UL_PROCESSOR
                 //configInfo.settings.subs.Add("4D");
                 //configInfo.settings.subs.Add("10D");
 
+                //DELETE TEST SUBJ PARTNER 0S
+                //configInfo.settings.subs.Add("DS_LADYBUGS_1819_1");
+                //configInfo.settings.subs.Add("DS_LADYBUGS_1819_8");
+
                 /************ 1)READ DAY MAPPINGS*******************/
-                if(configInfo.classSettings.mappingBy!="CLASS")
+                if (configInfo.classSettings.mappingBy!="CLASS")
                 configInfo.readDayMappings(day);
 
                 ClassroomDay cd = new ClassroomDay(day, configInfo);
