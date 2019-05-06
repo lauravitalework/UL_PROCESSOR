@@ -908,6 +908,18 @@ namespace UL_PROCESSOR
         {
             return t.Month + "/" + t.Date + "/" + t.Year + "/" + " " + getTimeStr( t);
         }
+        public static String getDayStr(DateTime t)
+        {
+            return  (t.Month < 10 ? "0" + t.Month : t.Month.ToString()) +
+                   t.Day+//(t.Day < 10 ? "0" + t.Day : t.Day.ToString()) +
+                    t.Year.ToString().Substring(2);
+        }
+        public static String getDayDashStr(DateTime t)
+        {
+            return (t.Month < 10 ? "0" + t.Month : t.Month.ToString()) +"-"+
+                   (t.Day < 10 ? "0" + t.Day : t.Day.ToString()) + "-" +
+                    t.Year.ToString();
+        }
         public static String getTimeStr(DateTime t)
         {
             return t.Hour + ":" + (t.Minute<10?"0"+ t.Minute: t.Minute.ToString()) + ":" +

@@ -65,6 +65,7 @@ namespace UL_PROCESSOR
         static void MergeCsvs(List<String> file_names, String destinationfilename)
         {
             StreamReader rdr = new StreamReader(file_names[0]);
+            rdr = new StreamReader(file_names[0]);
             StreamWriter wtr = new StreamWriter(destinationfilename);
 
             string master = rdr.ReadToEnd();

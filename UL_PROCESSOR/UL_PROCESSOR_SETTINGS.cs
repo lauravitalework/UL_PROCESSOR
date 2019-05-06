@@ -17,6 +17,7 @@ namespace UL_PROCESSOR
         public Boolean doGR = true;
         public Boolean doVel = true;
         public Boolean doOnsets = true;
+        public Boolean doSocialOnsets = true;
         public Boolean doMinVocs = true;
         public Boolean doDbs = true;
         public String dir;
@@ -27,6 +28,7 @@ namespace UL_PROCESSOR
         public String fileNameVersion = DateTime.Now.Month + "_" + DateTime.Now.Day + "_" + DateTime.Now.Year + "_" + new Random().Next();
         public List<String> subs = new List<string>();
         public Boolean qaHoles = false;
+        public Boolean lenaTimes = false;
         public void from(String[] args)
         {
             String[] settings = args[0].Split(' ');
@@ -69,6 +71,9 @@ namespace UL_PROCESSOR
                             break;
                         case "HOLES":
                             qaHoles = setting[1].Trim().ToUpper() == "YES";
+                            break;
+                        case "LENATIMES":
+                            lenaTimes = setting[1].Trim().ToUpper() == "YES";
                             break;
 
                     }

@@ -78,6 +78,21 @@ namespace UL_PROCESSOR
                     cd.writeGR(rawTags.Item3, rawLena ); 
                 }
 
+
+                //SORT 
+                /*List<Order> objListOrder =
+                source.OrderBy(order => order.OrderDate).ToList();*/
+                List<String> personKeys = new List<string>();
+                foreach(String person in rawLena.Keys)
+                {
+                    personKeys.Add(person);
+                   
+                }
+                foreach (String person in personKeys)
+                {
+                    List<PersonInfo> newList = rawLena[person].OrderBy(order => order.dt).ToList();
+                    rawLena[person] = newList;
+                }
                 /************ 5)SET LENA DATA*******************/
                 Console.WriteLine("setLenaData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 cd.setLenaData(rawLena);
