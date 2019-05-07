@@ -1681,7 +1681,7 @@ e20170310_134226_014863.wav	1
                                                     pi.lenaId = lenaId;
                                                     pi.bd = (end - start).Seconds + ((end - start).Milliseconds > 0 ? ((end - start).Milliseconds / 1000.00) : 0.00); //endSecs - startSecs;
                                                     pi.tc = tc;
-
+                                                    pi.pType = mr.type;
                                                     addMsToRawLena(ref rawLenaInfo, pi);
 
                                                     if (cf.settings.doOnsets)
@@ -1773,9 +1773,10 @@ e20170310_134226_014863.wav	1
                                                             pi.avDb = Convert.ToDouble(seg.Attributes["average_dB"].Value);
                                                             pi.maxDb = Convert.ToDouble(seg.Attributes["peak_dB"].Value);
                                                             pi.childSegments = childSegmentNumber;
-                                                            if (pi.vd < 0 || pi.bd < 0)
+                                                          
+                                                            if (pi.vc < 0 || pi.bd < 0)
                                                             {
-                                                                bool stop = true;
+                                                                    bool stop = true;
                                                                 start = Config.geFullTime(recStartTime.AddMilliseconds(startSecs * 1000));
                                                                 end = Config.geFullTime(recStartTime.AddMilliseconds(endSecs * 1000));
                                                             }
@@ -1819,7 +1820,7 @@ e20170310_134226_014863.wav	1
                                                                 setMinData(ref minDate, start, end, "CHC", pi.vc);
                                                             }
                                                             pi.vd = 0;
-                                                            //pi.vc = 0;
+                                                         
                                                             if (mr.type == "Child")
                                                             {
                                                                 subjectAvgDb = subjectAvgDb == 1 ? pi.avDb : (subjectAvgDb + pi.avDb) != 0 ? (subjectAvgDb + pi.avDb) / 2 : 0;
@@ -1846,6 +1847,7 @@ e20170310_134226_014863.wav	1
                                                                     cpi.lenaId = lenaId;
                                                                     cpi.bd = (cend - cstart).Seconds + ((cend - cstart).Milliseconds > 0 ? (cend - cstart).Milliseconds / 1000.00 : 0); //cendSecs - cstartSecs;
                                                                     cpi.cry = cpi.bd;
+                                                                    cpi.pType = mr.type;
                                                                     //Config.getTimeStr(end) + "," +
                                                                     //Math.Round(pi.vd, 2) + "," +
                                                                     newSwLine = (file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," + mr.type + "," + segmentNumber +
@@ -1901,6 +1903,7 @@ e20170310_134226_014863.wav	1
                                                                     cpi.lenaId = lenaId;
                                                                     cpi.bd = (cend - cstart).Seconds + ((cend - cstart).Milliseconds > 0 ? (cend - cstart).Milliseconds / 1000.00 : 0); //cendSecs - cstartSecs;
                                                                     cpi.vd = cpi.bd;
+                                                                    cpi.pType = mr.type;
                                                                     //pi.vc = Convert.ToDouble(seg.Attributes["childUttCnt"].Value);
                                                                     //cpi.cry = cpi.bd;
                                                                     //Config.getTimeStr(end) + "," +
@@ -1959,6 +1962,7 @@ e20170310_134226_014863.wav	1
                                                                 if (newSwLine != "" && cf.settings.doOnsets)
                                                                     sw.WriteLine(newSwLine);
                                                             }
+                                                            //////////////////////
                                                             add = true;
                                                         }
                                                         break;
@@ -1966,7 +1970,8 @@ e20170310_134226_014863.wav	1
                                                         pi.ac = Convert.ToDouble(seg.Attributes["femaleAdultWordCnt"].Value);
                                                         //if (mr.type == "Lab" || mr.type == "Teacher")
                                                         {
-                                                            pi.vd = Convert.ToDouble(seg.Attributes["femaleAdultUttLen"].Value.Substring(1, seg.Attributes["femaleAdultUttLen"].Value.Length - 2));
+                                                            pi.ad = Convert.ToDouble(seg.Attributes["femaleAdultUttLen"].Value.Substring(1, seg.Attributes["femaleAdultUttLen"].Value.Length - 2));
+                                                            //pi.vd = Convert.ToDouble(seg.Attributes["femaleAdultUttLen"].Value.Substring(1, seg.Attributes["femaleAdultUttLen"].Value.Length - 2));
                                                             pi.vc = Convert.ToDouble(seg.Attributes["femaleAdultWordCnt"].Value);
                                                             pi.avDb = Convert.ToDouble(seg.Attributes["average_dB"].Value);
                                                             pi.maxDb = Convert.ToDouble(seg.Attributes["peak_dB"].Value);
@@ -1980,7 +1985,7 @@ e20170310_134226_014863.wav	1
                                                                     startSecs + "," + endSecs + "," +
                                                                     Config.getTimeStr(start) + "," +
                                                                     Config.getTimeStr(end) + "," +
-                                                                    String.Format("{0:0.00}", pi.vd) + "," +
+                                                                    String.Format("{0:0.00}", pi.ad) + "," +
                                                                     String.Format("{0:0.00}", pi.bd) + "," +
                                                                     String.Format("{0:0.00}", pi.vc) + "," +
                                                                     String.Format("{0:0.00}", pi.avDb) + "," +
@@ -2000,7 +2005,7 @@ e20170310_134226_014863.wav	1
                                                         endSecs,
                                                         start,
                                                         end,
-                                                        pi.vd,
+                                                        pi.ad,
                                                         pi.bd,
                                                         pi.vc,
                                                         pi.avDb,
@@ -2017,14 +2022,14 @@ e20170310_134226_014863.wav	1
                                                                 setMinData(ref minDate, start, end, "FAN", pi.vc);
                                                             }
                                                         }
-                                                        if (mr.type == "Lab" || mr.type == "Teacher")
+                                                        //if (mr.type == "Lab" || mr.type == "Teacher")
                                                             add = true;
                                                         break;
                                                     case "MAN":
                                                         pi.ac = Convert.ToDouble(seg.Attributes["maleAdultWordCnt"].Value);
                                                         // if (mr.type == "Lab" || mr.type == "Teacher")
                                                         {
-                                                            pi.vd = Convert.ToDouble(seg.Attributes["maleAdultUttLen"].Value.Substring(1, seg.Attributes["maleAdultUttLen"].Value.Length - 2));
+                                                            pi.ad = Convert.ToDouble(seg.Attributes["maleAdultUttLen"].Value.Substring(1, seg.Attributes["maleAdultUttLen"].Value.Length - 2));
                                                             pi.vc = Convert.ToDouble(seg.Attributes["maleAdultWordCnt"].Value);
                                                             pi.avDb = Convert.ToDouble(seg.Attributes["average_dB"].Value);
                                                             pi.maxDb = Convert.ToDouble(seg.Attributes["peak_dB"].Value);
@@ -2039,7 +2044,7 @@ e20170310_134226_014863.wav	1
                                                                     startSecs + "," + endSecs + "," +
                                                                     Config.getTimeStr(start) + "," +
                                                                     Config.getTimeStr(end) + "," +
-                                                                    String.Format("{0:0.00}", pi.vd) + "," +
+                                                                    String.Format("{0:0.00}", pi.ad) + "," +
                                                                     String.Format("{0:0.00}", pi.bd) + "," +
                                                                     String.Format("{0:0.00}", pi.vc) + "," +
                                                                     String.Format("{0:0.00}", pi.avDb) + "," +
@@ -2059,7 +2064,7 @@ e20170310_134226_014863.wav	1
                                                             endSecs,
                                                             start,
                                                             end,
-                                                            pi.vd,
+                                                            pi.ad,
                                                             pi.bd,
                                                             pi.vc,
                                                             pi.avDb,
@@ -2071,7 +2076,7 @@ e20170310_134226_014863.wav	1
                                                                 setMinData(ref minDate, start, end, "MAN", pi.vc);
                                                             }
                                                         }
-                                                        if (mr.type == "Lab" || mr.type == "Teacher")
+                                                        //if (mr.type == "Lab" || mr.type == "Teacher")
                                                             add = true;
                                                         break;
                                                     case "OLN":
@@ -2673,123 +2678,127 @@ e20170310_134226_014863.wav	1
                             maxLenaTimes = time;
                     }
 
-                    Double vocDur = data.vd;
                     Double blockDur = data.bd;
+                    Double vocDur = data.vd;
+                    Double aDur = data.ad;
                     blockDur = (timeEnd - time).Seconds + (timeEnd - time).Milliseconds > 0 ? ((timeEnd - time).Milliseconds / 1000.00) : 0;
-                    //if (blockDur > 0)
+                    Double vocCount = data.vc;
+                    Double turnCount = data.tc;
+                    Double a = data.ac;
+                    Double ad = data.ad;
+                    Double n = data.no;
+                    Double o = data.oln;
+                    Double cry = data.cry;
+                    Double avDb = data.avDb;
+                    Double maxDb = data.maxDb;
+                    double segs = data.childSegments;
+
+                    if (personTotalCounts.ContainsKey(person))/////////////////
                     {
-                        Double vocCount = data.vc;
-                        Double turnCount = data.tc;
-                        Double a = data.ac;
-                        Double n = data.no;
-                        Double o = data.oln;
-                        Double cry = data.cry;
-                        Double avDb = data.avDb;
-                        Double maxDb = data.maxDb;
-                        double segs = data.childSegments;
+                        //Tuple<double, double, double, double, double> totalInfo = personTotalCounts[person];
 
-                        if (personTotalCounts.ContainsKey(person))/////////////////
-                        {
-                            //Tuple<double, double, double, double, double> totalInfo = personTotalCounts[person];
+                        personTotalCounts[person].vd = personTotalCounts[person].vd + vocDur;
+                        personTotalCounts[person].ad = personTotalCounts[person].ad + aDur;
+                        personTotalCounts[person].vc = personTotalCounts[person].vc + vocCount;
+                        personTotalCounts[person].tc = personTotalCounts[person].tc + turnCount;
+                        personTotalCounts[person].ac = personTotalCounts[person].ac + a;
+                        personTotalCounts[person].no = personTotalCounts[person].no + n;
+                        personTotalCounts[person].oln = personTotalCounts[person].oln + o;
+                        personTotalCounts[person].cry = personTotalCounts[person].cry + cry;
+                        personTotalCounts[person].avDb = personTotalCounts[person].avDb + avDb;
+                        personTotalCounts[person].maxDb = personTotalCounts[person].maxDb + maxDb;
+                        personTotalCounts[person].childSegments = personTotalCounts[person].childSegments + segs;
 
-                            personTotalCounts[person].vd = personTotalCounts[person].vd + vocDur;
-                            personTotalCounts[person].vc = personTotalCounts[person].vc + vocCount;
-                            personTotalCounts[person].tc = personTotalCounts[person].tc + turnCount;
-                            personTotalCounts[person].ac = personTotalCounts[person].ac + a;
-                            personTotalCounts[person].no = personTotalCounts[person].no + n;
-                            personTotalCounts[person].oln = personTotalCounts[person].oln + o;
-                            personTotalCounts[person].cry = personTotalCounts[person].cry + cry;
-                            personTotalCounts[person].avDb = personTotalCounts[person].avDb + avDb;
-                            personTotalCounts[person].maxDb = personTotalCounts[person].maxDb + maxDb;
-                            personTotalCounts[person].childSegments = personTotalCounts[person].childSegments + segs;
-
-                            //personTotalCounts[person] = new Tuple<double, double, double, double, double>(totalInfo.Item1 + vocDur, totalInfo.Item2 + vocCount, totalInfo.Item3 + turnCount, totalInfo.Item4 + a, totalInfo.Item5 + n);
-                        }
-                        else
+                        //personTotalCounts[person] = new Tuple<double, double, double, double, double>(totalInfo.Item1 + vocDur, totalInfo.Item2 + vocCount, totalInfo.Item3 + turnCount, totalInfo.Item4 + a, totalInfo.Item5 + n);
+                    }
+                    else
+                    {
+                        PersonInfo pi = new PersonInfo();
+                        pi.vd = vocDur;
+                        pi.ad = aDur;
+                        pi.vc = vocCount;
+                        pi.tc = turnCount;
+                        pi.ac = a;
+                        pi.no = n;
+                        pi.oln = o;
+                        pi.cry = cry;
+                        pi.avDb = avDb;
+                        pi.maxDb = maxDb;
+                        pi.childSegments = segs;
+                        personTotalCounts.Add(person, pi);
+                        personTotalCountsWUbi.Add(person, new PersonInfo());
+                        //personTotalCounts.Add(person, new Tuple<double, double, double, double, double>(vocDur, vocCount, turnCount, a, n));
+                    }
+                    if (blockDur > 0)
+                    {
+                        double turnCount10 = (turnCount / blockDur) / 10;
+                        double vocCount10 = (vocCount / blockDur) / 10;
+                        double vocDur10 = (vocDur / blockDur) / 10;
+                        double aDur10 = (aDur / blockDur) / 10;
+                        double adults10 = (a / blockDur) / 10;
+                        double noise10 = (n / blockDur) / 10;
+                        double oln10 = (o / blockDur) / 10;
+                        double cry10 = (cry / blockDur) / 10;
+                        double avDb10 = (avDb / blockDur) / 10;
+                        double maxDb10 = (maxDb / blockDur) / 10;
+                        double segs10 = (segs / blockDur) / 10;
+                        do
                         {
-                            PersonInfo pi = new PersonInfo();
-                            pi.vd = vocDur;
-                            pi.vc = vocCount;
-                            pi.tc = turnCount;
-                            pi.ac = a;
-                            pi.no = n;
-                            pi.oln = o;
-                            pi.cry = cry;
-                            pi.avDb = avDb;
-                            pi.maxDb = maxDb;
-                            pi.childSegments = segs;
-                            personTotalCounts.Add(person, pi);
-                            personTotalCountsWUbi.Add(person, new PersonInfo());
-                            //personTotalCounts.Add(person, new Tuple<double, double, double, double, double>(vocDur, vocCount, turnCount, a, n));
-                        }
-                        if (blockDur > 0)
-                        {
-                            double turnCount10 = (turnCount / blockDur) / 10;
-                            double vocCount10 = (vocCount / blockDur) / 10;
-                            double vocDur10 = (vocDur / blockDur) / 10;
-                            double adults10 = (a / blockDur) / 10;
-                            double noise10 = (n / blockDur) / 10;
-                            double oln10 = (o / blockDur) / 10;
-                            double cry10 = (cry / blockDur) / 10;
-                            double avDb10 = (avDb / blockDur) / 10;
-                            double maxDb10 = (maxDb / blockDur) / 10;
-                            double segs10 = (segs / blockDur) / 10;
-                            do
+                            if (activities.ContainsKey(time))
                             {
-                                if (activities.ContainsKey(time))
+                                if (cf.allLena && (!activities.ContainsKey(time)))
                                 {
-                                    if (cf.allLena && (!activities.ContainsKey(time)))
-                                    {
-                                        activities.Add(time, new Dictionary<string, PersonInfo>());
-                                    }
-                                    if (cf.allLena && (!activities[time].ContainsKey(person)))
-                                    {
-                                        activities[time].Add(person, new PersonInfo());
-                                    }
-                                    if (activities[time].ContainsKey(person))
-                                    {
-                                        //activities[time][person] = new PersonInfo(activities[time][person].xPos, activities[time][person].yPos, activities[time][person].lx, activities[time][person].ly, activities[time][person].rx, activities[time][person].ry, activities[time][person].orientation, 
-                                        //vocDur > 0, vocCount10, turnCount10, vocDur10, adults10, noise10);
-
-
-                                        activities[time][person].wasTalking = vocDur > 0 || activities[time][person].wasTalking;//, vocCount10, turnCount10, vocDur10, adults10, noise10;
-                                        activities[time][person].isCrying = cry > 0 || activities[time][person].isCrying;//, vocCount10, turnCount10, vocDur10, adults10, noise10;
-                                        activities[time][person].vc += vocCount10;
-                                        activities[time][person].tc += turnCount10;
-                                        activities[time][person].vd += vocDur10;
-                                        activities[time][person].ac += adults10;
-                                        activities[time][person].oln += oln10;
-                                        activities[time][person].no += noise10;
-                                        activities[time][person].cry += cry10;
-
-                                        activities[time][person].avDb += avDb10;
-                                        activities[time][person].maxDb += maxDb10;
-                                        activities[time][person].childSegments += segs10;
-                                        /*double avDb10 = (avDb / blockDur) / 10;
-                             double maxDb10 = (maxDb / blockDur) / 10;
-                             double segs10 = (segs / blockDur) / 10;*/
-                                        if (personTotalCountsWUbi.ContainsKey(person))/////////////////
-                                        {
-                                            personTotalCountsWUbi[person].vc += vocCount10;
-                                            personTotalCountsWUbi[person].tc += turnCount10;
-                                            personTotalCountsWUbi[person].vd += vocDur10;
-                                            personTotalCountsWUbi[person].ac += adults10;
-                                            personTotalCountsWUbi[person].oln += oln10;
-                                            personTotalCountsWUbi[person].no += noise10;
-                                            personTotalCountsWUbi[person].cry += cry10;
-                                            personTotalCountsWUbi[person].avDb += avDb10;
-                                            personTotalCountsWUbi[person].maxDb += maxDb10;
-                                            personTotalCountsWUbi[person].childSegments += segs10;
-                                        }
-
-                                    }
+                                    activities.Add(time, new Dictionary<string, PersonInfo>());
                                 }
+                                if (cf.allLena && (!activities[time].ContainsKey(person)))
+                                {
+                                    activities[time].Add(person, new PersonInfo());
+                                }
+                                if (activities[time].ContainsKey(person))
+                                {
+                                    //activities[time][person] = new PersonInfo(activities[time][person].xPos, activities[time][person].yPos, activities[time][person].lx, activities[time][person].ly, activities[time][person].rx, activities[time][person].ry, activities[time][person].orientation, 
+                                    //vocDur > 0, vocCount10, turnCount10, vocDur10, adults10, noise10);
 
-                                time = time.AddMilliseconds(100);
-                                vocDur -= 0.1;
-                                blockDur -= 0.1;
-                            } while (blockDur > 0);
-                        }
+
+                                    activities[time][person].wasTalking = vocDur > 0 || activities[time][person].wasTalking;//, vocCount10, turnCount10, vocDur10, adults10, noise10;
+                                    activities[time][person].isCrying = cry > 0 || activities[time][person].isCrying;//, vocCount10, turnCount10, vocDur10, adults10, noise10;
+                                    activities[time][person].vc += vocCount10;
+                                    activities[time][person].tc += turnCount10;
+                                    activities[time][person].vd += vocDur10;
+                                    activities[time][person].ad += aDur10;
+                                    activities[time][person].ac += adults10;
+                                    activities[time][person].oln += oln10;
+                                    activities[time][person].no += noise10;
+                                    activities[time][person].cry += cry10;
+
+                                    activities[time][person].avDb += avDb10;
+                                    activities[time][person].maxDb += maxDb10;
+                                    activities[time][person].childSegments += segs10;
+                                    /*double avDb10 = (avDb / blockDur) / 10;
+                            double maxDb10 = (maxDb / blockDur) / 10;
+                            double segs10 = (segs / blockDur) / 10;*/
+                                    if (personTotalCountsWUbi.ContainsKey(person))/////////////////
+                                    {
+                                        personTotalCountsWUbi[person].vc += vocCount10;
+                                        personTotalCountsWUbi[person].tc += turnCount10;
+                                        personTotalCountsWUbi[person].vd += vocDur10;
+                                        personTotalCountsWUbi[person].ad += aDur10;
+                                        personTotalCountsWUbi[person].ac += adults10;
+                                        personTotalCountsWUbi[person].oln += oln10;
+                                        personTotalCountsWUbi[person].no += noise10;
+                                        personTotalCountsWUbi[person].cry += cry10;
+                                        personTotalCountsWUbi[person].avDb += avDb10;
+                                        personTotalCountsWUbi[person].maxDb += maxDb10;
+                                        personTotalCountsWUbi[person].childSegments += segs10;
+                                    }
+
+                                }
+                            }
+
+                            time = time.AddMilliseconds(100);
+                            vocDur -= 0.1;
+                            blockDur -= 0.1;
+                        } while (blockDur > 0);
                     }
                 }
             }
@@ -3076,12 +3085,13 @@ e20170310_134226_014863.wav	1
                                                     Double tc = activities[dt][person].tc;
                                                     Double vc = activities[dt][person].vc;
                                                     Double vd = activities[dt][person].vd;
+                                                    Double ad = activities[dt][person].ad;
                                                     Double a = activities[dt][person].ac;
                                                     Double n = activities[dt][person].no;
                                                     Double o = activities[dt][person].oln;
                                                     Double c = activities[dt][person].cry;
 
-                                                    if (wasTalking || vd > 0 || tc > 0 || a > 0 || n > 0 || vc > 0 || o > 0 || c > 0)
+                                                    if (wasTalking || vd > 0 || ad > 0 || tc > 0 || a > 0 || n > 0 || vc > 0 || o > 0 || c > 0)
                                                     {
                                                         if (dist <= (cf.gOfR * cf.gOfR))
                                                         {
@@ -3116,6 +3126,7 @@ e20170310_134226_014863.wav	1
                                                                     {
                                                                         tc = i.tc > 0 && i.bd > 0 ? (i.tc / i.bd) / 10 : 0;
                                                                         a = i.ac > 0 && i.bd > 0 ? (i.ac / i.bd) / 10 : 0;
+                                                                        ad = i.ad > 0 && i.bd > 0 ? (i.ad / i.bd) / 10 : 0;
                                                                         n = i.no > 0 && i.bd > 0 ? (i.no / i.bd) / 10 : 0;
                                                                         vc = i.vc > 0 && i.bd > 0 ? (i.vc / i.bd) / 10 : 0;
                                                                         o = i.oln > 0 && i.bd > 0 ? (i.oln / i.bd) / 10 : 0;
@@ -3127,6 +3138,7 @@ e20170310_134226_014863.wav	1
                                                                             pairInteractions[pair].subject.vc += vc;
                                                                             pairInteractions[pair].subject.tc += tc;
                                                                             pairInteractions[pair].subject.ac += a;
+                                                                            pairInteractions[pair].subject.ad += ad;
                                                                             pairInteractions[pair].subject.no += n;
                                                                             pairInteractions[pair].subject.oln += o;
                                                                             pairInteractions[pair].subject.cry += c;
@@ -3137,6 +3149,7 @@ e20170310_134226_014863.wav	1
                                                                             pairInteractions[pair].partner.vc += vc;
                                                                             pairInteractions[pair].partner.tc += tc;
                                                                             pairInteractions[pair].partner.ac += a;
+                                                                            pairInteractions[pair].partner.ac += ad;
                                                                             pairInteractions[pair].partner.no += n;
                                                                             pairInteractions[pair].partner.oln += o;
                                                                             pairInteractions[pair].partner.cry += c;

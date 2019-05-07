@@ -38,6 +38,10 @@ namespace UL_PROCESSOR
 
                 //DELETE TEST SUBJ PARTNER 0S
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_1");
+                //configInfo.settings.subs.Add("DS_LADYBUGS_1819_T1");
+                //configInfo.settings.subs.Add("DS_LADYBUGS_1819_8");
+                //configInfo.settings.subs.Add("DS_LADYBUGS_1819_10");
+                //configInfo.settings.subs.Add("DS_LADYBUGS_1819_1");
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_8");
 
                 /************ 1)READ DAY MAPPINGS*******************/
@@ -334,6 +338,10 @@ namespace UL_PROCESSOR
             Boolean absent = sAbsent || pAbsent || dAbsent || lAbsent;
             String type = subject.IndexOf("Lab") == 0 ? "Lab" : subject.IndexOf("T") == 0 ? "Teacher" : "Child";
             String typep = partner.IndexOf("Lab") == 0 ? "Lab" : partner.IndexOf("T") == 0 ? "Teacher" : "Child";
+
+           // MappingRow mr =  day.cf.getUbiMapping(subject, day.day);
+            type = day.cf.getMapping(subject, day.day).type;
+            typep = day.cf.getMapping(partner, day.day).type;
             sAbsent = absent;
             pAbsent = absent;
             dAbsent = absent;
@@ -344,12 +352,12 @@ namespace UL_PROCESSOR
                    (statusp) + "," +
                    (nextDay ? "" : (type) + ",") +
                    (nextDay ? "" : (typep) + ",")
-                   + new StringBuilder().Insert(0, "NA,", (nextDay ? 63 : 63)).ToString();
+                   + new StringBuilder().Insert(0, "NA,", 65).ToString();
             lines[1] = (statusp) + "," +
                    (status) + "," +
                    (nextDay ? "" : (typep) + ",") +
                    (nextDay ? "" : (type) + ",")
-                   + new StringBuilder().Insert(0, "NA,", (nextDay ? 63 : 63)).ToString();
+                   + new StringBuilder().Insert(0, "NA,", 65).ToString();
             if (!absent)
             {
 
@@ -447,11 +455,24 @@ namespace UL_PROCESSOR
                     pUbi,
                     p, absent, absent);////
 
-                subjectLine = (
+               /* "Input2_pvc_or_stc" + "," +
+                   "Pair Block Talking," +
+                   "Pair Talking Duration," +
+                   "Subject-Talking-Duration-From_Start," +
+                   "Partner-Talking-Duration-From-Start," +
+                   "Subject-Talking-Duration-Evenly-Spread," +
+                   "Partner-Talking-Duration-Evenly-Spread," +
+                   "Subject Turn Count," +
+                   "Partner Turn Count," +*/
+
+
+               subjectLine = (
                        (status) + "," +
                        (statusp) + "," +
                        (nextDay ? "" : (type) + ",") +
-                       (nextDay ? "" : (typep) + ",") +
+                       (nextDay ? "" : (typep) + ",") +/////
+                       (absent ? "NA" : typep=="Child" ? partnerVocCount.ToString() : subjectAdCount.ToString()) + "," +
+                       (absent ? "NA" : typep == "Child" ? partnerVocCount.ToString() : subjectTurnCount.ToString()) + "," +
                        (absent ? "NA" : VD.ToString()) + "," +
                        (absent ? "NA" : interactionTime.ToString()) + "," +
                        (sAbsent ? "NA" : subjectInteractionTime.ToString()) + "," +
@@ -486,6 +507,8 @@ namespace UL_PROCESSOR
                     (status) + "," +
                     (nextDay ? "" : (typep) + ",") +
                     (nextDay ? "" : (type) + ",") +
+                    (absent ? "NA" : type == "Child" ? subjectVocCount.ToString() : partnerAdCount.ToString()) + "," +
+                    (absent ? "NA" : type == "Child" ? subjectVocCount.ToString() : partnerTurnCount.ToString()) + "," +
                     (absent ? "NA" : VD.ToString()) + "," +
                     (absent ? "NA" : interactionTime.ToString()) + "," +
                     (pAbsent ? "NA" : partnerInteractionTime.ToString()) + "," +
@@ -527,9 +550,11 @@ namespace UL_PROCESSOR
             {
                 //String title = ",Pair Talking Duration, Subject Talking Duration, Partner Talking Duration,Pair Turn Count, Subject Turn Count, Partner Turn Count, Pair Proximity Duration, Pair Orientation-Proximity Duration, Shared Time in Classroom, Subject Time, Partner Time, Total Recording Time, Total Voc Duration, Total Voc Count, Total Turn Count, Total Partner Voc Duration, Total Partner Voc Count, Total Partner Turn Count";
                 String title =
-                    "Pair Block Talking,"+
+                    "Input1_pvc_or_sac" + "," +
+                    "Input2_pvc_or_stc" + "," + 
+                    "Pair Block Talking," +
                     "Pair Talking Duration,"+ 
-                    "Subject-Talking-Duration-From_Start,"+
+                    "Subject-Talking-Duration-From_Start," +
                     "Partner-Talking-Duration-From-Start,"+ 
                     "Subject-Talking-Duration-Evenly-Spread,"+
                     "Partner-Talking-Duration-Evenly-Spread,"+ 
@@ -582,8 +607,8 @@ namespace UL_PROCESSOR
 
                 //title += getMetrics(" Total ", "WUBI Total", "Partner Total ", "WUBI Partner Total", new PersonInfo(), new PersonInfo(), new PersonInfo(), new PersonInfo(),false,false).Item1;//getMetrics("WUBI Total ", "WUBI Partner Total", new PersonInfo(), new PersonInfo()).Item1;
                 title += getMetrics(" WUBI Total ", " Total", "Partner WUBI Total ", " Partner Total", new PersonInfo(), new PersonInfo(), new PersonInfo(), new PersonInfo(), false, false).Item1;//getMetrics("WUBI Total ", "WUBI Partner Total", new PersonInfo(), new PersonInfo()).Item1;
-                String header1 = "Date, Subject, Partner, Adult?,Subject Status, Partner Status,Subject Type,Partner Type, " + title;
-                String header2 = "Lead_Subject Status, Lead_Partner Status,Lead_" + title.Replace(",", ",Lead_");
+                String header1 = "Date, Subject, Partner, Adult,Subject Status, Partner Status,Subject Type,Partner Type, " + title;
+                String header2 = "Lead_Date,Lead_Subject Status, Lead_Partner Status,Lead_" + title.Replace(",", ",Lead_");
                 sw.Write(header1.Replace(" ", ""));
                 sw.WriteLine(header2.Replace(" ", ""));
                 int idx = 0;
@@ -609,8 +634,8 @@ namespace UL_PROCESSOR
                             String subjectLine = date + "," + subject + "," + partner + "," + adult + "," + lines[0];
                             String partnerLine = date + "," + partner + "," + subject + "," + adult + "," + lines[1];
 
-                            String partnerLine2 = new StringBuilder().Insert(0, "NA,", 65).ToString();
-                            String subjectLine2 = new StringBuilder().Insert(0, "NA,", 65).ToString();
+                            String partnerLine2 = new StringBuilder().Insert(0, "NA,", 68).ToString();
+                            String subjectLine2 = new StringBuilder().Insert(0, "NA,", 68).ToString();
                             if (idx < days.Count)
                             {
                                 ClassroomDay nextDay = days[idx];
@@ -630,16 +655,16 @@ namespace UL_PROCESSOR
                                 {
 
                                     String[] linesN = writePairLineNew(nextDay, pairN, nextDay.startTime.ToShortDateString(), true);
-
+                                    ///
                                     if (!inversePair)
                                     {
-                                        subjectLine2 = linesN[0];
-                                        partnerLine2 = linesN[1];
+                                        subjectLine2 = nextDay.startTime.ToShortDateString()+","+linesN[0];
+                                        partnerLine2 = nextDay.startTime.ToShortDateString() + "," + linesN[1];
                                     }
                                     else
                                     {
-                                        subjectLine2 = linesN[1];
-                                        partnerLine2 = linesN[0];
+                                        subjectLine2 = nextDay.startTime.ToShortDateString() + "," + linesN[1];
+                                        partnerLine2 = nextDay.startTime.ToShortDateString() + "," + linesN[0];
                                     }
                                 }
 

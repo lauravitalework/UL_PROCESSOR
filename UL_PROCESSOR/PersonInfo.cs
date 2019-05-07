@@ -15,6 +15,7 @@ namespace UL_PROCESSOR
     public string ubiId = "";
     public string lenaId = "";
     public string bid = "";
+    public String pType = "";
     public DateTime dt = new DateTime();
     public bool wasTalking = false;
     public double x = 0.00;
@@ -28,6 +29,7 @@ namespace UL_PROCESSOR
     public double bd = 0.00;
     public double no = 0.00;
     public double ac = 0.00;
+    public double ad = 0.00;
     public double oln = 0.00;
     public double cry = 0.00;
     public double lx = 0.00;
