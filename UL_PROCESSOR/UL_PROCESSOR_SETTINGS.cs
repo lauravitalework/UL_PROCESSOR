@@ -8,6 +8,7 @@ namespace UL_PROCESSOR
 {
     class UL_PROCESSOR_SETTINGS
     {
+        public int chunkSize = 4;
         public Boolean doUbiChildFiles = false;
         public Boolean doTenFiles = true;
         public Boolean doSumDayFiles = true;
@@ -17,7 +18,7 @@ namespace UL_PROCESSOR
         public Boolean doGR = true;
         public Boolean doVel = true;
         public Boolean doOnsets = true;
-        public Boolean doSocialOnsets = true;
+        public Boolean doSocialOnsets = false;
         public Boolean doMinVocs = true;
         public Boolean doDbs = true;
         public String dir;
@@ -62,6 +63,9 @@ namespace UL_PROCESSOR
                             break;
                         case "ONSETS":
                             doOnsets = setting[1].Trim().ToUpper() == "YES";
+                            break;
+                        case "SOCIALONSETS":
+                            doSocialOnsets = setting[1].Trim().ToUpper() == "YES";
                             break;
                         case "DBS":
                             doDbs = setting[1].Trim().ToUpper() == "YES";

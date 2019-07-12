@@ -12,7 +12,8 @@ namespace UL_PROCESSOR
      
     class UL_PROCESSOR_Program
     {
-        public int chunkSize = 4;
+         
+
         public void processClassroom(UL_PROCESSOR_SETTINGS settings, UL_PROCESSOR_CLASS_SETTINGS classSettings)
         {
 
@@ -29,10 +30,9 @@ namespace UL_PROCESSOR
             {
                 Console.WriteLine(szDay);
                 //Console.ReadLine();
-
-                count++;
-                total++;
-                if (count>chunkSize)
+ 
+               
+                if (count>= settings.chunkSize)
                 {
                     if(lastDateChunks.Count > 0)
                         dateChunks.Insert(0, lastDateChunks[lastDateChunks.Count-1]);
@@ -47,7 +47,9 @@ namespace UL_PROCESSOR
                 }
                 dateChunks.Add(Convert.ToDateTime(szDay));
 
-                 
+
+                count++; total++;
+
             }
             
             if (lastDateChunks.Count > 0)
@@ -59,8 +61,19 @@ namespace UL_PROCESSOR
             fileNames = fileNames.Concat(ull.fileNames).ToList(); 
             if(settings.doSumAllFiles)
             MergeCsvs(fileNames, fileNames[fileNames.Count - 1].Replace(".", "ALL."));
-
-
+            Console.WriteLine("BID, DAY, VD, VC, TC, AC,OLN,NO, OC");
+            foreach (String szKey in ClassroomDay.sum.Keys)
+            {
+                Console.WriteLine(szKey+","+
+                    ClassroomDay.sum[szKey].vd+","+
+                     ClassroomDay.sum[szKey].vc + "," +
+                      ClassroomDay.sum[szKey].tc + "," +
+                       ClassroomDay.sum[szKey].ac + "," +
+                        ClassroomDay.sum[szKey].oln + "," +
+                         ClassroomDay.sum[szKey].no + "," +
+                          ClassroomDay.sum[szKey].otherChild);
+            }
+            Console.ReadLine();
         }
         static void MergeCsvs(List<String> file_names, String destinationfilename)
         {
@@ -440,6 +453,15 @@ namespace UL_PROCESSOR
                 }
         static void Main(string[] args)
         {
+            Console.WriteLine("APPROACH TEST");
+            Approach AP = new Approach();
+            AP.radius = 7;
+
+
+            Console.ReadLine();
+            
+            
+            
             //readLenaItsFiles("D://ADOS//");
             //PythonRunner pr = new PythonRunner();
             //pr.runScript();
@@ -469,7 +491,7 @@ namespace UL_PROCESSOR
                         UL_PROCESSOR_CLASS_SETTINGS classSettings = new UL_PROCESSOR_CLASS_SETTINGS();
                         classSettings.from(settings[a].Split('|'));
                         UL_PROCESSOR_Program pc = new UL_PROCESSOR_Program();
-                        pc = new UL_PROCESSOR_Program();
+                       
 
                         pc.processClassroom(settingParams, classSettings);
                     }

@@ -11,7 +11,6 @@ namespace UL_PROCESSOR
         public UL_PROCESSOR_SETTINGS settings;
         public UL_PROCESSOR_CLASS_SETTINGS classSettings;
 
-
         public Boolean allLena = false;
         public Boolean justUbi = false;//false;//false;//true;
         public Boolean makeRL = false;//true;//false;
@@ -48,6 +47,7 @@ namespace UL_PROCESSOR
         public int mappingAidCol = 14;
         public int mappingSexCol = 15;
         public int mappingTypeCol = 17;
+        public int mappingAbsentPresentCol = 19;
 
 
         public int lenaFileIdCol = 16;
@@ -372,7 +372,7 @@ namespace UL_PROCESSOR
                                 //if (line.Length <= 18 ||
                                 //    (line.Length > 18 && line[mappingUbiIdCol].Trim().ToUpper() != "ABSENT"))
                                 //{
-                                    Boolean absent = line.Length > 18 && line[mappingUbiIdCol].Trim().ToUpper() == "ABSENT";
+                                Boolean absent = classSettings.mappingBy=="DAY" && line.Length > 18 && line[mappingAbsentPresentCol].Trim().ToUpper() == "ABSENT";
                                 //if(!absent)
                                 { 
                                     MappingRow mr = new MappingRow();
@@ -382,8 +382,8 @@ namespace UL_PROCESSOR
                                     mr.BID = line[mappingBIdCol].Trim();
                                     if (!bids.Contains(mr.BID))
                                         bids.Add(mr.BID);
-                                    mr.Expiration = absent?new DateTime(1,2,1900):this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingExpiredCol]) : dt2;
-                                    mr.Start = absent ? new DateTime(1, 1, 1900) : this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingStartCol]) : dt;
+                                    mr.Expiration = this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingExpiredCol]) : dt2;
+                                    mr.Start = this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingStartCol]) : dt;
                                     mr.absences = getAbsentDays(line[mappingAbsentCol]);
                                     if (absent)
                                         mr.absences.Add(dt);

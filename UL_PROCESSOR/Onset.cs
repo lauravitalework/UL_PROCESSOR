@@ -27,7 +27,7 @@ namespace UL_PROCESSOR
         public double dbPeak;
         public double turnTaking;
         public bool inSocialContact = false;
-
+        public String diagnosis = "Typical";
 
  
 
@@ -48,7 +48,8 @@ namespace UL_PROCESSOR
         double wordCounta,
         double avgDba,
         double dbPeaka,
-        double turnTakinga )
+        double turnTakinga,
+        String diagnosisa)
         {
             file = filea;
             subject = subjecta;
@@ -67,7 +68,8 @@ namespace UL_PROCESSOR
             wordCount= wordCounta;
             avgDb= avgDba;
             dbPeak= dbPeaka;
-            turnTaking= turnTakinga; 
+            turnTaking= turnTakinga;
+            diagnosis = diagnosisa;
     }
         
     }

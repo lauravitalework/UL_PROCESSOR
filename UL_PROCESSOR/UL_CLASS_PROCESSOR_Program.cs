@@ -38,11 +38,14 @@ namespace UL_PROCESSOR
 
                 //DELETE TEST SUBJ PARTNER 0S
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_1");
-                //configInfo.settings.subs.Add("DS_LADYBUGS_1819_T1");
+                // configInfo.settings.subs.Add("DS_LADYBUGS_1819_T1");
+                //configInfo.settings.subs.Add("DS_LADYBUGS_1819_T2");
+                //configInfo.settings.subs.Add("DS_LADYBUGS_1819_10");
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_8");
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_10");
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_1");
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_8");
+
 
                 /************ 1)READ DAY MAPPINGS*******************/
                 if (configInfo.classSettings.mappingBy!="CLASS")
@@ -75,14 +78,7 @@ namespace UL_PROCESSOR
                 Console.WriteLine("setUbiTagData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 cd.setUbiTagData(rawTags.Item1, rawTags.Item2);
 
-                /************ 4)WRITE GR BASE FILES*******************/
-                if (configInfo.settings.doGR)
-                {
-                    Console.WriteLine("GR (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                    cd.writeGR(rawTags.Item3, rawLena ); 
-                }
-
-
+                
                 //SORT 
                 /*List<Order> objListOrder =
                 source.OrderBy(order => order.OrderDate).ToList();*/
@@ -97,6 +93,15 @@ namespace UL_PROCESSOR
                     List<PersonInfo> newList = rawLena[person].OrderBy(order => order.dt).ToList();
                     rawLena[person] = newList;
                 }
+
+                /************ 4)WRITE GR BASE FILES*******************/
+                if (configInfo.settings.doGR)
+                {
+                    Console.WriteLine("GR (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                    cd.writeGR(rawTags.Item3, rawLena);
+                }
+
+
                 /************ 5)SET LENA DATA*******************/
                 Console.WriteLine("setLenaData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 cd.setLenaData(rawLena);
@@ -107,7 +112,7 @@ namespace UL_PROCESSOR
 
 
                 /************ 8)GET REPORTS*******************/
-                if (configInfo.settings.doAngleFiles || configInfo.settings.doTenFiles || configInfo.settings.doSumAllFiles || configInfo.settings.doSumDayFiles)
+                if (configInfo.settings.doSocialOnsets || configInfo.settings.doAngleFiles || configInfo.settings.doTenFiles || configInfo.settings.doSumAllFiles || configInfo.settings.doSumDayFiles)
                 {
                     /************ I)COUNT INTERACTIONS*******************/
                     if (!configInfo.justUbi)
@@ -125,6 +130,7 @@ namespace UL_PROCESSOR
                     cd.activities.Clear();
                     cd.activities = null;
                     cds.Add(cd);
+                    
                 }
                 countDays++;
             }
@@ -342,6 +348,20 @@ namespace UL_PROCESSOR
            // MappingRow mr =  day.cf.getUbiMapping(subject, day.day);
             type = day.cf.getMapping(subject, day.day).type;
             typep = day.cf.getMapping(partner, day.day).type;
+            type = type.Trim() == "" ? (subject.IndexOf("T") == 0 ||
+                                      subject.IndexOf("_T") > 0 ?
+                                      "Teacher" :
+                                      (subject.IndexOf("L") == 0 ||
+                                      subject.IndexOf("_L") > 0 ?
+                                      "Lab" : "Child"))
+                                      : type;
+            typep = typep.Trim() == "" ? (partner.IndexOf("T") == 0 ||
+                                      partner.IndexOf("_T") > 0 ?
+                                      "Teacher" :
+                                      (partner.IndexOf("L") == 0 ||
+                                      partner.IndexOf("_L") > 0 ?
+                                      "Lab" : "Child"))
+                                      : typep;
             sAbsent = absent;
             pAbsent = absent;
             dAbsent = absent;
