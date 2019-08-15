@@ -382,8 +382,8 @@ namespace UL_PROCESSOR
                                     mr.BID = line[mappingBIdCol].Trim();
                                     if (!bids.Contains(mr.BID))
                                         bids.Add(mr.BID);
-                                    mr.Expiration = this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingExpiredCol]) : dt2;
-                                    mr.Start = this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingStartCol]) : dt;
+                                    mr.Expiration = this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingExpiredCol]) : absent?new DateTime(1900, 1,1):dt2;
+                                    mr.Start = this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingStartCol]) : absent ? new DateTime(1900,1, 2) : dt;
                                     mr.absences = getAbsentDays(line[mappingAbsentCol]);
                                     if (absent)
                                         mr.absences.Add(dt);

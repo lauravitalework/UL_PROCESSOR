@@ -56,6 +56,7 @@ namespace UL_PROCESSOR
         public double meters = 0;
         public double secs = 0;
 
+        public Boolean hasULData = false;
 
     }
 }

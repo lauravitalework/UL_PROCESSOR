@@ -57,12 +57,13 @@ namespace UL_PROCESSOR
             double x0 = t1.Minute * 60000 + t1.Second * 1000 + t1.Millisecond;
             double x1 = t2.Minute * 60000 + t2.Second * 1000 + t2.Millisecond;
             double x = t.Minute * 60000 + t.Second * 1000 + t.Millisecond;
+            /**** got ms totLA***/
 
             double y0x = p1.Item1;
             double y1x = p2.Item1;
             double y0y = p1.Item2;
             double y1y = p2.Item2;
-
+             
             double xlerp = (y0x * (x1 - x) + y1x * (x - x0)) / (x1 - x0);
             double ylerp = (y0y * (x1 - x) + y1y * (x - x0)) / (x1 - x0);
             return new Tuple<double, double>(xlerp, ylerp);
@@ -134,6 +135,16 @@ namespace UL_PROCESSOR
                 {
                     index = ~index;
                 }
+                else
+                {
+                    Boolean stop100 = true;
+                }
+
+                if(index==228)
+                {
+                    Boolean stop228 = true;
+                }
+
                 if (index > 0)
                 {
                     //LQ: why same hour??
@@ -201,7 +212,7 @@ namespace UL_PROCESSOR
             }
         }
         public Dictionary<String, DateTime> startLenaTimes = new Dictionary<string, DateTime>();
-        public DateTime maxLenaTimes = new DateTime(1900,1,1);
+        public DateTime maxLenaTimes = new DateTime(1900, 1, 1);
         public void setLenaData(Dictionary<String, List<PersonInfo>> lenadata)
         {
             if (cf.settings.getFromIts)
@@ -319,7 +330,7 @@ namespace UL_PROCESSOR
             int c = 0; int c2 = 0;
             foreach (String person in rawData.Keys)
             {
-                
+
                 try
                 {
                     List<Tuple<DateTime, PersonInfo>> cleanedData = new List<Tuple<DateTime, PersonInfo>>();
@@ -341,7 +352,7 @@ namespace UL_PROCESSOR
                     {
 
                     }
-                   
+
                     foreach (Tuple<DateTime, PersonInfo> dataLine in cleanedData)
                     {
                         DateTime cur = dataLine.Item1;
@@ -356,10 +367,11 @@ namespace UL_PROCESSOR
                             dataLine.Item2.ly = dataLine.Item2.y;
 
                             /*****T1 HACK right tag stopped working on 2/12/19 at 10:28:38.644 left 00:11:CE:00:00:00:02:CE right 00:11:CE:00:00:00:02:F2*****/
-                            Boolean hackT1 = false;// cf.getMapping(person, cur).leftTag.Trim()== "00:11:CE:00:00:00:02:CE" && cur >= new DateTime(2019, 02, 12, 10, 28, 38, 644) && cur <= new DateTime(2019, 06, 3);
+                            //Boolean hackT1 = false;// cf.getMapping(person, cur).leftTag.Trim()== "00:11:CE:00:00:00:02:CE" && cur >= new DateTime(2019, 02, 12, 10, 28, 38, 644) && cur <= new DateTime(2019, 06, 3);
+                            Boolean hackThisT1 = cf.settings.hackT1 ? cf.getMapping(person, cur).leftTag.Trim() == "00:11:CE:00:00:00:02:CE" && cur >= new DateTime(2019, 02, 12, 10, 28, 38, 644) && cur <= new DateTime(2019, 06, 3) : false;
                             /*****T1 HACK right tag *****/
 
-                            if (cf.makeRL || hackT1)
+                            if (cf.makeRL || hackThisT1)
                             {
                                 dataLine.Item2.rx = dataLine.Item2.lx + 0.15;
                                 dataLine.Item2.ry = dataLine.Item2.ly;
@@ -518,7 +530,7 @@ namespace UL_PROCESSOR
             }
             return rawInfo;
         }
-        
+
 
         public Boolean isValidTagTime(String personId, ref Dictionary<String, DateTime> last, Dictionary<String, DateTime> lastPairTag, ref Dictionary<String, String> firstLines, ref Dictionary<String, String> firstLinesPair, DateTime lineTime, Boolean validTime, String line, ref TextWriter swc)
         {
@@ -559,7 +571,7 @@ namespace UL_PROCESSOR
                 String personId = i.bid;
                 DateTime lineTime = i.dt;
                 String szLine = i.szLineData;
-                if (i.bid == "3D")
+                if (i.bid == "L2P")
                 {
                     bool stop = true;
                 }
@@ -572,8 +584,12 @@ namespace UL_PROCESSOR
                          lineTime <= rawLena[personId][rawLena[personId].Count - 1].dt &&
                          (!isThisInTimes(lineTime, cf.extractTimes)))
                 {
+                    if (i.bid == "L2P")
+                    {
+                        bool stop = true;
+                    }
                     Boolean sAbsent = cf.getMapping(personId, day).isAbsent(day);//|| (!day.startLenaTimes.ContainsKey(subject));// false;
-                    if (!sAbsent && lineTime.CompareTo(trunk) <= 0)
+                    if ((!sAbsent) && lineTime.CompareTo(trunk) <= 0)
                     {
                         if (i.tagType == "L")
                             validTime = validTime || isValidTagTime(personId, ref lastL, lastR, ref firstLinesL, ref firstLinesR, lineTime, validTime, (szLine.Replace(i.tag, personId + i.tagType) + "," + i.tag), ref swc);
@@ -628,6 +644,8 @@ namespace UL_PROCESSOR
                                     if (line.Length > 5)
                                     {
                                         String tag = line[1].Trim();
+                                        if (tag == "00:11:CE:00:00:00:02:66")
+                                            tag = tag;
                                         String personId = "";
                                         DateTime lineTime = Convert.ToDateTime(line[2]);
                                         Double xPos = Convert.ToDouble(line[3]);
@@ -691,7 +709,7 @@ namespace UL_PROCESSOR
                                                 rawInfoAll.Add(i);
                                             }
                                         }
-                                         
+
                                     }
                                 }
                             }
@@ -972,7 +990,7 @@ namespace UL_PROCESSOR
             {
                 using (TextWriter swvd = new StreamWriter(cf.root + cf.classroom + "/SYNC/DISTDETAILS_" + cf.settings.fileNameVersion + "_" + szDay + " .CSV"))//"
                 {
-                    sw.WriteLine("BID, DateTime, X, Y, Chaoming_Orientation, Talking, Aid, S, Type,rx,ry,lx,ly,Crying,Meters,Seconds,INFLOW,PART_FLOW_METERS,PART_FLOW_SECS,FLOW_METERS,FLOW_SECS,Velocity,Distance,Angle Velocity,Ubi_Orientation,");
+                    sw.WriteLine("BID, DateTime, X, Y, Chaoming_Orientation, Talking, Aid, S, Type,rx,ry,lx,ly,Crying,Meters,Seconds,INFLOW,PART_FLOW_METERS,PART_FLOW_SECS,FLOW_METERS,FLOW_SECS,Velocity,Distance,Angle Velocity,Ubi_Orientation,UL_INFO");
                     foreach (KeyValuePair<DateTime, Dictionary<String, PersonInfo>> pi in activities.OrderBy(key => key.Key))
                     {
                         DateTime dt = pi.Key;
@@ -1059,7 +1077,7 @@ namespace UL_PROCESSOR
                                                 lastPersonInfo[s].meters + "," +
                                                 lastPersonInfo[s].secs + "," +
                                                 (timeFlowFlag ? 0 : lastPersonInfo[s].meters) + "," +
-                                                (timeFlowFlag ? 0 : lastPersonInfo[s].secs) + "," + activities[dt][s].ori
+                                                (timeFlowFlag ? 0 : lastPersonInfo[s].secs) + "," + activities[dt][s].ori+"," + (activities[dt][s].hasULData?1:0)
                                             /* + "," +
                                         pointToPointVel + "," +
                                         dist + "," +
@@ -1141,11 +1159,11 @@ namespace UL_PROCESSOR
                                     //tagInfo ti = tags[s];
                                     MappingRow mr = cf.getMapping(s, day);
                                     if (((!cf.settings.startFromLena) || isWithLenaStart(dt, s))
-                                                                /*&&
-                                                                activities[dt][s].rx>0&&
-                                                                    activities[dt][s].ry>0&&
-                                                                    activities[dt][s].lx > 0 &&
-                                                                    activities[dt][s].ly > 0*/)
+                                                                    /*&&
+                                                                    activities[dt][s].rx>0&&
+                                                                        activities[dt][s].ry>0&&
+                                                                        activities[dt][s].lx > 0 &&
+                                                                        activities[dt][s].ly > 0*/)
                                     {
 
                                         double pointToPointVel = 0;
@@ -1359,7 +1377,7 @@ if (theta > 360) theta -= 360;*/
         public void setMinData(ref Dictionary<DateTime, Tuple<double, double, double, double>> minDate, DateTime start, DateTime end, String type, double count)
         {
 
-            if(start.Minute==14)
+            if (start.Minute == 14)
             {
                 Boolean stp = true;
             }
@@ -1501,7 +1519,7 @@ e20170310_134226_014863.wav	1
         {
             addToPersonInfoSum(ref sum, sumKey, vc, vd, tc, ac, no, oln, 0);
         }
-        public void addToPersonInfoSum(ref Dictionary<String,PersonInfo> sum, String sumKey, double vc, double vd, double tc, double ac, double no, double oln, double otherChild)
+        public void addToPersonInfoSum(ref Dictionary<String, PersonInfo> sum, String sumKey, double vc, double vd, double tc, double ac, double no, double oln, double otherChild)
         {
 
             /*****SUM******/
@@ -1523,8 +1541,8 @@ e20170310_134226_014863.wav	1
             Boolean dayDone = daysDone.ContainsKey(this.day);
             onsets = new Dictionary<string, List<Onset>>();
             Boolean doSmartNames = false;
-            TextWriter swsn=null;
-            if ( doSmartNames)
+            TextWriter swsn = null;
+            if (doSmartNames)
                 swsn = new StreamWriter(cf.syncFilePre + "_SMARTNAMES" + cf.settings.fileNameVersion + ".CSV", true);// countDays > 0);
 
             Dictionary<String, List<PersonInfo>> rawLenaInfo = new Dictionary<String, List<PersonInfo>>();
@@ -1567,7 +1585,7 @@ e20170310_134226_014863.wav	1
                 {
                     if (cf.settings.doDbs)
                         swd.WriteLine("Date,Subject,SubjectType,Conv_avg_db,Conv_avg_peak,Child_avg_db,Child_avg_peak");
-                    if ((!dayDone)&&(cf.settings.doOnsets || cf.settings.doSocialOnsets))
+                    if ((!dayDone) && (cf.settings.doOnsets || cf.settings.doSocialOnsets))
                     {
                         sw.WriteLine("File,Date,Subject,LenaID,SubjectType,segmentid,voctype,recstart,startsec,endsec,starttime,endtime,duration,seg_duration,wordcount,avg_db,avg_peak,turn_taking ");
                         //<AVA rawScore="-0.432" standardScore="ICD" estimatedMLU="ICD" estimatedDevAge="ICD" vocalizationCnt="ORH" vocalizationLen="ORH" MLV="ORH" />
@@ -1584,8 +1602,8 @@ e20170310_134226_014863.wav	1
                         //e20170306_105341_014866_aligned.wav
                     }
                 }
-               // TextWriter ssw = new StreamWriter(cf.syncFilePre + "_SUMMARY" + cf.settings.fileNameVersion + ".CSV", true);// countDays > 0);
-                
+                // TextWriter ssw = new StreamWriter(cf.syncFilePre + "_SUMMARY" + cf.settings.fileNameVersion + ".CSV", true);// countDays > 0);
+
                 foreach (string folder in folders)
                 {
                     String folderName = folder.Substring(folder.LastIndexOf("/") + 1);
@@ -1607,6 +1625,8 @@ e20170310_134226_014863.wav	1
                                 else if (lenaId.Substring(0, 1) == "0")
                                     lenaId = lenaId.Substring(1);
 
+                                if (lenaId == "26860")
+                                    lenaId = lenaId;
                                 //min child voc dur, child 
                                 double at = getAdjustedSecs(lenaId);
                                 XmlDocument doc = new XmlDocument();
@@ -1615,7 +1635,7 @@ e20170310_134226_014863.wav	1
                                 MappingRow mr = cf.getLenaMapping(lenaId, day);
                                 String pibid = mr.BID;
                                 String pitype = mr.type;
-                                
+
                                 XmlNodeList ava = cf.lenaVersion == "SP" ? doc.ChildNodes[0].SelectNodes("ProcessingUnit/AVA") : doc.ChildNodes[2].SelectNodes("ProcessingUnit/AVA");
                                 //MLV  ava[0].Attributes["MLV"].Value
                                 if ((!dayDone) && (cf.settings.doOnsets || cf.settings.doSocialOnsets) && pibid != "")
@@ -1639,7 +1659,7 @@ e20170310_134226_014863.wav	1
 
 
 
-            XmlNodeList rec = cf.lenaVersion == "SP" ? doc.ChildNodes[0].SelectNodes("ProcessingUnit/Recording") : doc.ChildNodes[2].SelectNodes("ProcessingUnit/Recording");
+                                XmlNodeList rec = cf.lenaVersion == "SP" ? doc.ChildNodes[0].SelectNodes("ProcessingUnit/Recording") : doc.ChildNodes[2].SelectNodes("ProcessingUnit/Recording");
 
 
                                 /*DateTime dt2 = i.dt;
@@ -1687,18 +1707,18 @@ e20170310_134226_014863.wav	1
                                         {
                                             case "PRIDE_LEAP_AM":
 
-                                                superDir =     "/projects2/cg/dmlab/IBSS/"+dir+ Config.getDayDashStr(this.day) +"/LENA_Data/"+ fileType +"/"+ fileName;
+                                                superDir = "/projects2/cg/dmlab/IBSS/" + dir + Config.getDayDashStr(this.day) + "/LENA_Data/" + fileType + "/" + fileName;
                                                 //superCopyDir = "/projects2/cg/dmlab/IBSS/" + dir + Config.getDayDashStr(this.day) + "/LENA_Data/" + fileType + "_RE/" + fileName;
                                                 renameDir = "/projects2/cg/dmlab/IBSS/" + dir + Config.getDayDashStr(this.day) + "/LENA_Data/" + fileType + "_RENAMED";
-                                                    break;
+                                                break;
 
                                         }
-                                        String newSmartName = Config.getDayStr(this.day) +pibid.Replace("Lab","L") + "_" + fileName.Substring(2);
+                                        String newSmartName = Config.getDayStr(this.day) + pibid.Replace("Lab", "L") + "_" + fileName.Substring(2);
                                         swsn.WriteLine(fileName + "," + newSmartName + "," +
                                             superDir + "," +
                                             "mkdir -p " + renameDir + ", " +
                                             "mkdir -p " + renameDir.Replace("PRIDE_LEAP_AM/", "").Replace("PRIDE_LEAP_PM/", "") + ", " +
-                                            "cp " + superDir + " " + renameDir + "/" + newSmartName + ", "+
+                                            "cp " + superDir + " " + renameDir + "/" + newSmartName + ", " +
                                             "cp " + superDir + " " + renameDir.Replace("PRIDE_LEAP_AM/", "").Replace("PRIDE_LEAP_PM/", "") + "/" + newSmartName);
                                         //swsn.WriteLine(fileName.Replace(".its",".wav") + "," + Config.getDayStr(this.day) + "_" + pibid + "_" + fileName.Replace(".its", ".wav"));
                                     }
@@ -1714,15 +1734,12 @@ e20170310_134226_014863.wav	1
                                     {
                                         swqa.WriteLine("SAME DAY, " + recStartTime.ToShortDateString() + " , " + day.ToShortDateString() + " ,LENA," +
                                                 lenaId + ", BID:, " + pibid + " ,REC: ," + recnum + ", START: , " + recStartSecs);
-                                        
+
                                     }
 
 
-                                     
-                                    if (  recStartTime.Day == day.Day &&
-                                          ( ((!isAm) && (!isPm)) ||
-                                          (isAm && recStartTime.Hour<11) ||
-                                          (isPm && recStartTime.Hour >= 11)))
+
+                                    if (recStartTime.Day == day.Day)
 
                                     {
                                         if (cf.settings.lenaTimes)
@@ -1732,7 +1749,7 @@ e20170310_134226_014863.wav	1
                                             String audioFileName = fileName.Substring(0, fileName.IndexOf("."));
                                             String audioFileName_aligned = audioFileName + "_aligned.wav";
                                             audioFileName = audioFileName + ".wav";
-                                            swlt.WriteLine(this.day + "," + fileName+","+ audioFileName+","+ audioFileName_aligned+","+lenaId+","+pibid+","+ recStartTime);
+                                            swlt.WriteLine(this.day + "," + fileName + "," + audioFileName + "," + audioFileName_aligned + "," + lenaId + "," + pibid + "," + recStartTime);
 
 
                                             /* sw.WriteLine(file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," + mr.type + "," +
@@ -1748,20 +1765,24 @@ e20170310_134226_014863.wav	1
                                                                         "," + end.Hour + "," + end.Minute + "," + end.Second);*/
                                         }
 
-                                      //  swoffsets.WriteLine(file + "," + this.day + "," + pibid + "," + lenaId + "," + mr.type + "," + recStartTimeOriginal + "," + Config.getTimeStr(recStartTimeOriginal) + ","+recStartTime+ ","+ Config.getTimeStr(recStartTime));//  
+                                        //  swoffsets.WriteLine(file + "," + this.day + "," + pibid + "," + lenaId + "," + mr.type + "," + recStartTimeOriginal + "," + Config.getTimeStr(recStartTimeOriginal) + ","+recStartTime+ ","+ Config.getTimeStr(recStartTime));//  
 
                                         foreach (XmlNode conv in nodes)
                                         {
                                             String sumKey = "";
                                             String num = conv.Attributes["num"].Value;
                                             XmlNodeList segments = conv.SelectNodes("Segment");
-                                            double startSecs = Convert.ToDouble(conv.Attributes["startTime"].Value.Substring(2, conv.Attributes["startTime"].Value.Length - 3))- recStartSecs;
-                                            double endSecs = Convert.ToDouble(conv.Attributes["endTime"].Value.Substring(2, conv.Attributes["endTime"].Value.Length - 3))- recStartSecs;
+                                            double startSecs = Convert.ToDouble(conv.Attributes["startTime"].Value.Substring(2, conv.Attributes["startTime"].Value.Length - 3)) - recStartSecs;
+                                            double endSecs = Convert.ToDouble(conv.Attributes["endTime"].Value.Substring(2, conv.Attributes["endTime"].Value.Length - 3)) - recStartSecs;
                                             DateTime start = Config.geFullTime(recStartTime.AddSeconds(startSecs));
                                             DateTime end = Config.geFullTime(recStartTime.AddSeconds(endSecs));
                                             PersonInfo pi = new PersonInfo();
+                                            if ((((!isAm) && (!isPm)) ||
+                                                 (isAm && start.Hour < 11) ||
+                                                 (isPm && start.Hour >= 11)))
 
-                                            mr = cf.getLenaMapping(lenaId, start);
+                                            {
+                                                mr = cf.getLenaMapping(lenaId, start);
                                             if (conv.Name == "Conversation")
                                             {
                                                 double tc = Convert.ToDouble(conv.Attributes["turnTaking"].Value);
@@ -1773,7 +1794,7 @@ e20170310_134226_014863.wav	1
                                                 if (tc > 0)
                                                 {
                                                     /*****SUM******/
-                                                    sumKey = start.ToShortDateString()+ ","+(mr.BID.Trim() != "" ? mr.BID : lenaId)+","+lenaId;
+                                                    sumKey = start.ToShortDateString() + "," + (mr.BID.Trim() != "" ? mr.BID : lenaId) + "," + lenaId;
                                                     addToPersonInfoSum(ref sum, sumKey, 0, 0, tc, 0, 0, 0);
                                                     /*****SUM******/
 
@@ -1791,50 +1812,50 @@ e20170310_134226_014863.wav	1
                                                         //sw.WriteLine("File,Date,Subject,LenaID,SubjectType,segmentid,voctype,
                                                         //recstart,startsec,endsec,starttime,endtime,
                                                         //duration,seg_duration,wordcount,avg_db,avg_peak,turn_taking ");
-                                                        sw.WriteLine(file + "," + 
-                                                            this.day + "," + 
-                                                            pi.bid + "," + 
-                                                            pi.lenaId + "," + 
+                                                        sw.WriteLine(file + "," +
+                                                            this.day + "," +
+                                                            pi.bid + "," +
+                                                            pi.lenaId + "," +
                                                             mr.type + "," +
-                                                            segmentNumber + 
+                                                            segmentNumber +
                                                             ",Conversation_turnTaking," +
-                                                            Config.getTimeStr(recStartTime) + "," + 
-                                                            startSecs + "," + 
+                                                            Config.getTimeStr(recStartTime) + "," +
+                                                            startSecs + "," +
                                                             endSecs + "," +
                                                             Config.getTimeStr(start) + "," +
                                                             Config.getTimeStr(end) + "," +
                                                             String.Format("{0:0.00}", pi.vd) + "," +
-                                                            String.Format("{0:0.00}", pi.bd) + ","+
+                                                            String.Format("{0:0.00}", pi.bd) + "," +
                                                             "," +
                                                             String.Format("{0:0.00}", pi.avDb) + "," +
-                                                            String.Format("{0:0.00}", pi.maxDb) +"," + 
-                                                            tc+","+
-                                                            start.Hour + "," + 
-                                                            start.Minute + "," + 
-                                                            start.Second +"," + 
-                                                            end.Hour + "," + 
-                                                            end.Minute + "," + 
+                                                            String.Format("{0:0.00}", pi.maxDb) + "," +
+                                                            tc + "," +
+                                                            start.Hour + "," +
+                                                            start.Minute + "," +
+                                                            start.Second + "," +
+                                                            end.Hour + "," +
+                                                            end.Minute + "," +
                                                             end.Second);
 
                                                         if (!onsets.ContainsKey(pi.bid))
                                                             onsets.Add(pi.bid, new List<Onset>());
-                                                        onsets[pi.bid].Add(new Onset(file ,
-                                                            this.day ,
-                                                            pi.bid ,
-                                                            pi.lenaId ,
-                                                            mr.type ,
+                                                        onsets[pi.bid].Add(new Onset(file,
+                                                            this.day,
+                                                            pi.bid,
+                                                            pi.lenaId,
+                                                            mr.type,
                                                             segmentNumber,
                                                            "Conversation_turnTaking",
-                                                            recStartTime ,
-                                                            startSecs ,
-                                                            endSecs ,
-                                                            start ,
-                                                            end ,
+                                                            recStartTime,
+                                                            startSecs,
+                                                            endSecs,
+                                                            start,
+                                                            end,
                                                             pi.vd,
-                                                            pi.bd ,
+                                                            pi.bd,
                                                             0,
-                                                            pi.avDb ,
-                                                            pi.maxDb ,
+                                                            pi.avDb,
+                                                            pi.maxDb,
                                                             tc, mr.aid));
                                                     }
                                                 }
@@ -1845,8 +1866,8 @@ e20170310_134226_014863.wav	1
                                             {
                                                 //startClockTime
                                                 segmentNumber++;
-                                                startSecs = Convert.ToDouble(seg.Attributes["startTime"].Value.Substring(2, seg.Attributes["startTime"].Value.Length - 3))- recStartSecs;
-                                                endSecs = Convert.ToDouble(seg.Attributes["endTime"].Value.Substring(2, seg.Attributes["endTime"].Value.Length - 3))- recStartSecs;
+                                                startSecs = Convert.ToDouble(seg.Attributes["startTime"].Value.Substring(2, seg.Attributes["startTime"].Value.Length - 3)) - recStartSecs;
+                                                endSecs = Convert.ToDouble(seg.Attributes["endTime"].Value.Substring(2, seg.Attributes["endTime"].Value.Length - 3)) - recStartSecs;
                                                 start = Config.geFullTime(recStartTime.AddMilliseconds(startSecs * 1000));
                                                 end = Config.geFullTime(recStartTime.AddMilliseconds(endSecs * 1000));
                                                 pi = new PersonInfo();
@@ -1863,7 +1884,7 @@ e20170310_134226_014863.wav	1
                                                 {
                                                     case "CHN":
                                                     case "CHF":
-                                                        
+
                                                         ///
                                                         // if (test == 0)
                                                         //   break;
@@ -1884,7 +1905,7 @@ e20170310_134226_014863.wav	1
 
                                                             if (pi.vc < 0 || pi.bd < 0)
                                                             {
-                                                                    bool stop = true;
+                                                                bool stop = true;
                                                                 start = Config.geFullTime(recStartTime.AddMilliseconds(startSecs * 1000));
                                                                 end = Config.geFullTime(recStartTime.AddMilliseconds(endSecs * 1000));
                                                             }
@@ -1894,11 +1915,11 @@ e20170310_134226_014863.wav	1
                                                                     segmentNumber + ",CHN_CHF SegmentUtt," +
                                                                     Config.getTimeStr(recStartTime) + "," + startSecs + "," + endSecs + "," +
                                                                     Config.getTimeStr(start) + "," +
-                                                                    Config.getTimeStr(end )+ "," +
+                                                                    Config.getTimeStr(end) + "," +
                                                                     String.Format("{0:0.00}", pi.vd) + "," +
                                                                     String.Format("{0:0.00}", pi.bd) + ",," +
                                                                     String.Format("{0:0.00}", pi.avDb) + "," +
-                                                                    String.Format("{0:0.00}", pi.maxDb) +",," + 
+                                                                    String.Format("{0:0.00}", pi.maxDb) + ",," +
                                                                     start.Hour + "," + start.Minute + "," + start.Second +
                                                                     "," + end.Hour + "," + end.Minute + "," + end.Second);
 
@@ -1928,7 +1949,7 @@ e20170310_134226_014863.wav	1
                                                                 setMinData(ref minDate, start, end, "CHC", pi.vc);
                                                             }
                                                             pi.vd = 0;
-                                                         
+
                                                             if (mr.type == "Child")
                                                             {
                                                                 subjectAvgDb = subjectAvgDb == 1 ? pi.avDb : (subjectAvgDb + pi.avDb) != 0 ? (subjectAvgDb + pi.avDb) / 2 : 0;
@@ -1943,8 +1964,8 @@ e20170310_134226_014863.wav	1
                                                                 {
                                                                     String cryStep = atts.Name.Substring(8);
                                                                     String att = atts.Name;
-                                                                    double cstartSecs = Convert.ToDouble(seg.Attributes[att].Value.Substring(2, seg.Attributes[att].Value.Length - 3))- recStartSecs;
-                                                                    double cendSecs = Convert.ToDouble(seg.Attributes["endCry" + cryStep].Value.Substring(2, seg.Attributes["endCry" + cryStep].Value.Length - 3))- recStartSecs;
+                                                                    double cstartSecs = Convert.ToDouble(seg.Attributes[att].Value.Substring(2, seg.Attributes[att].Value.Length - 3)) - recStartSecs;
+                                                                    double cendSecs = Convert.ToDouble(seg.Attributes["endCry" + cryStep].Value.Substring(2, seg.Attributes["endCry" + cryStep].Value.Length - 3)) - recStartSecs;
                                                                     DateTime cstart = Config.geFullTime(recStartTime.AddMilliseconds(cstartSecs * 1000));
                                                                     DateTime cend = Config.geFullTime(recStartTime.AddMilliseconds(cendSecs * 1000));
                                                                     PersonInfo cpi = new PersonInfo();
@@ -1999,8 +2020,8 @@ e20170310_134226_014863.wav	1
                                                                 {
                                                                     String cryStep = atts.Name.Substring(8);
                                                                     String att = atts.Name;
-                                                                    double cstartSecs = Convert.ToDouble(seg.Attributes[att].Value.Substring(2, seg.Attributes[att].Value.Length - 3))- recStartSecs;
-                                                                    double cendSecs = Convert.ToDouble(seg.Attributes["endUtt" + cryStep].Value.Substring(2, seg.Attributes["endUtt" + cryStep].Value.Length - 3))- recStartSecs;
+                                                                    double cstartSecs = Convert.ToDouble(seg.Attributes[att].Value.Substring(2, seg.Attributes[att].Value.Length - 3)) - recStartSecs;
+                                                                    double cendSecs = Convert.ToDouble(seg.Attributes["endUtt" + cryStep].Value.Substring(2, seg.Attributes["endUtt" + cryStep].Value.Length - 3)) - recStartSecs;
                                                                     DateTime cstart = Config.geFullTime(recStartTime.AddMilliseconds(cstartSecs * 1000));
                                                                     DateTime cend = Config.geFullTime(recStartTime.AddMilliseconds(cendSecs * 1000));
                                                                     PersonInfo cpi = new PersonInfo();
@@ -2023,12 +2044,12 @@ e20170310_134226_014863.wav	1
                                                                     newSwLine = (file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," + mr.type + "," + segmentNumber +
                                                                     ",CHN_CHF Utt," +
                                                                         Config.getTimeStr(recStartTime) + "," +
-                                                                        cstartSecs + "," + 
+                                                                        cstartSecs + "," +
                                                                         cendSecs + "," +
                                                                         Config.getTimeStr(cstart) + "," +
                                                                         Config.getTimeStr(cend) + "," +
                                                                         String.Format("{0:0.00}", cpi.vd) + "," +
-                                                                        String.Format("{0:0.00}", pi.bd) +",,,,," + 
+                                                                        String.Format("{0:0.00}", pi.bd) + ",,,,," +
                                                                         start.Hour + "," + start.Minute + "," + start.Second +
                                                                      "," + end.Hour + "," + end.Minute + "," + end.Second);
 
@@ -2067,7 +2088,7 @@ e20170310_134226_014863.wav	1
                                                                         setMinData(ref minDate, cstart, cend, "CHD", cpi.vd);
                                                                     }
                                                                 }
-                                                                if ((!dayDone) &&  newSwLine != "" && (cf.settings.doOnsets || cf.settings.doSocialOnsets))
+                                                                if ((!dayDone) && newSwLine != "" && (cf.settings.doOnsets || cf.settings.doSocialOnsets))
                                                                     sw.WriteLine(newSwLine);
                                                             }
                                                             //////////////////////
@@ -2076,7 +2097,7 @@ e20170310_134226_014863.wav	1
                                                         break;
                                                     case "FAN":
                                                         pi.ac = Convert.ToDouble(seg.Attributes["femaleAdultWordCnt"].Value);
-                                                       
+
                                                         /*****SUM******/
                                                         sumKey = this.day.ToShortDateString() + "," + (pi.bid.Trim() != "" ? pi.bid : lenaId) + "," + lenaId;
                                                         addToPersonInfoSum(ref sum, sumKey, 0, 0, 0, pi.ac, 0, 0);
@@ -2128,7 +2149,7 @@ e20170310_134226_014863.wav	1
                                                             }
                                                             if (cf.settings.doMinVocs)
                                                             {
-                                                                if (start.Minute == 14 && pi.bid=="6B")
+                                                                if (start.Minute == 14 && pi.bid == "6B")
                                                                 {
                                                                     Boolean stp = true;
                                                                 }
@@ -2137,11 +2158,11 @@ e20170310_134226_014863.wav	1
                                                             }
                                                         }
                                                         //if (mr.type == "Lab" || mr.type == "Teacher")
-                                                            add = true;
+                                                        add = true;
                                                         break;
                                                     case "MAN":
                                                         pi.ac = Convert.ToDouble(seg.Attributes["maleAdultWordCnt"].Value);
-                                                        
+
                                                         /*****SUM******/
                                                         sumKey = this.day.ToShortDateString() + "," + (pi.bid.Trim() != "" ? pi.bid : lenaId) + "," + lenaId;
                                                         addToPersonInfoSum(ref sum, sumKey, 0, 0, 0, pi.ac, 0, 0);
@@ -2158,7 +2179,7 @@ e20170310_134226_014863.wav	1
                                                             if ((!dayDone) && (cf.settings.doOnsets || cf.settings.doSocialOnsets))
                                                             {//Config.getTimeStr(end) + "," +
                                                              //Math.Round(pi.vd, 2) + "," +
-                                                                sw.WriteLine(file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," + 
+                                                                sw.WriteLine(file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," +
                                                                     mr.type + "," + segmentNumber +
                                                                     ",MAN SegmentUtt," +
                                                                     Config.getTimeStr(recStartTime) + "," +
@@ -2198,13 +2219,13 @@ e20170310_134226_014863.wav	1
                                                             }
                                                         }
                                                         //if (mr.type == "Lab" || mr.type == "Teacher")
-                                                            add = true;
+                                                        add = true;
                                                         break;
                                                     case "OLN":
                                                         pi.bd = endSecs - startSecs;
                                                         pi.oln = pi.bd;
                                                         /*****SUM******/
-                                                        sumKey = this.day.ToShortDateString() + "," +( pi.bid.Trim() != "" ? pi.bid : lenaId) + "," + lenaId;
+                                                        sumKey = this.day.ToShortDateString() + "," + (pi.bid.Trim() != "" ? pi.bid : lenaId) + "," + lenaId;
                                                         addToPersonInfoSum(ref sum, sumKey, 0, 0, 0, 0, 0, pi.oln);
                                                         /*****SUM******/
                                                         add = true;
@@ -2225,7 +2246,7 @@ e20170310_134226_014863.wav	1
                                                             setMinData(ref minDate, start, end, "CX", pi.bd);
                                                         }
                                                         /*****SUM******/
-                                                        sumKey = this.day.ToShortDateString() + "," + (pi.bid.Trim() != "" ? pi.bid : lenaId)+","+lenaId;
+                                                        sumKey = this.day.ToShortDateString() + "," + (pi.bid.Trim() != "" ? pi.bid : lenaId) + "," + lenaId;
                                                         addToPersonInfoSum(ref sum, sumKey, 0, 0, 0, 0, 0, 0, pi.bd);
                                                         /*****SUM******/
                                                         break;
@@ -2238,9 +2259,11 @@ e20170310_134226_014863.wav	1
                                                     addMsToRawLena(ref rawLenaInfo, pi);
                                                 }
 
-                                            }
+                                            }//////
+
 
                                         }
+                                    }
                                     }
 
                                     if (cf.settings.doDbs)
@@ -2267,13 +2290,13 @@ e20170310_134226_014863.wav	1
                         }
                     }
                 }
-                if (  (cf.settings.doOnsets || cf.settings.doSocialOnsets))
+                if ((cf.settings.doOnsets || cf.settings.doSocialOnsets))
                 {
                     swoffsets.Close();
                     sw.Close();
                     swava.Close();
                 }
-                     
+
                 if (cf.settings.doDbs)
                     swd.Dispose();
                 if (cf.settings.doMinVocs)
@@ -2287,8 +2310,8 @@ e20170310_134226_014863.wav	1
 
                 swqa.Close();
             }
-            if(!dayDone)
-            daysDone.Add(this.day, true);
+            if (!dayDone)
+                daysDone.Add(this.day, true);
             return rawLenaInfo;
         }
         public Dictionary<String, List<PersonInfo>> readLenaItsFilesOld(int countDays)
@@ -2371,7 +2394,7 @@ e20170310_134226_014863.wav	1
                                                                 dt3 = new DateTime(dt3.Year, dt3.Month, dt3.Day, dt3.Hour, dt3.Minute, dt3.Second, ms);
                                                                 i.bd= (dt3 - dt2).Seconds + ((dt3 - dt2).Milliseconds / 1000.00);
                                                                 */
-                                        int segmentNumber = 0;
+                                int segmentNumber = 0;
                                 int childSegmentNumber = 0;
                                 foreach (XmlNode recording in rec)
                                 {
@@ -2391,7 +2414,7 @@ e20170310_134226_014863.wav	1
                                     double subjectConvAvgDb = 1;
                                     double subjectConvMaxDb = 1;
 
-                                  
+
                                     if (recStartTime.Day == day.Day)
                                     {
                                         foreach (XmlNode conv in nodes)
@@ -2449,7 +2472,7 @@ e20170310_134226_014863.wav	1
                                                 {
                                                     case "CHN":
                                                     case "CHF":
-                                              
+
                                                         ///
                                                         // if (test == 0)
                                                         //   break;
@@ -2793,10 +2816,7 @@ e20170310_134226_014863.wav	1
         {
             foreach (String person in lenadata.Keys)
             {
-                if (person == "10D")
-                {
-                    bool stop = true;
-                }
+             
                 Boolean startSet = false;
                 List<PersonInfo> dataLine = lenadata[person];
                 foreach (PersonInfo data in dataLine)
@@ -2883,6 +2903,10 @@ e20170310_134226_014863.wav	1
                         {
                             if (activities.ContainsKey(time))
                             {
+                                if (activities[time].ContainsKey(person))
+                                {
+                                    activities[time][person].hasULData = true;
+                                }
                                 if (cf.allLena && (!activities.ContainsKey(time)))
                                 {
                                     activities.Add(time, new Dictionary<string, PersonInfo>());
@@ -2891,6 +2915,7 @@ e20170310_134226_014863.wav	1
                                 {
                                     activities[time].Add(person, new PersonInfo());
                                 }
+
                                 if (activities[time].ContainsKey(person))
                                 {
                                     //activities[time][person] = new PersonInfo(activities[time][person].xPos, activities[time][person].yPos, activities[time][person].lx, activities[time][person].ly, activities[time][person].rx, activities[time][person].ry, activities[time][person].orientation, 
@@ -3069,15 +3094,23 @@ e20170310_134226_014863.wav	1
             Dictionary<DateTime, Dictionary<String, Tuple<DateTime, DateTime>>> flags = new Dictionary<DateTime, Dictionary<string, Tuple<DateTime, DateTime>>>();
 
             bool trunkDetailFile = true;
-            
+
             try
             {
                 TextWriter sw = null;
+                TextWriter swa = null;
+
                 if (cf.settings.doAngleFiles)
                     sw = new StreamWriter(cf.root + cf.classroom + "/SYNC/interaction_angles_xy_output_" + (trunkDetailFile ? "trunk_" : "") + (cf.justFreePlay ? "freeplay_" : "") + szDay + "_" + cf.settings.fileNameVersion + ".CSV");
+                if (cf.settings.doApproach)
+                    swa = new StreamWriter(cf.root + cf.classroom + "/SYNC/approach_" + (trunkDetailFile ? "trunk_" : "") + (cf.justFreePlay ? "freeplay_" : "") + szDay + "_" + cf.settings.fileNameVersion + ".CSV");
+
                 {
                     if (cf.settings.doAngleFiles)
                         sw.WriteLine("Person 1, Person2, Interaction Time, Interaction Millisecond, Interaction, 45Interaction, Angle1, Angle2, Leftx,Lefty,Rightx,Righty, Leftx2,Lefty2,Rightx2,Righty2,Type1, Type2, Gender1, Gender2, Diagnosis1, Diagnosis2, WasTalking1, WasTalking2 ");
+
+                    if (cf.settings.doApproach)
+                        swa.WriteLine("Person 1, Person2, Interaction Time, Interaction Millisecond,d1,d2,approachMeters,x10,y10,x20,y20,x11,y11,x21,y21 ");
 
                     int opic = 0;
 
@@ -3091,224 +3124,289 @@ e20170310_134226_014863.wav	1
                             int ppc = 0;
                             int pic = 0;
                             DateTime dt = opi.Key;
-                      
 
-                        if (trunkDetailFile && dt.CompareTo(trunk) <= 0 && ((!cf.justFreePlay) || (isThisFreePlay(dt))))/////
-                        {
 
-                            foreach (String person in activities[dt].Keys)
+                            if (trunkDetailFile && dt.CompareTo(trunk) <= 0 && ((!cf.justFreePlay) || (isThisFreePlay(dt))))/////
                             {
+
+                                foreach (String person in activities[dt].Keys)
+                                {
                                     pc++;
                                     // if((person=="10D" || person=="1D" )&& isWithLenaStart(dt, person))
-                                try
+                                    try
                                     {
-                                        
 
 
-                                if ((cf.settings.subs.Count == 0 || cf.settings.subs.Contains(person)) &&
-                                ((cf.justUbi || (!cf.settings.startFromLena) || isWithLenaStart(dt, person))))
-                                {
 
-                                    if ((!double.IsNaN(activities[dt][person].x)) &&
-                                        (!double.IsNaN(activities[dt][person].y)) &&
-                                        (!double.IsNaN(activities[dt][person].lx)) &&
-                                        (!double.IsNaN(activities[dt][person].ly)) &&
-                                        (!double.IsNaN(activities[dt][person].rx)) &&
-                                        (!double.IsNaN(activities[dt][person].ry)))
-                                    {
-                                        Tuple<double, double, double> xyo = getCenterAndOrientationFromLR(activities[dt][person]);
-                                        activities[dt][person].x = xyo.Item1;
-                                        activities[dt][person].y = xyo.Item2;
-                                        activities[dt][person].ori_chaoming = xyo.Item3;
-
-                                        if (activities[dt][person].x != 0 &&
-                                                activities[dt][person].y != 0 &&
-                                                (!double.IsNaN(activities[dt][person].x)) &&
-                                                (!double.IsNaN(activities[dt][person].y)))
+                                        if ((cf.settings.subs.Count == 0 || cf.settings.subs.Contains(person)) &&
+                                        ((cf.justUbi || (!cf.settings.startFromLena) || isWithLenaStart(dt, person))))
                                         {
 
-
-
-                                            ppc = 0;
-                                            foreach (String p in activities[dt].Keys)
+                                            //If we have left and right info for this person then proceed
+                                            if ((!double.IsNaN(activities[dt][person].x)) &&
+                                           (!double.IsNaN(activities[dt][person].y)) &&
+                                           (!double.IsNaN(activities[dt][person].lx)) &&
+                                           (!double.IsNaN(activities[dt][person].ly)) &&
+                                           (!double.IsNaN(activities[dt][person].rx)) &&
+                                           (!double.IsNaN(activities[dt][person].ry)))
                                             {
+                                                Tuple<double, double, double> xyo = getCenterAndOrientationFromLR(activities[dt][person]);
+                                                activities[dt][person].x = xyo.Item1;
+                                                activities[dt][person].y = xyo.Item2;
+                                                activities[dt][person].ori_chaoming = xyo.Item3;
+
+                                                if (activities[dt][person].x != 0 &&
+                                                        activities[dt][person].y != 0 &&
+                                                        (!double.IsNaN(activities[dt][person].x)) &&
+                                                        (!double.IsNaN(activities[dt][person].y)))
+                                                {
+
+
+
+                                                    ppc = 0;
+                                                    foreach (String p in activities[dt].Keys)
+                                                    {
                                                         ppc++;
 
-                                                        
+
                                                         xyo = getCenterAndOrientationFromLR(activities[dt][p]);
-                                                activities[dt][p].x = xyo.Item1;
-                                                activities[dt][p].y = xyo.Item2;
-                                                activities[dt][p].ori_chaoming = xyo.Item3;
+                                                        activities[dt][p].x = xyo.Item1;
+                                                        activities[dt][p].y = xyo.Item2;
+                                                        activities[dt][p].ori_chaoming = xyo.Item3;
 
-                                                if ((!p.Equals(person)) && 
-                                                    (cf.settings.subs.Count == 0 || cf.settings.subs.Contains(p)) &&
-                                                                        isWithLenaStart(dt, p)&&
-                                                                        activities[dt][p].x != 0 &&
-                                                                        activities[dt][p].y != 0 &&
-                                                                        activities[dt][p].rx != 0 &&
-                                                                        activities[dt][p].ry != 0 &&
-                                                                        activities[dt][p].lx != 0 &&
-                                                                        activities[dt][p].ly != 0 &&
-                                                                        (!double.IsNaN(activities[dt][p].x)) &&
-                                                                            (!double.IsNaN(activities[dt][p].y)) &&
-                                                                            (!double.IsNaN(activities[dt][p].lx)) &&
-                                                                            (!double.IsNaN(activities[dt][p].ly)) &&
-                                                                            (!double.IsNaN(activities[dt][p].rx)) &&
-                                                                            (!double.IsNaN(activities[dt][p].ry)))
-                                                {
-                                                    Boolean inversePair = false;
-                                                    String subject = p;
-                                                    String partner = person;
-                                                    String pair = p + "-" + person;
-                                                    if ((!cf.pairs.Contains(pair)) && cf.pairs.Contains(person + "-" + p))
-                                                    {
-                                                        inversePair = true;
-                                                        pair = person + "-" + p;
-                                                        subject = person;
-                                                        partner = p;
-                                                    }
-
-
-                                                     
-                                                    if(!isWithLenaStart(dt, p))
-                                                    {
-
-                                                        if (!flags.ContainsKey(day))
-                                                            flags.Add(day, new Dictionary<string, Tuple<DateTime, DateTime>>());
-
-                                                        if ((!flags[day].ContainsKey(pair)) && startLenaTimes.ContainsKey(p))
+                                                        if ((!p.Equals(person)) &&
+                                                            (cf.settings.subs.Count == 0 || cf.settings.subs.Contains(p)) &&
+                                                                                isWithLenaStart(dt, p) &&
+                                                                                activities[dt][p].x != 0 &&
+                                                                                activities[dt][p].y != 0 &&
+                                                                                activities[dt][p].rx != 0 &&
+                                                                                activities[dt][p].ry != 0 &&
+                                                                                activities[dt][p].lx != 0 &&
+                                                                                activities[dt][p].ly != 0 &&
+                                                                                (!double.IsNaN(activities[dt][p].x)) &&
+                                                                                    (!double.IsNaN(activities[dt][p].y)) &&
+                                                                                    (!double.IsNaN(activities[dt][p].lx)) &&
+                                                                                    (!double.IsNaN(activities[dt][p].ly)) &&
+                                                                                    (!double.IsNaN(activities[dt][p].rx)) &&
+                                                                                    (!double.IsNaN(activities[dt][p].ry)))
                                                         {
-                                                            DateTime lenaStart =  startLenaTimes[p] ;
-                                                            flags[day].Add(pair, new Tuple<DateTime, DateTime>(dt, lenaStart));
-                                                            Console.WriteLine(pair+" on "+day.ToShortDateString() + " LOG TimeStamp: " +
-                  Config.getDateTimeStr(dt) +
-                  " LENA START: " + Config.getDateTimeStr(lenaStart));
-                                                        }
-                                                        
+                                                            Boolean inversePair = false;
+                                                            String subject = p;
+                                                            String partner = person;
+                                                            String pair = p + "-" + person;
+                                                            if ((!cf.pairs.Contains(pair)) && cf.pairs.Contains(person + "-" + p))
+                                                            {
+                                                                inversePair = true;
+                                                                pair = person + "-" + p;
+                                                                subject = person;
+                                                                partner = p;
+                                                            }
+
+
+
+                                                            if (!isWithLenaStart(dt, p))
+                                                            {
+
+                                                                if (!flags.ContainsKey(day))
+                                                                    flags.Add(day, new Dictionary<string, Tuple<DateTime, DateTime>>());
+
+                                                                if ((!flags[day].ContainsKey(pair)) && startLenaTimes.ContainsKey(p))
+                                                                {
+                                                                    DateTime lenaStart = startLenaTimes[p];
+                                                                    flags[day].Add(pair, new Tuple<DateTime, DateTime>(dt, lenaStart));
+                                                                    Console.WriteLine(pair + " on " + day.ToShortDateString() + " LOG TimeStamp: " +
+                          Config.getDateTimeStr(dt) +
+                          " LENA START: " + Config.getDateTimeStr(lenaStart));
+                                                                }
 
 
 
 
-                                                        }
-                                                    if (!pairInteractions.ContainsKey(pair))
-                                                        pairInteractions.Add(pair, new PairInfo());
 
-                                                    if (!inversePair)
-                                                    {
-                                                        if (!pairInteractions[pair].subjectSet)
-                                                        {
-                                                            pairInteractions[pair].subjectSet = true;
-                                                        }
-                                                        else
-                                                        {
-                                                            pairInteractions[pair].subject.individualTime += 0.1;////
-                                                        }
-                                                    }
-                                                    else
-                                                    {
-                                                        if (!pairInteractions[pair].partnerSet)
-                                                        {
-                                                            pairInteractions[pair].partnerSet = true;
-                                                        }
-                                                        else
-                                                        {
-                                                            pairInteractions[pair].partner.individualTime += 0.1;
-                                                        }
-                                                    }
+                                                            }
+                                                            if (!pairInteractions.ContainsKey(pair))
+                                                                pairInteractions.Add(pair, new PairInfo());
 
-                                                    pairInteractions[pair].sharedTimeInSecs += .1;
-                                                    double dist = calcSquaredDist(activities[dt][person], activities[dt][p]);
+                                                            if (!inversePair)
+                                                            {
+                                                                if (!pairInteractions[pair].subjectSet)
+                                                                {
+                                                                    pairInteractions[pair].subjectSet = true;
+                                                                }
+                                                                else
+                                                                {
+                                                                    pairInteractions[pair].subject.individualTime += 0.1;////
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                if (!pairInteractions[pair].partnerSet)
+                                                                {
+                                                                    pairInteractions[pair].partnerSet = true;
+                                                                }
+                                                                else
+                                                                {
+                                                                    pairInteractions[pair].partner.individualTime += 0.1;
+                                                                }
+                                                            }
+
+                                                            pairInteractions[pair].sharedTimeInSecs += .1;
+                                                            double dist = calcSquaredDist(activities[dt][person], activities[dt][p]);
                                                             MappingRow person1 = cf.getMapping(person, dt);
                                                             MappingRow person2 = cf.getMapping(p, dt);
 
 
-                                                    Boolean withinGofR = (dist <= (cf.gOfR * cf.gOfR));
-                                                    Tuple<double, double> angles = withinOrientationData(activities[dt][p], activities[dt][person]);
+                                                            Boolean withinGofR = (dist <= (cf.gOfR * cf.gOfR));
+                                                            Tuple<double, double> angles = withinOrientationData(activities[dt][p], activities[dt][person]);
 
                                                             /*****T1 HACK right tag stopped working on 2/12/19 at 10:28:38.644 left 00:11:CE:00:00:00:02:CE right 00:11:CE:00:00:00:02:F2*****/
-                                                            Boolean hackT1 = false;// cf.getMapping(person, dt).leftTag.Trim() == "00:11:CE:00:00:00:02:CE" && dt >= new DateTime(2019, 02, 12, 10, 28, 38, 644) && dt <= new DateTime(2019, 06, 3);
-                                                    /*****T1 HACK right tag *****/
+                                                            Boolean hackThisT1 = cf.settings.hackT1? cf.getMapping(person, dt).leftTag.Trim() == "00:11:CE:00:00:00:02:CE" && dt >= new DateTime(2019, 02, 12, 10, 28, 38, 644) && dt <= new DateTime(2019, 06, 3) : false;
+                                                            //cf.getMapping(person, dt).leftTag.Trim() == "00:11:CE:00:00:00:02:CE" && dt >= new DateTime(2019, 02, 12, 10, 28, 38, 644) && dt <= new DateTime(2019, 06, 3);
+                                                                                   /*****T1 HACK right tag *****/
 
-                                                    Boolean orientedCloseness = withinGofR && ((Math.Abs(angles.Item1) <= 45 && Math.Abs(angles.Item2) <= 45) || hackT1);
+                                                            Boolean orientedCloseness = withinGofR && ((Math.Abs(angles.Item1) <= 45 && Math.Abs(angles.Item2) <= 45) || hackThisT1);
 
-                                                    Boolean wasTalking = activities[dt][person].wasTalking;
-                                                    if (withinGofR)
-                                                    {
-
-                                                        if (cf.settings.doAngleFiles)
-                                                        {
-
-
-
-                                                            sw.WriteLine(person + "," + 
-                                                                p + "," + 
-                                                                dt.ToLongTimeString() + ","+
-                                                                dt.Millisecond + "," + 
-                                                                (withinGofR ? "0.1" : "0") + "," + 
-                                                                (orientedCloseness ? "0.1" : "0") + "," +
-                                                                (angles.Item1) + "," + 
-                                                                (angles.Item2) + "," + 
-                                                                activities[dt][person].lx + "," + 
-                                                                activities[dt][person].ly + "," + 
-                                                                activities[dt][person].rx + "," + 
-                                                                activities[dt][person].ry + "," + 
-                                                                activities[dt][p].lx + "," + 
-                                                                activities[dt][p].ly + "," + 
-                                                                activities[dt][p].rx + "," + 
-                                                                activities[dt][p].ry + "," +
-                                                            person1.type + "," + 
-                                                            person2.type + "," +
-                                                            person1.sex + "," + 
-                                                            person2.sex + "," +
-                                                            person1.aid + "," + 
-                                                            person2.aid + "," + 
-                                                            activities[dt][person].wasTalking + "," + 
-                                                            activities[dt][p].wasTalking);
-                                                        }
-
-                                                        pairInteractions[pair].closeTimeInSecs += .1;
-
-                                                        if (orientedCloseness)
-                                                        {
-                                                            pairInteractions[pair].closeAndOrientedTimeInSecs += .1;
-
-                                                        }
-                                                    }
-                                                    //if(wasTalking)
-                                                    Double tc = activities[dt][person].tc;
-                                                    Double vc = activities[dt][person].vc;
-                                                    Double vd = activities[dt][person].vd;
-                                                    Double ad = activities[dt][person].ad;
-                                                    Double a = activities[dt][person].ac;
-                                                    Double n = activities[dt][person].no;
-                                                    Double o = activities[dt][person].oln;
-                                                    Double c = activities[dt][person].cry;
-
-                                                    if (wasTalking || vd > 0 || ad > 0 || tc > 0 || a > 0 || n > 0 || vc > 0 || o > 0 || c > 0)
-                                                    {
-                                                        if (dist <= (cf.gOfR * cf.gOfR))
-                                                        {
-
-                                                            if (hackT1 || justProx || withinOrientation(activities[dt][p], activities[dt][person], 45))
+                                                            Boolean wasTalking = activities[dt][person].wasTalking;
+                                                            if (cf.settings.doApproach)
                                                             {
-                                                                if (activities[dt][person].cry > 0 && activities[dt][p].cry > 0)
+                                                                double dist0 = 0;
+                                                                double dist1 = 0;
+                                                                DateTime dt0 = dt.AddMilliseconds(-100);
+                                                                
+                                                                if (activities.ContainsKey(dt0))
                                                                 {
-                                                                    if (person.Equals(pair.Split('-')[0]))
+                                                                    if (activities[dt0].ContainsKey(p))
                                                                     {
-                                                                        pairInteractions[pair].closeAndOrientedCryInSecs += (activities[dt][person].cry);
-                                                                        pairInteractions[pair].subject.cryingTime += (activities[dt][person].cryingTime);
+                                                                        if((!Double.IsNaN(activities[dt0][p].x)) &&
+                                                                            (!Double.IsNaN(activities[dt0][p].y)) &&
+                                                                            (!Double.IsNaN(activities[dt0][person].x)) &&
+                                                                            (!Double.IsNaN(activities[dt0][person].y)) &&
+                                                                                activities[dt0][p].x != 0 &&
+                                                                                activities[dt0][p].y != 0 &&
+                                                                                activities[dt0][p].rx != 0 &&
+                                                                                activities[dt0][p].ry != 0 &&
+                                                                                activities[dt0][p].lx != 0 &&
+                                                                                activities[dt0][p].ly != 0 &&
+                                                                                activities[dt0][person].x != 0 &&
+                                                                                activities[dt0][person].y != 0 &&
+                                                                                activities[dt0][person].rx != 0 &&
+                                                                                activities[dt0][person].ry != 0 &&
+                                                                                activities[dt0][person].lx != 0 &&
+                                                                                activities[dt0][person].ly != 0)
+                                                                            {
+                                                                                dist1 = Math.Sqrt(calcSquaredDist(activities[dt][person], activities[dt0][p]));
+                                                                                dist0 = Math.Sqrt(calcSquaredDist(activities[dt0][person], activities[dt0][p]));
+                                                                            double approachMeters = dist0 - dist1;
+
+                                                                            if (Double.IsNaN(approachMeters))
+                                                                            {
+                                                                                bool stop = true;
+                                                                                dist1 = Math.Sqrt(calcSquaredDist(activities[dt][person], activities[dt0][p]));
+                                                                                dist0 = Math.Sqrt(calcSquaredDist(activities[dt0][person], activities[dt0][p]));
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                swa.WriteLine(person + "," +
+                                                                                    p + "," +
+                                                                                    dt.ToLongTimeString() + "," +
+                                                                                    dt.Millisecond + "," +
+                                                                                    dist0 + "," +
+                                                                                    dist1 + "," +
+                                                                                    approachMeters+","+
+                                                                                    activities[dt0][person].x+","+
+                                                                                    activities[dt0][person].y + "," +
+                                                                                    activities[dt0][p].x + "," +
+                                                                                    activities[dt0][p].y + "," +
+                                                                                    activities[dt][person].x + "," +
+                                                                                    activities[dt][person].y + "," +
+                                                                                    activities[dt][p].x + "," +
+                                                                                    activities[dt][p].y);
+                                                                            }
+                                                                        }
+                                                                         
                                                                     }
-                                                                    else
-                                                                    {//p is in the first part of the pair
-                                                                        pairInteractions[pair].closeAndOrientedCryInSecs += (activities[dt][p].cry);
-                                                                        pairInteractions[pair].subject.cryingTime += (activities[dt][p].cryingTime);
-                                                                    }
+
+                                                                }
+                                                                 
+                                                                 
+                                                            }
+                                                            if (withinGofR)
+                                                            {
+
+                                                                if (cf.settings.doAngleFiles)
+                                                                {
+
+
+
+                                                                    sw.WriteLine(person + "," +
+                                                                        p + "," +
+                                                                        dt.ToLongTimeString() + "," +
+                                                                        dt.Millisecond + "," +
+                                                                        (withinGofR ? "0.1" : "0") + "," +
+                                                                        (orientedCloseness ? "0.1" : "0") + "," +
+                                                                        (angles.Item1) + "," +
+                                                                        (angles.Item2) + "," +
+                                                                        activities[dt][person].lx + "," +
+                                                                        activities[dt][person].ly + "," +
+                                                                        activities[dt][person].rx + "," +
+                                                                        activities[dt][person].ry + "," +
+                                                                        activities[dt][p].lx + "," +
+                                                                        activities[dt][p].ly + "," +
+                                                                        activities[dt][p].rx + "," +
+                                                                        activities[dt][p].ry + "," +
+                                                                    person1.type + "," +
+                                                                    person2.type + "," +
+                                                                    person1.sex + "," +
+                                                                    person2.sex + "," +
+                                                                    person1.aid + "," +
+                                                                    person2.aid + "," +
+                                                                    activities[dt][person].wasTalking + "," +
+                                                                    activities[dt][p].wasTalking);
                                                                 }
 
-                                                                List<PersonInfo> pi = lenaInfo[person];
-                                                                        pic = 0;
-                                                                foreach (PersonInfo i in pi)
+                                                                pairInteractions[pair].closeTimeInSecs += .1;
+
+                                                                if (orientedCloseness)
                                                                 {
+                                                                    pairInteractions[pair].closeAndOrientedTimeInSecs += .1;
+
+                                                                }
+                                                            }
+                                                            //if(wasTalking)
+                                                            Double tc = activities[dt][person].tc;
+                                                            Double vc = activities[dt][person].vc;
+                                                            Double vd = activities[dt][person].vd;
+                                                            Double ad = activities[dt][person].ad;
+                                                            Double a = activities[dt][person].ac;
+                                                            Double n = activities[dt][person].no;
+                                                            Double o = activities[dt][person].oln;
+                                                            Double c = activities[dt][person].cry;
+
+                                                            if (wasTalking || vd > 0 || ad > 0 || tc > 0 || a > 0 || n > 0 || vc > 0 || o > 0 || c > 0)
+                                                            {
+                                                                if (dist <= (cf.gOfR * cf.gOfR))
+                                                                {
+
+                                                                    if (hackThisT1 || justProx || withinOrientation(activities[dt][p], activities[dt][person], 45))
+                                                                    {
+                                                                        if (activities[dt][person].cry > 0 && activities[dt][p].cry > 0)
+                                                                        {
+                                                                            if (person.Equals(pair.Split('-')[0]))
+                                                                            {
+                                                                                pairInteractions[pair].closeAndOrientedCryInSecs += (activities[dt][person].cry);
+                                                                                pairInteractions[pair].subject.cryingTime += (activities[dt][person].cryingTime);
+                                                                            }
+                                                                            else
+                                                                            {//p is in the first part of the pair
+                                                                                pairInteractions[pair].closeAndOrientedCryInSecs += (activities[dt][p].cry);
+                                                                                pairInteractions[pair].subject.cryingTime += (activities[dt][p].cryingTime);
+                                                                            }
+                                                                        }
+
+                                                                        List<PersonInfo> pi = lenaInfo[person];
+                                                                        pic = 0;
+                                                                        foreach (PersonInfo i in pi)
+                                                                        {
                                                                             pic++;
 
                                                                             if (opic == 20532 && pc == 4 && ppc == 6 && pic == 6613)
@@ -3316,123 +3414,123 @@ e20170310_134226_014863.wav	1
                                                                                 bool stop = true;//
                                                                             }
                                                                             DateTime dt2 = i.dt;
-                                                                    DateTime dt3 = i.dt.AddSeconds(i.bd);
-                                                                    int ms = dt2.Millisecond > 0 ? dt2.Millisecond / 100 * 100 : dt2.Millisecond;// + 100;
-                                                                    dt2 = new DateTime(dt2.Year, dt2.Month, dt2.Day, dt2.Hour, dt2.Minute, dt2.Second, ms);
-                                                                    ms = dt3.Millisecond > 0 ? dt3.Millisecond / 100 * 100 : dt3.Millisecond;// + 100;
-                                                                    dt3 = new DateTime(dt3.Year, dt3.Month, dt3.Day, dt3.Hour, dt3.Minute, dt3.Second, ms);
-                                                                    i.bd = (dt3 - dt2).Seconds + ((dt3 - dt2).Milliseconds / 1000.00);
-                                                                    if (dt >= dt2 && dt <= dt3)
-                                                                    {
-                                                                        tc = i.tc > 0 && i.bd > 0 ? (i.tc / i.bd) / 10 : 0;
-                                                                        a = i.ac > 0 && i.bd > 0 ? (i.ac / i.bd) / 10 : 0;
-                                                                        ad = i.ad > 0 && i.bd > 0 ? (i.ad / i.bd) / 10 : 0;
-                                                                        n = i.no > 0 && i.bd > 0 ? (i.no / i.bd) / 10 : 0;
-                                                                        vc = i.vc > 0 && i.bd > 0 ? (i.vc / i.bd) / 10 : 0;
-                                                                        o = i.oln > 0 && i.bd > 0 ? (i.oln / i.bd) / 10 : 0;
-                                                                        c = i.cry > 0 && i.bd > 0 ? (i.cry / i.bd) / 10 : 0;
-                                                                        double vd2 = i.vd > 0 && i.bd > 0 ? (i.vd / i.bd) / 10 : 0;
-                                                                        if (person.Equals(pair.Split('-')[0]))
-                                                                        {
-                                                                            pairInteractions[pair].subject.vd += vd2;
-                                                                            pairInteractions[pair].subject.vc += vc;
-                                                                            pairInteractions[pair].subject.tc += tc;
-                                                                            pairInteractions[pair].subject.ac += a;
-                                                                            pairInteractions[pair].subject.ad += ad;
-                                                                            pairInteractions[pair].subject.no += n;
-                                                                            pairInteractions[pair].subject.oln += o;
-                                                                            pairInteractions[pair].subject.cry += c;
-                                                                        }
-                                                                        else //p is in the first part of the pair
-                                                                        {
-                                                                            pairInteractions[pair].partner.vd += vd2;
-                                                                            pairInteractions[pair].partner.vc += vc;
-                                                                            pairInteractions[pair].partner.tc += tc;
-                                                                            pairInteractions[pair].partner.ac += a;
-                                                                            pairInteractions[pair].partner.ac += ad;
-                                                                            pairInteractions[pair].partner.no += n;
-                                                                            pairInteractions[pair].partner.oln += o;
-                                                                            pairInteractions[pair].partner.cry += c;
-                                                                        }///
-
-                                                                    }
-                                                                }
-
-                                                                if (wasTalking)
-                                                                {
-                                                                    //pairStats[pair] += 0.1;
-                                                                    /////ONSETS
-                                                                    if(cf.settings.doSocialOnsets && onsets.ContainsKey(subject))
-                                                                    {
-                                                                        int sPos = 0;
-                                                                        if (!onsetPos.ContainsKey(subject))
-                                                                            onsetPos.Add(subject, 0);
-                                                                        else
-                                                                            sPos = onsetPos[subject];
-
-                                                                        for (; sPos < onsets[subject].Count; sPos++)
-                                                                        {
-                                                                            if (dt.CompareTo(onsets[subject][sPos].startTime) < 0)
-                                                                                break;
-                                                                            if (dt.CompareTo(onsets[subject][sPos].startTime)>=0 &&
-                                                                                dt.CompareTo(onsets[subject][sPos].endTime)<=0)
+                                                                            DateTime dt3 = i.dt.AddSeconds(i.bd);
+                                                                            int ms = dt2.Millisecond > 0 ? dt2.Millisecond / 100 * 100 : dt2.Millisecond;// + 100;
+                                                                            dt2 = new DateTime(dt2.Year, dt2.Month, dt2.Day, dt2.Hour, dt2.Minute, dt2.Second, ms);
+                                                                            ms = dt3.Millisecond > 0 ? dt3.Millisecond / 100 * 100 : dt3.Millisecond;// + 100;
+                                                                            dt3 = new DateTime(dt3.Year, dt3.Month, dt3.Day, dt3.Hour, dt3.Minute, dt3.Second, ms);
+                                                                            i.bd = (dt3 - dt2).Seconds + ((dt3 - dt2).Milliseconds / 1000.00);
+                                                                            if (dt >= dt2 && dt <= dt3)
                                                                             {
-                                                                                onsets[subject][sPos].inSocialContact = true;
+                                                                                tc = i.tc > 0 && i.bd > 0 ? (i.tc / i.bd) / 10 : 0;
+                                                                                a = i.ac > 0 && i.bd > 0 ? (i.ac / i.bd) / 10 : 0;
+                                                                                ad = i.ad > 0 && i.bd > 0 ? (i.ad / i.bd) / 10 : 0;
+                                                                                n = i.no > 0 && i.bd > 0 ? (i.no / i.bd) / 10 : 0;
+                                                                                vc = i.vc > 0 && i.bd > 0 ? (i.vc / i.bd) / 10 : 0;
+                                                                                o = i.oln > 0 && i.bd > 0 ? (i.oln / i.bd) / 10 : 0;
+                                                                                c = i.cry > 0 && i.bd > 0 ? (i.cry / i.bd) / 10 : 0;
+                                                                                double vd2 = i.vd > 0 && i.bd > 0 ? (i.vd / i.bd) / 10 : 0;
+                                                                                if (person.Equals(pair.Split('-')[0]))
+                                                                                {
+                                                                                    pairInteractions[pair].subject.vd += vd2;
+                                                                                    pairInteractions[pair].subject.vc += vc;
+                                                                                    pairInteractions[pair].subject.tc += tc;
+                                                                                    pairInteractions[pair].subject.ac += a;
+                                                                                    pairInteractions[pair].subject.ad += ad;
+                                                                                    pairInteractions[pair].subject.no += n;
+                                                                                    pairInteractions[pair].subject.oln += o;
+                                                                                    pairInteractions[pair].subject.cry += c;
+                                                                                }
+                                                                                else //p is in the first part of the pair
+                                                                                {
+                                                                                    pairInteractions[pair].partner.vd += vd2;
+                                                                                    pairInteractions[pair].partner.vc += vc;
+                                                                                    pairInteractions[pair].partner.tc += tc;
+                                                                                    pairInteractions[pair].partner.ac += a;
+                                                                                    pairInteractions[pair].partner.ac += ad;
+                                                                                    pairInteractions[pair].partner.no += n;
+                                                                                    pairInteractions[pair].partner.oln += o;
+                                                                                    pairInteractions[pair].partner.cry += c;
+                                                                                }///
 
                                                                             }
                                                                         }
-                                                                        onsetPos[subject] = sPos;
 
-
-                                                                        
-                                                                        int pPos = 0;
-                                                                        if (!onsetPos.ContainsKey(partner))
-                                                                            onsetPos.Add(partner, 0);
-                                                                        else
-                                                                            pPos = onsetPos[partner];
-
-                                                                        for (; pPos < onsets[partner].Count; pPos++)
+                                                                        if (wasTalking)
                                                                         {
-                                                                            if (dt.CompareTo(onsets[partner][pPos].startTime) < 0)
-                                                                                break;
-                                                                            if (dt.CompareTo(onsets[partner][pPos].startTime) >= 0 &&
-                                                                                dt.CompareTo(onsets[partner][pPos].endTime) <= 0)
+                                                                            //pairStats[pair] += 0.1;
+                                                                            /////ONSETS
+                                                                            if (cf.settings.doSocialOnsets && onsets.ContainsKey(subject))
                                                                             {
-                                                                                onsets[partner][pPos].inSocialContact = true;
+                                                                                int sPos = 0;
+                                                                                if (!onsetPos.ContainsKey(subject))
+                                                                                    onsetPos.Add(subject, 0);
+                                                                                else
+                                                                                    sPos = onsetPos[subject];
+
+                                                                                for (; sPos < onsets[subject].Count; sPos++)
+                                                                                {
+                                                                                    if (dt.CompareTo(onsets[subject][sPos].startTime) < 0)
+                                                                                        break;
+                                                                                    if (dt.CompareTo(onsets[subject][sPos].startTime) >= 0 &&
+                                                                                        dt.CompareTo(onsets[subject][sPos].endTime) <= 0)
+                                                                                    {
+                                                                                        onsets[subject][sPos].inSocialContact = true;
+
+                                                                                    }
+                                                                                }
+                                                                                onsetPos[subject] = sPos;
+
+
+
+                                                                                int pPos = 0;
+                                                                                if (!onsetPos.ContainsKey(partner))
+                                                                                    onsetPos.Add(partner, 0);
+                                                                                else
+                                                                                    pPos = onsetPos[partner];
+
+                                                                                for (; pPos < onsets[partner].Count; pPos++)
+                                                                                {
+                                                                                    if (dt.CompareTo(onsets[partner][pPos].startTime) < 0)
+                                                                                        break;
+                                                                                    if (dt.CompareTo(onsets[partner][pPos].startTime) >= 0 &&
+                                                                                        dt.CompareTo(onsets[partner][pPos].endTime) <= 0)
+                                                                                    {
+                                                                                        onsets[partner][pPos].inSocialContact = true;
+
+                                                                                    }
+                                                                                }
+                                                                                onsetPos[partner] = pPos;
+
 
                                                                             }
-                                                                        }
-                                                                        onsetPos[partner] = pPos;
 
-                                                                         
-                                                                    }
-                                                                    
-                                                                    pairInteractions[pair].closeAndOrientedTalkInSecs += 0.1;
-                                                                    if (person.Equals(pair.Split('-')[0]))
-                                                                    {
-                                                                        pairInteractions[pair].subject.interactionTime += 0.1;
-                                                                    }
-                                                                    else //p is in the first part of the pair
-                                                                    {
-                                                                        pairInteractions[pair].partner.interactionTime += 0.1;
+                                                                            pairInteractions[pair].closeAndOrientedTalkInSecs += 0.1;
+                                                                            if (person.Equals(pair.Split('-')[0]))
+                                                                            {
+                                                                                pairInteractions[pair].subject.interactionTime += 0.1;
+                                                                            }
+                                                                            else //p is in the first part of the pair
+                                                                            {
+                                                                                pairInteractions[pair].partner.interactionTime += 0.1;
+                                                                            }
+                                                                        }
                                                                     }
                                                                 }
                                                             }
                                                         }
                                                     }
                                                 }
+
                                             }
                                         }
-
-                                    }
-                                }
                                     }
                                     catch (Exception e)
                                     {
                                         Console.WriteLine("INTERACTION ERROR 2: " + e.Message);
                                     }
                                 }
-                        }
+                            }
                         }
                         catch (Exception e)
                         {
@@ -3455,12 +3553,13 @@ e20170310_134226_014863.wav	1
                     }
                 }*/
                 sw.Close();
+                swa.Close();
             }
             catch (Exception e)
             {
                 Console.WriteLine(e.Message);
             }
-            foreach(DateTime dayDate in flags.Keys)
+            foreach (DateTime dayDate in flags.Keys)
             {
                 foreach (String daypairDate in flags[dayDate].Keys)
                 {
@@ -3469,11 +3568,11 @@ e20170310_134226_014863.wav	1
                         " LENA START: " + Config.getDateTimeStr(flags[dayDate][daypairDate].Item2));*/
                 }
             }
-            if(cf.settings.doSocialOnsets)
+            if (cf.settings.doSocialOnsets)
             {
                 writeSocialOnsets();
             }
-            
+
         }
         public void writeSocialOnsets()
         {
@@ -3482,16 +3581,16 @@ e20170310_134226_014863.wav	1
             {
                 String szFileName = cf.syncFilePre + "_SOCIALONSETS_" + cf.settings.fileNameVersion + ".CSV";
                 bool fileExists = File.Exists(szFileName);
-              
+
                 sw = new StreamWriter(szFileName, true);// countDays > 0);
-                if(!fileExists)
+                if (!fileExists)
                     sw.WriteLine("File,Date,Subject,LenaID,SubjectType,segmentid,voctype,recstart,startsec,endsec,starttime,endtime,duration,seg_duration,wordcount,avg_db,avg_peak,turn_taking ");
                 foreach (String s in onsets.Keys)
                 {
                     foreach (Onset os in onsets[s])
-                    { 
+                    {
 
-                   
+
                         sw.WriteLine(os.file + "," +
                          os.day + "," +
                          os.subject + "," +

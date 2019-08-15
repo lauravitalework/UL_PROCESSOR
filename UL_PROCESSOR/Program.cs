@@ -73,7 +73,7 @@ namespace UL_PROCESSOR
                          ClassroomDay.sum[szKey].no + "," +
                           ClassroomDay.sum[szKey].otherChild);
             }
-            Console.ReadLine();
+            
         }
         static void MergeCsvs(List<String> file_names, String destinationfilename)
         {
@@ -451,17 +451,9 @@ namespace UL_PROCESSOR
             }
 
                 }
-        static void Main(string[] args)
+        static void Main(string[] arguments)
         {
-            Console.WriteLine("APPROACH TEST");
-            Approach AP = new Approach();
-            AP.radius = 7;
 
-
-            Console.ReadLine();
-            
-            
-            
             //readLenaItsFiles("D://ADOS//");
             //PythonRunner pr = new PythonRunner();
             //pr.runScript();
@@ -470,61 +462,38 @@ namespace UL_PROCESSOR
             //FileComparer fc = new FileComparer();
             //fc.compareFiles(new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59 },
             //    "C://LVL//LADYBUGS1//SYNC//ADEX_07242018_267290963_2_PAIRACTIVITY_ALL_LADYBUGS1_TOTALSALL.CSV", "C://LVL//LADYBUGS1//SYNC//ITS_07242018_900772189_2_PAIRACTIVITY_ALL_LADYBUGS1_TOTALSALL.CSV", false,80,false);
-         //   napOnset();
+            //   napOnset();
 
 
-            if (args.Length>0)
+            foreach (String szArgs in arguments)
             {
-
+                String[] args = szArgs.Split(' ');
                 Console.WriteLine(args[0]);
-               // Console.ReadLine();
+                // Console.ReadLine();
                 UL_PROCESSOR_SETTINGS settingParams = new UL_PROCESSOR_SETTINGS();
                 settingParams.from(args);
 
-                String[] settings = args[0].Split(' ');
-               
-                for (int a=1;a< settings.Length;a++)
+                String[] settings = args;//[0].Split(' ');
+
+                for (int a = 1; a < settings.Length; a++)
                 {
-                    if(settings[a].Split('|').Length>1)
+                    if (settings[a].Split('|').Length > 1)
                     {
                         /******** A)FOR EACH CLASSROOM:********/
                         UL_PROCESSOR_CLASS_SETTINGS classSettings = new UL_PROCESSOR_CLASS_SETTINGS();
                         classSettings.from(settings[a].Split('|'));
                         UL_PROCESSOR_Program pc = new UL_PROCESSOR_Program();
-                       
+
 
                         pc.processClassroom(settingParams, classSettings);
                     }
 
                 }
-
-                int argCount = 0;
-
-                /*String[] settings = args[0].Split(' ');
-            dir = settings[0];
-
-            UL_PROCESSOR_SETTINGS settingParams = new UL_PROCESSOR_SETTINGS();
-            for (int a = 1; a < settings.Length; a++)
-            {
-                String[] setting = settings[a].Split(':');*/
-                /******** A)FOR EACH CLASSROOM:********/
-
-
-               /* foreach (String arg in args)
-                {
-                    argCount++;
-                    if (argCount > 1)
-                    {
-                        UL_PROCESSOR_CLASS_SETTINGS classSettings = new UL_PROCESSOR_CLASS_SETTINGS();
-                        classSettings.from(arg.Split(' '));
-                        UL_PROCESSOR_Program pc = new UL_PROCESSOR_Program();
-                        pc = new UL_PROCESSOR_Program();
-                        pc.processClassroom(settingParams, classSettings);
-                         
-                    }
-                }*/
-
             }
+            
+
+
+
             Console.ReadLine();
         }
 

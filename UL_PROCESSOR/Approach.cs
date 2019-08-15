@@ -11,7 +11,7 @@ namespace UL_PROCESSOR
         public double radius = 1.5;
 
 
-        public static double getApproachDistance( DateTime timeMs,  )
+        public static double getApproachDistance( DateTime timeMs  )
         {
             double returnVal = 0;
 

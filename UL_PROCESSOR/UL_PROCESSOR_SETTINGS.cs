@@ -8,6 +8,7 @@ namespace UL_PROCESSOR
 {
     class UL_PROCESSOR_SETTINGS
     {
+        public Boolean hackT1 = false;
         public int chunkSize = 4;
         public Boolean doUbiChildFiles = false;
         public Boolean doTenFiles = true;
@@ -19,8 +20,9 @@ namespace UL_PROCESSOR
         public Boolean doVel = true;
         public Boolean doOnsets = true;
         public Boolean doSocialOnsets = false;
-        public Boolean doMinVocs = true;
+        public Boolean doMinVocs = false;
         public Boolean doDbs = true;
+        public Boolean doApproach = false;
         public String dir;
         public Boolean doAll10OfSecs = false;//false;//true;
         public Boolean startFromLena = true;//false;//true;
@@ -30,9 +32,9 @@ namespace UL_PROCESSOR
         public List<String> subs = new List<string>();
         public Boolean qaHoles = false;
         public Boolean lenaTimes = false;
-        public void from(String[] args)
+        public void from(String[] settings)//args)
         {
-            String[] settings = args[0].Split(' ');
+            //String[] settings = args[0].Split(' ');
             dir = settings[0];
 
             UL_PROCESSOR_SETTINGS settingParams = new UL_PROCESSOR_SETTINGS();
@@ -78,6 +80,12 @@ namespace UL_PROCESSOR
                             break;
                         case "LENATIMES":
                             lenaTimes = setting[1].Trim().ToUpper() == "YES";
+                            break;
+                        case "APPROACH":
+                            doApproach = setting[1].Trim().ToUpper() == "YES";
+                            break;
+                        case "HACKT1":
+                            hackT1 = setting[1].Trim().ToUpper() == "YES";
                             break;
 
                     }

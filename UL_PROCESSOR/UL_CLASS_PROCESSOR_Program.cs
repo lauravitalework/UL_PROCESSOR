@@ -45,7 +45,8 @@ namespace UL_PROCESSOR
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_10");
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_1");
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_8");
-
+                //configInfo.settings.subs.Add("10L");
+                //configInfo.settings.subs.Add("L2");
 
                 /************ 1)READ DAY MAPPINGS*******************/
                 if (configInfo.classSettings.mappingBy!="CLASS")
@@ -112,7 +113,7 @@ namespace UL_PROCESSOR
 
 
                 /************ 8)GET REPORTS*******************/
-                if (configInfo.settings.doSocialOnsets || configInfo.settings.doAngleFiles || configInfo.settings.doTenFiles || configInfo.settings.doSumAllFiles || configInfo.settings.doSumDayFiles)
+                if (configInfo.settings.doSocialOnsets || configInfo.settings.doAngleFiles || configInfo.settings.doApproach || configInfo.settings.doTenFiles || configInfo.settings.doSumAllFiles || configInfo.settings.doSumDayFiles)
                 {
                     /************ I)COUNT INTERACTIONS*******************/
                     if (!configInfo.justUbi)
@@ -630,7 +631,7 @@ namespace UL_PROCESSOR
                 String header1 = "Date, Subject, Partner, Adult,Subject Status, Partner Status,Subject Type,Partner Type, " + title;
                 String header2 = "Lead_Date,Lead_Subject Status, Lead_Partner Status,Lead_" + title.Replace(",", ",Lead_");
                 sw.Write(header1.Replace(" ", ""));
-                sw.WriteLine(header2.Replace(" ", ""));
+                sw.WriteLine(header2.Replace(" ", "")+",CLASSROOM");
                 int idx = 0;
                 foreach (ClassroomDay day in days)
                 {
@@ -690,8 +691,8 @@ namespace UL_PROCESSOR
 
                             }
 
-                            sw.WriteLine(subjectLine + subjectLine2);
-                            sw.WriteLine(partnerLine + partnerLine2);
+                            sw.WriteLine(subjectLine + subjectLine2+","+day.cf.classroom);
+                            sw.WriteLine(partnerLine + partnerLine2 + "," + day.cf.classroom);
 
                         }
                     }
