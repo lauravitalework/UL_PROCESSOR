@@ -11,6 +11,9 @@ namespace UL_PROCESSOR
         public DateTime Start = new DateTime();
         public DateTime Expiration = new DateTime();
         public String BID = "";
+        public String longBID = "";
+        public String shortBID = "";
+        public String lang="";
         public String UbiID = "";
         public String LenaId = "";
         public String leftTag = "";
@@ -18,6 +21,7 @@ namespace UL_PROCESSOR
         public String aid = "";
         public String sex = "";
         public String type = "";
+        public String dob = "";
         public List<DateTime> absences = new List<DateTime>();
 
         public DateTime day = new DateTime();

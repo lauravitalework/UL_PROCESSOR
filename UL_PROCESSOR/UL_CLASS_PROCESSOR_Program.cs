@@ -44,6 +44,7 @@ namespace UL_PROCESSOR
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_8");
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_10");
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_1");
+                //configInfo.settings.subs.Add("DS_LADYBUGS_1819_11");
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_8");
                 //configInfo.settings.subs.Add("10L");
                 //configInfo.settings.subs.Add("L2");
@@ -628,7 +629,7 @@ namespace UL_PROCESSOR
 
                 //title += getMetrics(" Total ", "WUBI Total", "Partner Total ", "WUBI Partner Total", new PersonInfo(), new PersonInfo(), new PersonInfo(), new PersonInfo(),false,false).Item1;//getMetrics("WUBI Total ", "WUBI Partner Total", new PersonInfo(), new PersonInfo()).Item1;
                 title += getMetrics(" WUBI Total ", " Total", "Partner WUBI Total ", " Partner Total", new PersonInfo(), new PersonInfo(), new PersonInfo(), new PersonInfo(), false, false).Item1;//getMetrics("WUBI Total ", "WUBI Partner Total", new PersonInfo(), new PersonInfo()).Item1;
-                String header1 = "Date, Subject, Partner, Adult,Subject Status, Partner Status,Subject Type,Partner Type, " + title;
+                String header1 = "Date, Subject, Partner, Subject ShortID, Partner ShortID, Subject Diagnosis, Partner Diagnosis, Subject Gender, Partner Gender, Subject Language, Partner Language, Adult,Subject Status, Partner Status,Subject Type,Partner Type, " + title;
                 String header2 = "Lead_Date,Lead_Subject Status, Lead_Partner Status,Lead_" + title.Replace(",", ",Lead_");
                 sw.Write(header1.Replace(" ", ""));
                 sw.WriteLine(header2.Replace(" ", "")+",CLASSROOM");
@@ -652,8 +653,28 @@ namespace UL_PROCESSOR
                             {
                                 adult = true;
                             }
-                            String subjectLine = date + "," + subject + "," + partner + "," + adult + "," + lines[0];
-                            String partnerLine = date + "," + partner + "," + subject + "," + adult + "," + lines[1];
+
+
+                            MappingRow mr = day.cf.getBaseMapping(subject, day.day);
+                            MappingRow mrp = day.cf.getBaseMapping(partner, day.day);
+
+                         /*   subjectLine = (
+                                   (nextDay ? "" : (mr.longBID) + ",") +
+                                   (nextDay ? "" : (mrp.longBID) + ",") +
+                                   (status) + "," +
+                                   (statusp) + "," +
+                                   (nextDay ? "" : (type) + ",") +
+                                   (nextDay ? "" : (typep) + ",") +/////
+                                   (nextDay ? "" : (mr.aid) + ",") +
+                                   (nextDay ? "" : (mrp.aid) + ",") +
+                                   (nextDay ? "" : (mr.sex) + ",") +
+                                   (nextDay ? "" : (mrp.sex) + ",") +
+                                   (nextDay ? "" : (mr.lang) + ",") +
+                                   (nextDay ? "" : (mrp.lang) + ",") +*/
+
+
+                            String subjectLine = date + "," + subject + "," + partner + "," + mr.shortBID + "," + mrp.shortBID + "," + mr.aid + "," + mrp.aid + "," + mr.sex + "," + mrp.sex + "," + mr.lang + "," + mrp.lang + "," + adult + "," + lines[0];
+                            String partnerLine = date + "," + partner + "," + subject + "," + mrp.shortBID + "," + mr.shortBID + "," + mrp.aid + "," + mr.aid + "," + mrp.sex + "," + mr.sex + "," + mrp.lang + "," + mr.lang + "," + adult + "," + lines[1];
 
                             String partnerLine2 = new StringBuilder().Insert(0, "NA,", 68).ToString();
                             String subjectLine2 = new StringBuilder().Insert(0, "NA,", 68).ToString();

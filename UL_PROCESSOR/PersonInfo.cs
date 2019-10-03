@@ -16,6 +16,12 @@ namespace UL_PROCESSOR
     public string lenaId = "";
     public string bid = "";
     public String pType = "";
+        public String diagnosis = "";//14
+        public String gender = "";//15
+        public String backgroundLanguage = "";
+        public String dob = "";//16
+        public String lang = "";// 
+        public String longBid = "";
     public DateTime dt = new DateTime();
     public bool wasTalking = false;
     public double x = 0.00;

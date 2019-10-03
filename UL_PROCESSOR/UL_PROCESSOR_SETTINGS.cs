@@ -102,6 +102,8 @@ namespace UL_PROCESSOR
         public String szDates;
         public String mappingBy = "CLASS";//"CLASS";"DAY"
         public double gOfR = 1.5;
+        public double gOfRMin = 0;
+        public String szGr = "";
         public void from(String[] vars)
         {
             classroom = vars[0].Trim();
@@ -109,7 +111,14 @@ namespace UL_PROCESSOR
              
             if(vars.Length>3)
             {
+                if(vars[3].Trim().Split(',').Length>1)
+                {
+                    gOfRMin = double.TryParse(vars[3].Trim().Split(',')[0], out gOfRMin) ? gOfRMin :0;
+                    gOfR = double.TryParse(vars[3].Trim().Split(',')[1], out gOfR) ? gOfR : 1.5;
+                }
+                else
                 gOfR = double.TryParse(vars[3].Trim(), out gOfR) ? gOfR : 1.5;
+
                 szDates = vars[4].Trim();
                 mappingBy = vars[2].Trim();
             }

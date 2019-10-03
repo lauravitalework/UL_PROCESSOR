@@ -626,6 +626,7 @@ namespace UL_PROCESSOR
                     (DateTime.TryParse(folderName, out folderDate) && folderDate >= day && folderDate < day.AddDays(1)))
                 {
                     string[] files = Directory.GetFiles(folder);
+                    files = Directory.GetFiles(folder);
                     foreach (string file in files)
                     {
                         String fileName = Path.GetFileName(file);
@@ -660,8 +661,13 @@ namespace UL_PROCESSOR
                                         endTime = lineTime;
                                         if (cf.mapRowsUbiL.ContainsKey(tag))
                                         {
-                                            personId = cf.getUbiMappingL(tag, lineTime).BID;// tagMappigLeft[tag].Trim();
+                                            MappingRow mr = cf.getUbiMappingL(tag, lineTime);
+                                            personId = mr.BID;// tagMappigLeft[tag].Trim();
                                             i.bid = personId;
+                                            i.longBid = mr.longBID;
+                                            i.gender = mr.sex;
+                                            i.lang = mr.lang;
+                                            i.diagnosis = mr.aid;
                                             tagType = "L";
                                             if (cf.settings.subs.Count == 0 || cf.settings.subs.Contains(personId))
                                             {
@@ -671,8 +677,15 @@ namespace UL_PROCESSOR
                                         }
                                         else if (cf.mapRowsUbiR.ContainsKey(tag))
                                         {
-                                            personId = cf.getUbiMappingR(tag, lineTime).BID;// tagMappigLeft[tag].Trim();
+                                            MappingRow mr = cf.getUbiMappingR(tag, lineTime);
+                                            personId = mr.BID;// tagMappigLeft[tag].Trim();
                                             i.bid = personId;
+                                            i.longBid = mr.longBID;
+                                            i.gender = mr.sex;
+                                            i.lang = mr.lang;
+                                            i.diagnosis = mr.aid;
+
+                                           
                                             tagType = "R";
                                             if (cf.settings.subs.Count == 0 || cf.settings.subs.Contains(personId))
                                             {
@@ -1612,6 +1625,7 @@ e20170310_134226_014863.wav	1
                         (DateTime.TryParse(folderName, out folderDate) && folderDate >= day && folderDate < day.AddDays(1)))
                     {
                         string[] files = Directory.GetFiles(folder);
+                        files = Directory.GetFiles(folder);
                         foreach (string file in files)
                         {
                             String fileName = Path.GetFileName(file);
@@ -1740,7 +1754,6 @@ e20170310_134226_014863.wav	1
 
 
                                     if (recStartTime.Day == day.Day)
-
                                     {
                                         if (cf.settings.lenaTimes)
                                         {
@@ -1805,6 +1818,10 @@ e20170310_134226_014863.wav	1
                                                     pi.bd = (end - start).Seconds + ((end - start).Milliseconds > 0 ? ((end - start).Milliseconds / 1000.00) : 0.00); //endSecs - startSecs;
                                                     pi.tc = tc;
                                                     pi.pType = mr.type;
+                                                        pi.longBid = mr.longBID;
+                                                        pi.gender = mr.sex;
+                                                        pi.lang = mr.lang;
+                                                        pi.diagnosis = mr.aid;
                                                     addMsToRawLena(ref rawLenaInfo, pi);
 
                                                     if ((!dayDone) && (cf.settings.doOnsets || cf.settings.doSocialOnsets))
@@ -1859,7 +1876,6 @@ e20170310_134226_014863.wav	1
                                                             tc, mr.aid));
                                                     }
                                                 }
-
                                             }
 
                                             foreach (XmlNode seg in segments)
@@ -1877,7 +1893,11 @@ e20170310_134226_014863.wav	1
                                                 pi.ubiId = mr.UbiID;// ubiAndBId[0];
                                                 pi.bid = mr.BID;// ubiAndBId[1];
                                                 pi.lenaId = lenaId;
-                                                String speaker = seg.Attributes["spkr"].Value;
+                                                    pi.longBid = mr.longBID;
+                                                    pi.gender = mr.sex;
+                                                    pi.lang = mr.lang;
+                                                    pi.diagnosis = mr.aid;
+                                                    String speaker = seg.Attributes["spkr"].Value;
                                                 pi.bd = (end - start).Seconds + ((end - start).Milliseconds > 0 ? ((end - start).Milliseconds / 1000.00) : 0); //endSecs - startSecs;
                                                 Boolean add = false;
                                                 switch (speaker)
@@ -1971,6 +1991,10 @@ e20170310_134226_014863.wav	1
                                                                     PersonInfo cpi = new PersonInfo();
                                                                     cpi.dt = cstart;
                                                                     mr = cf.getLenaMapping(lenaId, start);
+                                                                        cpi.longBid = mr.longBID;
+                                                                        cpi.gender = mr.sex;
+                                                                        cpi.lang = mr.lang;
+                                                                        cpi.diagnosis = mr.aid;
                                                                     cpi.ubiId = mr.UbiID;// ubiAndBId[0];
                                                                     cpi.bid = mr.BID;// ubiAndBId[1];
                                                                     cpi.lenaId = lenaId;
@@ -2028,6 +2052,10 @@ e20170310_134226_014863.wav	1
                                                                     cpi.dt = cstart;
                                                                     mr = cf.getLenaMapping(lenaId, start);
                                                                     cpi.ubiId = mr.UbiID;// ubiAndBId[0];
+                                                                        cpi.longBid = mr.longBID;
+                                                                        cpi.gender = mr.sex;
+                                                                        cpi.lang = mr.lang;
+                                                                        cpi.diagnosis = mr.aid;
                                                                     cpi.bid = mr.BID;// ubiAndBId[1];
                                                                     cpi.lenaId = lenaId;
                                                                     cpi.bd = (cend - cstart).Seconds + ((cend - cstart).Milliseconds > 0 ? (cend - cstart).Milliseconds / 1000.00 : 0); //cendSecs - cstartSecs;
@@ -2248,8 +2276,24 @@ e20170310_134226_014863.wav	1
                                                         /*****SUM******/
                                                         sumKey = this.day.ToShortDateString() + "," + (pi.bid.Trim() != "" ? pi.bid : lenaId) + "," + lenaId;
                                                         addToPersonInfoSum(ref sum, sumKey, 0, 0, 0, 0, 0, 0, pi.bd);
-                                                        /*****SUM******/
-                                                        break;
+                                                            if (cf.settings.doOnsets)
+                                                            {
+                                                                sw.WriteLine(file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," + mr.type + "," +
+                                                                    segmentNumber + ",CXN_CXF SegmentUtt," +
+                                                                    Config.getTimeStr(recStartTime) + "," + startSecs + "," + endSecs + "," +
+                                                                    Config.getTimeStr(start) + "," +
+                                                                    Config.getTimeStr(end) + "," +
+                                                                    String.Format("{0:0.00}", pi.vd) + "," +
+                                                                    String.Format("{0:0.00}", pi.bd) + ",," +
+                                                                    String.Format("{0:0.00}", pi.avDb) + "," +
+                                                                    String.Format("{0:0.00}", pi.maxDb) + ",," +
+                                                                    start.Hour + "," + start.Minute + "," + start.Second +
+                                                                    "," + end.Hour + "," + end.Minute + "," + end.Second);
+                                                            }
+
+
+                                                                /*****SUM******/
+                                                                break;
 
                                                 }
 
@@ -3089,6 +3133,8 @@ e20170310_134226_014863.wav	1
         public Dictionary<string, PairInfo> pairInteractions = new Dictionary<string, PairInfo>();
         public void countInteractionsNew(DateTime trunk, Dictionary<String, List<PersonInfo>> lenaInfo)
         {
+
+            List<String> appPairs = new List<string>();
             Dictionary<String, int> onsetPos = new Dictionary<string, int>();
 
             Dictionary<DateTime, Dictionary<String, Tuple<DateTime, DateTime>>> flags = new Dictionary<DateTime, Dictionary<string, Tuple<DateTime, DateTime>>>();
@@ -3110,7 +3156,7 @@ e20170310_134226_014863.wav	1
                         sw.WriteLine("Person 1, Person2, Interaction Time, Interaction Millisecond, Interaction, 45Interaction, Angle1, Angle2, Leftx,Lefty,Rightx,Righty, Leftx2,Lefty2,Rightx2,Righty2,Type1, Type2, Gender1, Gender2, Diagnosis1, Diagnosis2, WasTalking1, WasTalking2 ");
 
                     if (cf.settings.doApproach)
-                        swa.WriteLine("Person 1, Person2, Interaction Time, Interaction Millisecond,d1,d2,approachMeters,x10,y10,x20,y20,x11,y11,x21,y21 ");
+                        swa.WriteLine("Person 1, Person2, Interaction Time, Interaction Millisecond,d1,d2,approachMeters,x10,y10,x20,y20,x11,y11,x21,y21, WithinGR, WithinGRAnd45deg, Angle1, Angle2,Type1, Type2, Gender1, Gender2, Diagnosis1, Diagnosis2 ");
 
                     int opic = 0;
 
@@ -3256,7 +3302,7 @@ e20170310_134226_014863.wav	1
                                                             MappingRow person2 = cf.getMapping(p, dt);
 
 
-                                                            Boolean withinGofR = (dist <= (cf.gOfR * cf.gOfR));
+                                                            Boolean withinGofR = (dist <= (cf.gOfR * cf.gOfR)) && (dist >= (cf.gOfRMin * cf.gOfRMin));
                                                             Tuple<double, double> angles = withinOrientationData(activities[dt][p], activities[dt][person]);
 
                                                             /*****T1 HACK right tag stopped working on 2/12/19 at 10:28:38.644 left 00:11:CE:00:00:00:02:CE right 00:11:CE:00:00:00:02:F2*****/
@@ -3306,21 +3352,39 @@ e20170310_134226_014863.wav	1
                                                                             }
                                                                             else
                                                                             {
-                                                                                swa.WriteLine(person + "," +
+                                                                                String appLine = person + "," +
                                                                                     p + "," +
                                                                                     dt.ToLongTimeString() + "," +
                                                                                     dt.Millisecond + "," +
                                                                                     dist0 + "," +
                                                                                     dist1 + "," +
-                                                                                    approachMeters+","+
-                                                                                    activities[dt0][person].x+","+
+                                                                                    approachMeters + "," +
+                                                                                    activities[dt0][person].x + "," +
                                                                                     activities[dt0][person].y + "," +
                                                                                     activities[dt0][p].x + "," +
                                                                                     activities[dt0][p].y + "," +
                                                                                     activities[dt][person].x + "," +
                                                                                     activities[dt][person].y + "," +
                                                                                     activities[dt][p].x + "," +
-                                                                                    activities[dt][p].y);
+                                                                                    activities[dt][p].y + "," +
+                                                                                    (withinGofR ? "TRUE" : "FALSE") + "," +
+                                                                                    (orientedCloseness ? "TRUE" : "FALSE") + "," +
+                                                                                    (angles.Item1) + "," +
+                                                                                    (angles.Item2) + "," +
+                                                                                    person1.type + "," +
+                                                                                    person2.type + "," +
+                                                                                    person1.sex + "," +
+                                                                                    person2.sex + "," +
+                                                                                    person1.aid + "," +
+                                                                                    person2.aid;
+
+                                                                                if(appLine.Split(',').Length!=25)
+                                                                                {
+
+
+                                                                                    Console.WriteLine("APP LINE " + appLine);
+                                                                                }
+                                                                                swa.WriteLine( appLine);
                                                                             }
                                                                         }
                                                                          
@@ -3384,7 +3448,7 @@ e20170310_134226_014863.wav	1
 
                                                             if (wasTalking || vd > 0 || ad > 0 || tc > 0 || a > 0 || n > 0 || vc > 0 || o > 0 || c > 0)
                                                             {
-                                                                if (dist <= (cf.gOfR * cf.gOfR))
+                                                                if (dist <= (cf.gOfR * cf.gOfR) && dist >= (cf.gOfRMin * cf.gOfRMin))
                                                                 {
 
                                                                     if (hackThisT1 || justProx || withinOrientation(activities[dt][p], activities[dt][person], 45))
@@ -3702,7 +3766,7 @@ e20170310_134226_014863.wav	1
 
                                                 pairInteractions[pair].sharedTimeInSecs += .1;
                                                 double dist = calcSquaredDist(activities[dt][person], activities[dt][p]);
-                                                if (dist <= (cf.gOfR * cf.gOfR))
+                                                if (dist <= (cf.gOfR * cf.gOfR) && dist >= (cf.gOfRMin * cf.gOfRMin))
                                                 {
                                                     pairInteractions[pair].closeTimeInSecs += .1;
                                                     Tuple<double, double> angles = withinOrientationData(activities[dt][p], activities[dt][person]);
@@ -3736,7 +3800,7 @@ e20170310_134226_014863.wav	1
                                                 if (!p.Equals(person) && (subs.Count == 0 || subs.Contains(p)))
                                                 {
                                                     double dist = calcSquaredDist(activities[dt][p], activities[dt][person]);
-                                                    if (dist <= (cf.gOfR * cf.gOfR))
+                                                    if (dist <= (cf.gOfR * cf.gOfR) && dist <= (cf.gOfRMin * cf.gOfRMin))
                                                     {
 
                                                         if (justProx || withinOrientation(activities[dt][p], activities[dt][person], 45))
