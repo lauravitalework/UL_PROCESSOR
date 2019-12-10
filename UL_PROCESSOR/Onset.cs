@@ -27,7 +27,10 @@ namespace UL_PROCESSOR
         public double dbPeak;
         public double turnTaking;
         public bool inSocialContact = false;
+        public bool inChildSocialContact = false;
+        public bool inOneChildSocialContact = false;
         public String diagnosis = "Typical";
+
 
  
 

@@ -35,7 +35,37 @@ namespace UL_PROCESSOR
                 //configInfo.settings.subs.Add("12P");
                 //configInfo.settings.subs.Add("4D");
                 //configInfo.settings.subs.Add("10D");
+                /*  configInfo.settings.subs.Add("9B");
+                 configInfo.settings.subs.Add("1B");
+                 configInfo.settings.subs.Add("3B"); 
+                configInfo.settings.subs.Add("5B");
+                configInfo.settings.subs.Add("7B"); */
+              //  configInfo.settings.subs.Add("T2B");
+              //  configInfo.settings.subs.Add("T1B");
+              //  configInfo.settings.subs.Add("T3B");
+              //  configInfo.settings.subs.Add("T4B");
 
+            //    configInfo.settings.subs.Add("Lab1B");
+              //  configInfo.settings.subs.Add("Lab2B");
+              //  configInfo.settings.subs.Add("Lab3B");
+              //  configInfo.settings.subs.Add("Lab4B");
+              //  configInfo.settings.subs.Add("Lab5B");
+
+
+                /*T1B
+T2B
+Lab1B
+Lab2B
+Lab4B
+Lab2B
+Lab3B
+Lab5B
+Lab3B
+T4B
+Lab3B
+T3B
+Lab2B
+*/
                 //DELETE TEST SUBJ PARTNER 0S
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_1");
                 // configInfo.settings.subs.Add("DS_LADYBUGS_1819_T1");
@@ -48,6 +78,10 @@ namespace UL_PROCESSOR
                 //configInfo.settings.subs.Add("DS_LADYBUGS_1819_8");
                 //configInfo.settings.subs.Add("10L");
                 //configInfo.settings.subs.Add("L2");
+                //L8P	DS_PANDAS_1819_1
+                //configInfo.settings.subs.Add("DS_PANDAS_1819_1");
+                //configInfo.settings.subs.Add("DS_PANDAS_1819_10");
+                //configInfo.settings.subs.Add("L8P");
 
                 /************ 1)READ DAY MAPPINGS*******************/
                 if (configInfo.classSettings.mappingBy!="CLASS")

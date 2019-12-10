@@ -1900,6 +1900,8 @@ e20170310_134226_014863.wav	1
                                                     String speaker = seg.Attributes["spkr"].Value;
                                                 pi.bd = (end - start).Seconds + ((end - start).Milliseconds > 0 ? ((end - start).Milliseconds / 1000.00) : 0); //endSecs - startSecs;
                                                 Boolean add = false;
+                                                pi.avDb = Convert.ToDouble(seg.Attributes["average_dB"].Value);
+                                                pi.maxDb = Convert.ToDouble(seg.Attributes["peak_dB"].Value);
                                                 switch (speaker)
                                                 {
                                                     case "CHN":
@@ -1913,8 +1915,7 @@ e20170310_134226_014863.wav	1
                                                         {
                                                             pi.vd = Convert.ToDouble(seg.Attributes["childUttLen"].Value.Substring(1, seg.Attributes["childUttLen"].Value.Length - 2));
                                                             pi.vc = Convert.ToDouble(seg.Attributes["childUttCnt"].Value);
-                                                            pi.avDb = Convert.ToDouble(seg.Attributes["average_dB"].Value);
-                                                            pi.maxDb = Convert.ToDouble(seg.Attributes["peak_dB"].Value);
+                                                          
                                                             pi.childSegments = childSegmentNumber;
 
 
@@ -1959,7 +1960,7 @@ e20170310_134226_014863.wav	1
                                                             end,
                                                             pi.vd,
                                                             pi.bd,
-                                                            0,
+                                                            pi.vc,//changed for lynns defemse reviewer 11/22/19
                                                             pi.avDb,
                                                             pi.maxDb,
                                                             0, mr.aid));
@@ -2356,369 +2357,6 @@ e20170310_134226_014863.wav	1
             }
             if (!dayDone)
                 daysDone.Add(this.day, true);
-            return rawLenaInfo;
-        }
-        public Dictionary<String, List<PersonInfo>> readLenaItsFilesOld(int countDays)
-        {
-            Dictionary<String, List<PersonInfo>> rawLenaInfo = new Dictionary<String, List<PersonInfo>>();
-
-
-
-            //Date	Subject	SubjectType	segmentid	voctype	recstart	startsec	endsec	starttime	endtime	duration	uttlen
-            string[] folders = { cf.lenaFileDir + "/ITS/" };// Directory.GetDirectories(cf.lenaFileDir + "/ITS/");
-
-            if (cf.classSettings.mappingBy == "CLASS")
-                folders = Directory.GetDirectories(cf.lenaFileDir + "/ITS/");
-
-            TextWriter sw = null;
-            TextWriter swm = null;
-            if ((cf.settings.doOnsets || cf.settings.doSocialOnsets))
-            {
-                sw = new StreamWriter(cf.syncFilePre + "_ONSETS" + cf.settings.fileNameVersion + ".CSV", true);// countDays > 0);
-            }
-            if (cf.settings.doMinVocs)
-            {
-                swm = new StreamWriter(cf.syncFilePre + "_MIN_VOCS" + cf.settings.fileNameVersion + ".CSV", true);// countDays > 0);
-            }
-
-            //using (sw = new StreamWriter(cf.syncFilePre + DateTime.Now.Month + "_" + DateTime.Now.Day + "_" + DateTime.Now.Year + "_" + cf.version + "_ONSETS.CSV", countDays > 0))
-            {
-                TextWriter swd = null;
-
-                if (cf.settings.doDbs)
-                    swd = new StreamWriter(cf.syncFilePre + "_DBS" + cf.settings.fileNameVersion + ".CSV", countDays > 0);
-                if (countDays == 0)
-                {
-                    if (cf.settings.doDbs)
-                        swd.WriteLine("Date,Subject,SubjectType,Conv_avg_db,Conv_avg_peak,Child_avg_db,Child_avg_peak");
-                    if ((cf.settings.doOnsets || cf.settings.doSocialOnsets))
-                    {
-                        sw.WriteLine("File,Date,Subject,LenaID,SubjectType,segmentid,voctype,recstart,startsec,endsec,starttime,endtime,duration,seg_duration,wordcount,avg_db,avg_peak, ");
-                    }
-                    if (cf.settings.doMinVocs)
-                    {
-                        swm.WriteLine("File,Date,Subject,LenaID,SubjectType,Time,Key Child Utt Duration, Key Child Utt Count, Other Child Utt Duration, Adult Word Count");
-                    }
-                }
-
-                foreach (string folder in folders)
-                {
-                    String folderName = folder.Substring(folder.LastIndexOf("/") + 1);
-                    DateTime folderDate;
-                    if (cf.classSettings.mappingBy != "CLASS" ||
-                        (DateTime.TryParse(folderName, out folderDate) && folderDate >= day && folderDate < day.AddDays(1)))
-                    {
-                        string[] files = Directory.GetFiles(folder);
-                        foreach (string file in files)
-                        {
-                            String fileName = Path.GetFileName(file);
-                            {
-
-                                Console.WriteLine(file);
-                                String lenaId = fileName;// file.Substring(file.IndexOf("\\") + 1);
-                                lenaId = lenaId.Substring(cf.lenaVersion == "SP" ? 16 : 17, 6);
-                                if (lenaId.Substring(0, 2) == "00")
-                                    lenaId = lenaId.Substring(2);
-                                else if (lenaId.Substring(0, 1) == "0")
-                                    lenaId = lenaId.Substring(1);
-
-                                //min child voc dur, child 
-                                double at = getAdjustedSecs(lenaId);
-                                XmlDocument doc = new XmlDocument();
-                                doc.Load(file);
-                                XmlNodeList rec = cf.lenaVersion == "SP" ? doc.ChildNodes[0].SelectNodes("ProcessingUnit/Recording") : doc.ChildNodes[2].SelectNodes("ProcessingUnit/Recording");
-
-
-                                /*DateTime dt2 = i.dt;
-                                                                DateTime dt3 = i.dt.AddSeconds(i.bd);
-                                                                //////////////
-                                                                int ms = dt2.Millisecond > 0 ? dt2.Millisecond / 100 * 100 : dt2.Millisecond;// + 100;
-                                                                dt2 = new DateTime(dt2.Year, dt2.Month, dt2.Day, dt2.Hour, dt2.Minute, dt2.Second, ms);
-                                                                ms = dt3.Millisecond > 0 ? dt3.Millisecond / 100 * 100 : dt3.Millisecond;// + 100;
-                                                                dt3 = new DateTime(dt3.Year, dt3.Month, dt3.Day, dt3.Hour, dt3.Minute, dt3.Second, ms);
-                                                                i.bd= (dt3 - dt2).Seconds + ((dt3 - dt2).Milliseconds / 1000.00);
-                                                                */
-                                int segmentNumber = 0;
-                                int childSegmentNumber = 0;
-                                foreach (XmlNode recording in rec)
-                                {
-                                    Dictionary<DateTime, Tuple<double, double, double, double>> minDate = new Dictionary<DateTime, Tuple<double, double, double, double>>();
-                                    DateTime recStartTimeOriginal = DateTime.Parse(recording.Attributes["startClockTime"].Value);
-                                    XmlNodeList nodes = recording.SelectNodes("Conversation|Pause");
-                                    XmlNodeList nodesP = recording.SelectNodes("Conversation");
-                                    double adjustedSecs = getAdjustedSecs(lenaId);
-                                    DateTime recStartTime = Config.getMsTime(recStartTimeOriginal.AddSeconds(adjustedSecs));
-
-
-                                    MappingRow mr = cf.getLenaMapping(lenaId, recStartTime);
-                                    String pibid = mr.BID;
-                                    String pitype = mr.type;
-                                    double subjectAvgDb = 1;
-                                    double subjectMaxDb = 1;
-                                    double subjectConvAvgDb = 1;
-                                    double subjectConvMaxDb = 1;
-
-
-                                    if (recStartTime.Day == day.Day)
-                                    {
-                                        foreach (XmlNode conv in nodes)
-                                        {
-                                            String num = conv.Attributes["num"].Value;
-                                            XmlNodeList segments = conv.SelectNodes("Segment");
-                                            double startSecs = Convert.ToDouble(conv.Attributes["startTime"].Value.Substring(2, conv.Attributes["startTime"].Value.Length - 3));
-                                            double endSecs = Convert.ToDouble(conv.Attributes["endTime"].Value.Substring(2, conv.Attributes["endTime"].Value.Length - 3));
-                                            DateTime start = Config.getMsTime(recStartTime.AddSeconds(startSecs));
-                                            DateTime end = Config.getMsTime(recStartTime.AddSeconds(endSecs));
-                                            PersonInfo pi = new PersonInfo();
-
-                                            mr = cf.getLenaMapping(lenaId, start);
-                                            if (conv.Name == "Conversation")
-                                            {
-                                                double tc = Convert.ToDouble(conv.Attributes["turnTaking"].Value);
-                                                double db = Convert.ToDouble(conv.Attributes["average_dB"].Value);
-                                                double mdb = Convert.ToDouble(conv.Attributes["peak_dB"].Value);
-                                                subjectConvAvgDb = subjectConvAvgDb == 1 ? db : (subjectConvAvgDb + db) != 0 ? (subjectConvAvgDb + db) / 2 : 0;
-                                                subjectConvMaxDb = subjectConvMaxDb == 1 ? mdb : (subjectConvMaxDb + mdb) != 0 ? (subjectConvMaxDb + mdb) / 2 : 0;
-
-                                                if (tc > 0)
-                                                {
-                                                    pi.dt = start;
-                                                    pi.ubiId = mr.UbiID;// ubiAndBId[0];
-                                                    pi.bid = mr.BID;// ubiAndBId[1];
-                                                    pi.lenaId = lenaId;
-                                                    pi.bd = (end - start).Seconds + ((end - start).Milliseconds > 0 ? ((end - start).Milliseconds / 1000.00) : 0.00); //endSecs - startSecs;
-                                                    pi.tc = tc;
-
-                                                    addToRawLena(ref rawLenaInfo, pi);
-                                                }
-
-                                            }
-
-                                            foreach (XmlNode seg in segments)
-                                            {
-                                                //startClockTime
-                                                segmentNumber++;
-                                                startSecs = Convert.ToDouble(seg.Attributes["startTime"].Value.Substring(2, seg.Attributes["startTime"].Value.Length - 3));
-                                                endSecs = Convert.ToDouble(seg.Attributes["endTime"].Value.Substring(2, seg.Attributes["endTime"].Value.Length - 3));
-                                                start = Config.getMsTime(recStartTime.AddMilliseconds(startSecs * 1000));
-                                                end = Config.getMsTime(recStartTime.AddMilliseconds(endSecs * 1000));
-                                                pi = new PersonInfo();
-                                                pi.dt = start;
-
-                                                mr = cf.getLenaMapping(lenaId, start);
-                                                pi.ubiId = mr.UbiID;// ubiAndBId[0];
-                                                pi.bid = mr.BID;// ubiAndBId[1];
-                                                pi.lenaId = lenaId;
-                                                String speaker = seg.Attributes["spkr"].Value;
-                                                pi.bd = (end - start).Seconds + ((end - start).Milliseconds > 0 ? ((end - start).Milliseconds / 1000.00) : 0); //endSecs - startSecs;
-                                                Boolean add = false;
-                                                switch (speaker)
-                                                {
-                                                    case "CHN":
-                                                    case "CHF":
-
-                                                        ///
-                                                        // if (test == 0)
-                                                        //   break;
-                                                        childSegmentNumber++;
-                                                        //if (mr.type == "Child")
-                                                        {
-                                                            pi.vd = Convert.ToDouble(seg.Attributes["childUttLen"].Value.Substring(1, seg.Attributes["childUttLen"].Value.Length - 2));
-                                                            pi.vc = Convert.ToDouble(seg.Attributes["childUttCnt"].Value);
-                                                            pi.avDb = Convert.ToDouble(seg.Attributes["average_dB"].Value);
-                                                            pi.maxDb = Convert.ToDouble(seg.Attributes["peak_dB"].Value);
-                                                            pi.childSegments = childSegmentNumber;
-                                                            if (pi.vd < 0 || pi.bd < 0)
-                                                            {
-                                                                bool stop = true;
-                                                                start = Config.getMsTime(recStartTime.AddMilliseconds(startSecs * 1000));
-                                                                end = Config.getMsTime(recStartTime.AddMilliseconds(endSecs * 1000));
-                                                            }
-                                                            if ((cf.settings.doOnsets || cf.settings.doSocialOnsets))
-                                                            {
-                                                                sw.WriteLine(file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," + mr.type + "," + segmentNumber +
-                                                                    ",CHN_CHF SegmentUtt," + recStartTime + "," + startSecs + "," + endSecs + "," + start + "," + end + "," +
-                                                                    pi.vd + "," + pi.bd + ",," + pi.avDb + "," + pi.maxDb +
-                                                                    "," + start.Hour + "," + start.Minute + "," + start.Second +
-                                                                     "," + end.Hour + "," + end.Minute + "," + end.Second);
-                                                            }
-                                                            if (cf.settings.doMinVocs)
-                                                            {
-                                                                setMinData(ref minDate, start, end, "CHC", pi.vc);
-                                                            }
-                                                            pi.vd = 0;
-                                                            //pi.vc = 0;
-                                                            if (mr.type == "Child")
-                                                            {
-                                                                subjectAvgDb = subjectAvgDb == 1 ? pi.avDb : (subjectAvgDb + pi.avDb) != 0 ? (subjectAvgDb + pi.avDb) / 2 : 0;
-                                                                subjectMaxDb = subjectMaxDb == 1 ? pi.maxDb : (subjectMaxDb + pi.maxDb) != 0 ? (subjectMaxDb + pi.maxDb) / 2 : 0;
-                                                            }
-
-                                                            foreach (XmlAttribute atts in seg.Attributes)
-                                                            {
-
-                                                                String newSwLine = "";
-                                                                if (atts.Name.IndexOf("startCry") == 0)
-                                                                {
-                                                                    String cryStep = atts.Name.Substring(8);
-                                                                    String att = atts.Name;
-                                                                    double cstartSecs = Convert.ToDouble(seg.Attributes[att].Value.Substring(2, seg.Attributes[att].Value.Length - 3));
-                                                                    double cendSecs = Convert.ToDouble(seg.Attributes["endCry" + cryStep].Value.Substring(2, seg.Attributes["endCry" + cryStep].Value.Length - 3));
-                                                                    DateTime cstart = Config.getMsTime(recStartTime.AddMilliseconds(cstartSecs * 1000));
-                                                                    DateTime cend = Config.getMsTime(recStartTime.AddMilliseconds(cendSecs * 1000));
-                                                                    PersonInfo cpi = new PersonInfo();
-                                                                    cpi.dt = cstart;
-                                                                    mr = cf.getLenaMapping(lenaId, start);
-                                                                    cpi.ubiId = mr.UbiID;// ubiAndBId[0];
-                                                                    cpi.bid = mr.BID;// ubiAndBId[1];
-                                                                    cpi.lenaId = lenaId;
-                                                                    cpi.bd = (cend - cstart).Seconds + ((cend - cstart).Milliseconds > 0 ? (cend - cstart).Milliseconds / 1000.00 : 0); //cendSecs - cstartSecs;
-                                                                    cpi.cry = cpi.bd;
-                                                                    newSwLine = (file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," + mr.type + "," + segmentNumber + ",CHN_CHF Cry," + recStartTime + "," + cstartSecs + "," + cendSecs + "," + cstart + "," + cend + "," + cpi.cry + "," + pi.bd);
-                                                                    if (mr.type == "Child")
-                                                                        addToRawLena(ref rawLenaInfo, cpi);
-
-                                                                }
-                                                                else if (atts.Name.IndexOf("startUtt") == 0)
-                                                                {
-                                                                    String cryStep = atts.Name.Substring(8);
-                                                                    String att = atts.Name;
-                                                                    double cstartSecs = Convert.ToDouble(seg.Attributes[att].Value.Substring(2, seg.Attributes[att].Value.Length - 3));
-                                                                    double cendSecs = Convert.ToDouble(seg.Attributes["endUtt" + cryStep].Value.Substring(2, seg.Attributes["endUtt" + cryStep].Value.Length - 3));
-                                                                    DateTime cstart = Config.getMsTime(recStartTime.AddMilliseconds(cstartSecs * 1000));
-                                                                    DateTime cend = Config.getMsTime(recStartTime.AddMilliseconds(cendSecs * 1000));
-                                                                    PersonInfo cpi = new PersonInfo();
-                                                                    cpi.dt = cstart;
-                                                                    mr = cf.getLenaMapping(lenaId, start);
-                                                                    cpi.ubiId = mr.UbiID;// ubiAndBId[0];
-                                                                    cpi.bid = mr.BID;// ubiAndBId[1];
-                                                                    cpi.lenaId = lenaId;
-                                                                    cpi.bd = (cend - cstart).Seconds + ((cend - cstart).Milliseconds > 0 ? (cend - cstart).Milliseconds / 1000.00 : 0); //cendSecs - cstartSecs;
-                                                                    cpi.vd = cpi.bd;
-                                                                    //pi.vc = Convert.ToDouble(seg.Attributes["childUttCnt"].Value);
-                                                                    //cpi.cry = cpi.bd;
-                                                                    newSwLine = (file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," + mr.type + "," + segmentNumber +
-                                                                        ",CHN_CHF Utt," + recStartTime + "," + cstartSecs + "," + cendSecs + "," +
-                                                                        cstart + "," + cend + "," + cpi.vd + "," + pi.bd +
-                                                                    "," + start.Hour + "," + start.Minute + "," + start.Second +
-                                                                     "," + end.Hour + "," + end.Minute + "," + end.Second);
-                                                                    if (mr.type == "Child")
-                                                                        addToRawLena(ref rawLenaInfo, cpi);
-
-
-                                                                    if (cf.settings.doMinVocs)
-                                                                    {
-                                                                        setMinData(ref minDate, cstart, cend, "CHD", cpi.vd);
-                                                                    }
-                                                                }
-                                                                if (newSwLine != "" && (cf.settings.doOnsets || cf.settings.doSocialOnsets))
-                                                                    sw.WriteLine(newSwLine);
-                                                            }
-                                                            add = true;
-                                                        }
-                                                        break;
-                                                    case "FAN":
-                                                        pi.ac = Convert.ToDouble(seg.Attributes["femaleAdultWordCnt"].Value);
-                                                        //if (mr.type == "Lab" || mr.type == "Teacher")
-                                                        {
-                                                            pi.vd = Convert.ToDouble(seg.Attributes["femaleAdultUttLen"].Value.Substring(1, seg.Attributes["femaleAdultUttLen"].Value.Length - 2));
-                                                            pi.vc = Convert.ToDouble(seg.Attributes["femaleAdultWordCnt"].Value);
-                                                            pi.avDb = Convert.ToDouble(seg.Attributes["average_dB"].Value);
-                                                            pi.maxDb = Convert.ToDouble(seg.Attributes["peak_dB"].Value);
-                                                            pi.childSegments = childSegmentNumber;
-                                                            if ((cf.settings.doOnsets || cf.settings.doSocialOnsets))
-                                                            {
-                                                                sw.WriteLine(file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," + mr.type + "," + segmentNumber + ",FAN SegmentUtt," + recStartTime + "," + startSecs + "," + endSecs + "," + start + "," + end + "," + pi.vd + "," + pi.bd + "," + pi.vc + "," + pi.avDb + "," + pi.maxDb);
-                                                            }
-                                                            if (cf.settings.doMinVocs)
-                                                            {
-                                                                setMinData(ref minDate, start, end, "FAN", pi.vc);
-                                                            }
-                                                        }
-                                                        if (mr.type == "Lab" || mr.type == "Teacher")
-                                                            add = true;
-                                                        break;
-                                                    case "MAN":
-                                                        pi.ac = Convert.ToDouble(seg.Attributes["maleAdultWordCnt"].Value);
-                                                        // if (mr.type == "Lab" || mr.type == "Teacher")
-                                                        {
-                                                            pi.vd = Convert.ToDouble(seg.Attributes["maleAdultUttLen"].Value.Substring(1, seg.Attributes["maleAdultUttLen"].Value.Length - 2));
-                                                            pi.vc = Convert.ToDouble(seg.Attributes["maleAdultWordCnt"].Value);
-                                                            pi.avDb = Convert.ToDouble(seg.Attributes["average_dB"].Value);
-                                                            pi.maxDb = Convert.ToDouble(seg.Attributes["peak_dB"].Value);
-                                                            pi.childSegments = childSegmentNumber;
-                                                            if ((cf.settings.doOnsets || cf.settings.doSocialOnsets))
-                                                            {
-                                                                sw.WriteLine(file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," + mr.type + "," + segmentNumber + ",MAN SegmentUtt," + recStartTime + "," + startSecs + "," + endSecs + "," + start + "," + end + "," + pi.vd + "," + pi.bd + "," + pi.vc + "," + pi.avDb + "," + pi.maxDb);
-                                                            }
-                                                            if (cf.settings.doMinVocs)
-                                                            {
-                                                                setMinData(ref minDate, start, end, "MAN", pi.vc);
-                                                            }
-                                                        }
-                                                        if (mr.type == "Lab" || mr.type == "Teacher")
-                                                            add = true;
-                                                        break;
-                                                    case "OLN":
-                                                        pi.bd = endSecs - startSecs;
-                                                        pi.oln = pi.bd;
-                                                        add = true;
-                                                        break;
-                                                    case "NON":
-                                                        pi.bd = endSecs - startSecs;
-                                                        pi.no = pi.bd;
-                                                        add = true;
-                                                        break;
-                                                    case "CXN":
-                                                    case "CXF":
-                                                        if (cf.settings.doMinVocs)
-                                                        {
-                                                            setMinData(ref minDate, start, end, "CX", pi.bd);
-                                                        }
-                                                        break;
-
-                                                }
-
-                                                if (add)
-                                                {
-
-                                                    addToRawLena(ref rawLenaInfo, pi);
-                                                }
-
-                                            }
-
-                                        }
-                                    }
-
-                                    if (cf.settings.doDbs)
-                                        swd.WriteLine(this.day + "," + pibid + "," + pitype + "," + (subjectConvAvgDb != 1 ? subjectConvAvgDb : 0) + "," + (subjectConvMaxDb != 1 ? subjectConvMaxDb : 0) + "," + (subjectAvgDb != 1 ? subjectAvgDb : 0) + "," + (subjectMaxDb != 1 ? subjectMaxDb : 0));
-                                    foreach (DateTime md in minDate.Keys)
-                                    {
-                                        //Dictionary<DateTime, Tuple<double, double, double, double>> minDate = new Dictionary<DateTime, Tuple<double, double, double, double>>();
-                                        Tuple<double, double, double, double> minVal = minDate[md];
-                                        swm.WriteLine(file + "," + this.day + "," + pibid + "," + lenaId + "," + pitype + "," + md.ToString() +
-                                            "," + minVal.Item1 +
-                                            "," + minVal.Item2 +
-                                            "," + minVal.Item3 +
-                                            "," + minVal.Item4);
-
-                                    }
-                                }
-                                // 
-
-                            }
-
-                        }
-                    }
-                }
-                if ((cf.settings.doOnsets || cf.settings.doSocialOnsets))
-                    sw.Close();
-                if (cf.settings.doDbs)
-                    swd.Dispose();
-                if (cf.settings.doMinVocs)
-                    swm.Dispose();
-            }
-
             return rawLenaInfo;
         }
         public void addToRawLena(ref Dictionary<String, List<PersonInfo>> rl, PersonInfo lpi)
@@ -3119,6 +2757,10 @@ e20170310_134226_014863.wav	1
 
 
                     pi.ori_chaoming = Math.Atan2(pi.ry - pi.ly, pi.rx - pi.lx) / Math.PI * 180 + 90;
+                    if(pi.ori_chaoming > 360)
+                    {
+                        pi.ori_chaoming = pi.ori_chaoming;
+                    }
                     pi.ori_chaoming = pi.ori_chaoming > 360 ? pi.ori_chaoming - 360 : pi.ori_chaoming;
 
 
@@ -3490,7 +3132,7 @@ e20170310_134226_014863.wav	1
                                                                                 a = i.ac > 0 && i.bd > 0 ? (i.ac / i.bd) / 10 : 0;
                                                                                 ad = i.ad > 0 && i.bd > 0 ? (i.ad / i.bd) / 10 : 0;
                                                                                 n = i.no > 0 && i.bd > 0 ? (i.no / i.bd) / 10 : 0;
-                                                                                vc = i.vc > 0 && i.bd > 0 ? (i.vc / i.bd) / 10 : 0;
+                                                                                vc = i.vc > 0 && i.bd > 0 ? (i.vc / i.bd) / 10 : 0;///
                                                                                 o = i.oln > 0 && i.bd > 0 ? (i.oln / i.bd) / 10 : 0;
                                                                                 c = i.cry > 0 && i.bd > 0 ? (i.cry / i.bd) / 10 : 0;
                                                                                 double vd2 = i.vd > 0 && i.bd > 0 ? (i.vd / i.bd) / 10 : 0;
@@ -3540,7 +3182,14 @@ e20170310_134226_014863.wav	1
                                                                                         dt.CompareTo(onsets[subject][sPos].endTime) <= 0)
                                                                                     {
                                                                                         onsets[subject][sPos].inSocialContact = true;
-
+                                                                                        if (person1.type == "Child" && person2.type=="Child")
+                                                                                        {
+                                                                                            onsets[subject][sPos].inChildSocialContact = true;
+                                                                                        }
+                                                                                        if (person1.type == "Child" || person2.type == "Child")
+                                                                                        {
+                                                                                            onsets[subject][sPos].inOneChildSocialContact = true;
+                                                                                        }
                                                                                     }
                                                                                 }
                                                                                 onsetPos[subject] = sPos;
@@ -3561,7 +3210,14 @@ e20170310_134226_014863.wav	1
                                                                                         dt.CompareTo(onsets[partner][pPos].endTime) <= 0)
                                                                                     {
                                                                                         onsets[partner][pPos].inSocialContact = true;
-
+                                                                                        if (person1.type == "Child" && person2.type == "Child")
+                                                                                        {
+                                                                                            onsets[subject][sPos].inChildSocialContact = true;
+                                                                                        }
+                                                                                        if (person1.type == "Child" || person2.type == "Child")
+                                                                                        {
+                                                                                            onsets[subject][sPos].inOneChildSocialContact = true;
+                                                                                        }
                                                                                     }
                                                                                 }
                                                                                 onsetPos[partner] = pPos;
@@ -3638,15 +3294,18 @@ e20170310_134226_014863.wav	1
             }
 
         }
+        public bool getChildWavSocial = true;
         public void writeSocialOnsets()
         {
             TextWriter sw = null;
+            TextWriter sw2 = null;
             if (cf.settings.doSocialOnsets)
             {
                 String szFileName = cf.syncFilePre + "_SOCIALONSETS_" + cf.settings.fileNameVersion + ".CSV";
                 bool fileExists = File.Exists(szFileName);
 
                 sw = new StreamWriter(szFileName, true);// countDays > 0);
+                sw2 = new StreamWriter(szFileName.Replace(".CSV","_WAVSSOC.CSV"), true);// countDays > 0);
                 if (!fileExists)
                     sw.WriteLine("File,Date,Subject,LenaID,SubjectType,segmentid,voctype,recstart,startsec,endsec,starttime,endtime,duration,seg_duration,wordcount,avg_db,avg_peak,turn_taking ");
                 foreach (String s in onsets.Keys)
@@ -3674,9 +3333,62 @@ e20170310_134226_014863.wav	1
                          os.dbPeak + "," +
                          os.turnTaking + "," +
                         (os.inSocialContact ? "YES" : "NO") + "," + os.diagnosis);
+
+                        if (getChildWavSocial && os.inChildSocialContact && os.subjectType == "Child")
+                        {
+                               if( os.vocType == "CHN_CHF SegmentUtt"  )
+                                {
+                                        sw2.WriteLine(os.file + "," +
+                                    os.day + "," +
+                                    os.subject + "," +
+                                    os.lenaID + "," +
+                                    os.subjectType + "," +
+                                    os.segmentId + "," +
+                                    os.vocType + "," +
+                                    os.recStart + "," +
+                                    os.startSecs + "," +
+                                    os.endSecs + "," +
+                                    os.startTime + "," +
+                                    os.endTime + "," +
+                                    os.duration + "," +
+                                    os.segmentDuration + "," +
+                                    os.wordCount + "," +
+                                    os.avgDb + "," +
+                                    os.dbPeak + "," +
+                                    os.turnTaking + "," +
+                                   (os.inSocialContact ? "YES" : "NO") + "," + os.diagnosis);
+                                    }
+                            if  (os.vocType == "FAN SegmentUtt" || os.vocType == "MAN SegmentUtt")
+                            {
+                                sw2.WriteLine(os.file + "," +
+                            os.day + "," +
+                            os.subject + "," +
+                            os.lenaID + "," +
+                            os.subjectType + "," +
+                            os.segmentId + "," +
+                            os.vocType + "," +
+                            os.recStart + "," +
+                            os.startSecs + "," +
+                            os.endSecs + "," +
+                            os.startTime + "," +
+                            os.endTime + "," +
+                            os.duration + "," +
+                            os.segmentDuration + "," +
+                            os.wordCount + "," +
+                            os.avgDb + "," +
+                            os.dbPeak + "," +
+                            os.turnTaking + "," +
+                           (os.inSocialContact ? "YES" : "NO") + "," + os.diagnosis);
+                            }
+
+                        }
+                        
+
+                        
                     }
                 }
                 sw.Close();
+                sw2.Close();
             }
         }
         public void countInteractionsNewOld(List<String> subs, DateTime trunk, Dictionary<String, List<PersonInfo>> lenaInfo)
