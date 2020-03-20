@@ -2131,7 +2131,10 @@ e20170310_134226_014863.wav	1
                                                         sumKey = this.day.ToShortDateString() + "," + (pi.bid.Trim() != "" ? pi.bid : lenaId) + "," + lenaId;
                                                         addToPersonInfoSum(ref sum, sumKey, 0, 0, 0, pi.ac, 0, 0);
                                                         /*****SUM******/
-
+                                                        if(Math.Round(startSecs,0)== 8791)
+                                                            {
+                                                                int f = 1;
+                                                            }
                                                         //if (mr.type == "Lab" || mr.type == "Teacher")
                                                         {
                                                             pi.ad = Convert.ToDouble(seg.Attributes["femaleAdultUttLen"].Value.Substring(1, seg.Attributes["femaleAdultUttLen"].Value.Length - 2));
@@ -3212,11 +3215,11 @@ e20170310_134226_014863.wav	1
                                                                                         onsets[partner][pPos].inSocialContact = true;
                                                                                         if (person1.type == "Child" && person2.type == "Child")
                                                                                         {
-                                                                                            onsets[subject][sPos].inChildSocialContact = true;
+                                                                                            onsets[partner][pPos].inChildSocialContact = true;
                                                                                         }
                                                                                         if (person1.type == "Child" || person2.type == "Child")
                                                                                         {
-                                                                                            onsets[subject][sPos].inOneChildSocialContact = true;
+                                                                                            onsets[partner][pPos].inOneChildSocialContact = true;
                                                                                         }
                                                                                     }
                                                                                 }
@@ -3336,7 +3339,12 @@ e20170310_134226_014863.wav	1
 
                         if (getChildWavSocial && os.inChildSocialContact && os.subjectType == "Child")
                         {
-                               if( os.vocType == "CHN_CHF SegmentUtt"  )
+                            if((os.inSocialContact ? "YES" : "NO")=="NO")
+                            {
+                               // Console.WriteLine("NOSOCCONTACT ");
+                            }
+
+                            if ( os.vocType == "CHN_CHF SegmentUtt"  )
                                 {
                                         sw2.WriteLine(os.file + "," +
                                     os.day + "," +

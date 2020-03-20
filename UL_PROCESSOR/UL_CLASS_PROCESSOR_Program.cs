@@ -40,16 +40,16 @@ namespace UL_PROCESSOR
                  configInfo.settings.subs.Add("3B"); 
                 configInfo.settings.subs.Add("5B");
                 configInfo.settings.subs.Add("7B"); */
-              //  configInfo.settings.subs.Add("T2B");
-              //  configInfo.settings.subs.Add("T1B");
-              //  configInfo.settings.subs.Add("T3B");
-              //  configInfo.settings.subs.Add("T4B");
+                //  configInfo.settings.subs.Add("T2B");
+                //  configInfo.settings.subs.Add("T1B");
+                //  configInfo.settings.subs.Add("T3B");
+                //  configInfo.settings.subs.Add("T4B");
 
-            //    configInfo.settings.subs.Add("Lab1B");
-              //  configInfo.settings.subs.Add("Lab2B");
-              //  configInfo.settings.subs.Add("Lab3B");
-              //  configInfo.settings.subs.Add("Lab4B");
-              //  configInfo.settings.subs.Add("Lab5B");
+                //    configInfo.settings.subs.Add("Lab1B");
+                //  configInfo.settings.subs.Add("Lab2B");
+                //  configInfo.settings.subs.Add("Lab3B");
+                //  configInfo.settings.subs.Add("Lab4B");
+                //  configInfo.settings.subs.Add("Lab5B");
 
 
                 /*T1B
@@ -82,6 +82,8 @@ Lab2B
                 //configInfo.settings.subs.Add("DS_PANDAS_1819_1");
                 //configInfo.settings.subs.Add("DS_PANDAS_1819_10");
                 //configInfo.settings.subs.Add("L8P");
+
+                //configInfo.settings.subs.Add("2B");
 
                 /************ 1)READ DAY MAPPINGS*******************/
                 if (configInfo.classSettings.mappingBy!="CLASS")
@@ -634,7 +636,7 @@ Lab2B
                     "Shared Time in Classroom,"+ 
                     "Subject Time,"+ 
                     "Partner Time,"+ 
-                    "Total Recording Time," ;//, "+
+                    "Total Recording Time," ;//, "+////
                                             /* "WUBI Total VD " +","+
                                              "Total VD" +","+
                                              "Partner WUBI Total VD " +","+
