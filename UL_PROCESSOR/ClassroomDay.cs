@@ -645,7 +645,10 @@ namespace UL_PROCESSOR
                                     if (line.Length > 5)
                                     {
                                         String tag = line[1].Trim();
-                                        if (tag == "00:11:CE:00:00:00:02:66")
+                                        if (tag == "00:11:CE:00:00:00:01:EC")
+                                            tag = tag;
+
+                                        if (tag == "00:11:CE:00:00:00:02:F2")
                                             tag = tag;
                                         String personId = "";
                                         DateTime lineTime = Convert.ToDateTime(line[2]);
@@ -692,6 +695,10 @@ namespace UL_PROCESSOR
                                                 i.rx = xPos;
                                                 i.ry = yPos;
                                             }
+                                        }
+                                        else
+                                        {
+                                            tag = tag;
                                         }
                                         i.x = xPos;
                                         i.y = yPos;
@@ -1639,7 +1646,7 @@ e20170310_134226_014863.wav	1
                                 else if (lenaId.Substring(0, 1) == "0")
                                     lenaId = lenaId.Substring(1);
 
-                                if (lenaId == "26860")
+                                if (lenaId == "29643")
                                     lenaId = lenaId;
                                 //min child voc dur, child 
                                 double at = getAdjustedSecs(lenaId);
@@ -2379,6 +2386,7 @@ e20170310_134226_014863.wav	1
             {
                 rl.Add(lpi.bid, new List<PersonInfo>());
             }
+            
             rl[lpi.bid].Add(lpi);
 
         }
@@ -2801,7 +2809,7 @@ e20170310_134226_014863.wav	1
                         sw.WriteLine("Person 1, Person2, Interaction Time, Interaction Millisecond, Interaction, 45Interaction, Angle1, Angle2, Leftx,Lefty,Rightx,Righty, Leftx2,Lefty2,Rightx2,Righty2,Type1, Type2, Gender1, Gender2, Diagnosis1, Diagnosis2, WasTalking1, WasTalking2 ");
 
                     if (cf.settings.doApproach)
-                        swa.WriteLine("Person 1, Person2, Interaction Time, Interaction Millisecond,d1,d2,approachMeters,x10,y10,x20,y20,x11,y11,x21,y21, WithinGR, WithinGRAnd45deg, Angle1, Angle2,Type1, Type2, Gender1, Gender2, Diagnosis1, Diagnosis2 ");
+                        swa.WriteLine("Person 1, Person2, Interaction Time, Interaction Millisecond,d1,d2,approachMeters,x10,y10,x20,y20,x11,y11,x21,y21, WithinGR, WithinGRAnd45deg, Angle1, Angle2,Type1, Type2, Gender1, Gender2, Diagnosis1, Diagnosis2,LongPerson 1, LongPerson2,  ");
 
                     int opic = 0;
 
@@ -2997,8 +3005,10 @@ e20170310_134226_014863.wav	1
                                                                             }
                                                                             else
                                                                             {
-                                                                                String appLine = person + "," +
-                                                                                    p + "," +
+                                                                                ////
+                                                                                String appLine = 
+                                                                                    person1.shortBID + "," +
+                                                                                    person2.shortBID + "," +
                                                                                     dt.ToLongTimeString() + "," +
                                                                                     dt.Millisecond + "," +
                                                                                     dist0 + "," +
@@ -3021,9 +3031,11 @@ e20170310_134226_014863.wav	1
                                                                                     person1.sex + "," +
                                                                                     person2.sex + "," +
                                                                                     person1.aid + "," +
-                                                                                    person2.aid;
+                                                                                    person2.aid+","+
+                                                                                    person + "," +
+                                                                                    p ;
 
-                                                                                if(appLine.Split(',').Length!=25)
+                                                                                if(appLine.Split(',').Length!=27)
                                                                                 {
 
 
@@ -3087,6 +3099,8 @@ e20170310_134226_014863.wav	1
                                                             Double vd = activities[dt][person].vd;
                                                             Double ad = activities[dt][person].ad;
                                                             Double a = activities[dt][person].ac;
+                                                            Double atd = activities[dt][person].atd;
+                                                            Double at = activities[dt][person].atc;
                                                             Double n = activities[dt][person].no;
                                                             Double o = activities[dt][person].oln;
                                                             Double c = activities[dt][person].cry;
@@ -3134,6 +3148,8 @@ e20170310_134226_014863.wav	1
                                                                                 tc = i.tc > 0 && i.bd > 0 ? (i.tc / i.bd) / 10 : 0;
                                                                                 a = i.ac > 0 && i.bd > 0 ? (i.ac / i.bd) / 10 : 0;
                                                                                 ad = i.ad > 0 && i.bd > 0 ? (i.ad / i.bd) / 10 : 0;
+                                                                                at = i.atc > 0 && i.bd > 0 ? (i.atc / i.bd) / 10 : 0;
+                                                                                atd = i.atd > 0 && i.bd > 0 ? (i.atd / i.bd) / 10 : 0;
                                                                                 n = i.no > 0 && i.bd > 0 ? (i.no / i.bd) / 10 : 0;
                                                                                 vc = i.vc > 0 && i.bd > 0 ? (i.vc / i.bd) / 10 : 0;///
                                                                                 o = i.oln > 0 && i.bd > 0 ? (i.oln / i.bd) / 10 : 0;
@@ -3149,6 +3165,15 @@ e20170310_134226_014863.wav	1
                                                                                     pairInteractions[pair].subject.no += n;
                                                                                     pairInteractions[pair].subject.oln += o;
                                                                                     pairInteractions[pair].subject.cry += c;
+
+                                                                                    if(activities[dt][p].pType.Trim().ToUpper().IndexOf("T")==0)
+                                                                                    {
+                                                                                        pairInteractions[pair].subject.atc += at;
+                                                                                        pairInteractions[pair].subject.atd += atd;
+
+                                                                                    }
+
+
                                                                                 }
                                                                                 else //p is in the first part of the pair
                                                                                 {
@@ -3160,6 +3185,15 @@ e20170310_134226_014863.wav	1
                                                                                     pairInteractions[pair].partner.no += n;
                                                                                     pairInteractions[pair].partner.oln += o;
                                                                                     pairInteractions[pair].partner.cry += c;
+
+                                                                                    if (activities[dt][person].pType.Trim().ToUpper().IndexOf("T") == 0)
+                                                                                    {
+                                                                                        pairInteractions[pair].partner.atc += at;
+                                                                                        pairInteractions[pair].partner.atd += atd;
+
+                                                                                    }
+
+
                                                                                 }///
 
                                                                             }

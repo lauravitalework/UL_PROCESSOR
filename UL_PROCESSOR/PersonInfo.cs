@@ -36,6 +36,8 @@ namespace UL_PROCESSOR
     public double no = 0.00;
     public double ac = 0.00;
     public double ad = 0.00;
+    public double atc = 0.00;
+    public double atd = 0.00;
     public double oln = 0.00;
     public double cry = 0.00;
     public double otherChild = 0;

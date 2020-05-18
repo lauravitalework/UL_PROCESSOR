@@ -410,12 +410,12 @@ Lab2B
                    (statusp) + "," +
                    (nextDay ? "" : (type) + ",") +
                    (nextDay ? "" : (typep) + ",")
-                   + new StringBuilder().Insert(0, "NA,", 65).ToString();
+                   + new StringBuilder().Insert(0, "NA,", 71).ToString();//65
             lines[1] = (statusp) + "," +
                    (status) + "," +
                    (nextDay ? "" : (typep) + ",") +
                    (nextDay ? "" : (type) + ",")
-                   + new StringBuilder().Insert(0, "NA,", 65).ToString();
+                   + new StringBuilder().Insert(0, "NA,", 71).ToString();//65
             if (!absent)
             {
 
@@ -427,6 +427,12 @@ Lab2B
                 double partnerVocCount = 0;
                 double subjectVocDur = 0;
                 double partnerVocDur = 0;
+                double subjectAdUttLen= 0;
+                double partnerAdUttLen = 0;
+                double subjectTeacherUttLen = 0;
+                double partnerTeacherUttLen = 0;
+                double subjectTeacherCount = 0;
+                double partnerTeacherCount = 0; //Math.Round(day.pairStatsSep[pair].p2.ac, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
                 double subjectAdCount = 0;
                 double partnerAdCount = 0; //Math.Round(day.pairStatsSep[pair].p2.ac, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
                 double subjectNoise = 0; //Math.Round(day.pairStatsSep[pair].p1.no, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
@@ -474,6 +480,9 @@ Lab2B
                     subjectVocCount = Math.Round(day.pairInteractions[pair].subject.vc, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
                     subjectVocDur = Math.Round(day.pairInteractions[pair].subject.vd, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
                     subjectAdCount = Math.Round(day.pairInteractions[pair].subject.ac, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
+                    subjectAdUttLen = Math.Round(day.pairInteractions[pair].subject.ad, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
+                    subjectTeacherCount = Math.Round(day.pairInteractions[pair].subject.atc, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
+                    subjectTeacherUttLen = Math.Round(day.pairInteractions[pair].subject.atd, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
                     subjectNoise = Math.Round(day.pairInteractions[pair].subject.no, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
                     subjectOln = Math.Round(day.pairInteractions[pair].subject.oln, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
                     subjectCry = Math.Round(day.pairInteractions[pair].subject.cry, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
@@ -484,6 +493,9 @@ Lab2B
                     partnerVocCount = Math.Round(day.pairInteractions[pair].partner.vc, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
                     partnerVocDur = Math.Round(day.pairInteractions[pair].partner.vd, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
                     partnerAdCount = Math.Round(day.pairInteractions[pair].partner.ac, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                    partnerAdUttLen = Math.Round(day.pairInteractions[pair].partner.ad, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                    partnerTeacherCount = Math.Round(day.pairInteractions[pair].partner.atc, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                    partnerTeacherUttLen = Math.Round(day.pairInteractions[pair].partner.atd, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
                     partnerNoise = Math.Round(day.pairInteractions[pair].partner.no, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
                     partnerOln = Math.Round(day.pairInteractions[pair].partner.oln, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
                     partnerCry = Math.Round(day.pairInteractions[pair].partner.cry, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
@@ -512,19 +524,19 @@ Lab2B
                     s,
                     pUbi,
                     p, absent, absent);////
+                                       // TO ADD Input2_DUR_PVD_OR_UTTL
+                                       /* "Input2_pvc_or_stc" + "," +
+                                           "Pair Block Talking," +
+                                           "Pair Talking Duration," +
+                                           "Subject-Talking-Duration-From_Start," +
+                                           "Partner-Talking-Duration-From-Start," +
+                                           "Subject-Talking-Duration-Evenly-Spread," +
+                                           "Partner-Talking-Duration-Evenly-Spread," +
+                                           "Subject Turn Count," +
+                                           "Partner Turn Count," +*/
 
-               /* "Input2_pvc_or_stc" + "," +
-                   "Pair Block Talking," +
-                   "Pair Talking Duration," +
-                   "Subject-Talking-Duration-From_Start," +
-                   "Partner-Talking-Duration-From-Start," +
-                   "Subject-Talking-Duration-Evenly-Spread," +
-                   "Partner-Talking-Duration-Evenly-Spread," +
-                   "Subject Turn Count," +
-                   "Partner Turn Count," +*/
 
-
-               subjectLine = (
+                subjectLine = (
                        (status) + "," +
                        (statusp) + "," +
                        (nextDay ? "" : (type) + ",") +
@@ -543,6 +555,12 @@ Lab2B
                        (pAbsent ? "NA" : partnerVocCount.ToString()) + "," +
                        (sAbsent ? "NA" : subjectAdCount.ToString()) + "," +
                        (pAbsent ? "NA" : partnerAdCount.ToString()) + "," +
+                       (sAbsent ? "NA" : subjectAdUttLen.ToString()) + "," +
+                       (pAbsent ? "NA" : partnerAdUttLen.ToString()) + "," +
+                       (sAbsent ? "NA" : subjectTeacherCount.ToString()) + "," +
+                       (pAbsent ? "NA" : partnerTeacherCount.ToString()) + "," +
+                       (sAbsent ? "NA" : subjectTeacherUttLen.ToString()) + "," +
+                       (pAbsent ? "NA" : partnerTeacherUttLen.ToString()) + "," +
                        (sAbsent ? "NA" : subjectNoise.ToString()) + "," +
                        (pAbsent ? "NA" : partnerNoise.ToString()) + "," +
                        (sAbsent ? "NA" : subjectOln.ToString()) + "," +
@@ -579,6 +597,12 @@ Lab2B
                     (sAbsent ? "NA" : subjectVocCount.ToString()) + "," +
                     (pAbsent ? "NA" : partnerAdCount.ToString()) + "," +
                     (sAbsent ? "NA" : subjectAdCount.ToString()) + "," +
+                    (pAbsent ? "NA" : partnerAdUttLen.ToString()) + "," +
+                    (sAbsent ? "NA" : subjectAdUttLen.ToString()) + "," +
+                    (pAbsent ? "NA" : partnerTeacherCount.ToString()) + "," +
+                    (sAbsent ? "NA" : subjectTeacherCount.ToString()) + "," +
+                    (pAbsent ? "NA" : partnerTeacherUttLen.ToString()) + "," +
+                    (sAbsent ? "NA" : subjectTeacherUttLen.ToString()) + "," +
                     (pAbsent ? "NA" : partnerNoise.ToString()) + "," +
                     (sAbsent ? "NA" : subjectNoise.ToString()) + "," +
                     (pAbsent ? "NA" : partnerOln.ToString()) + "," +
@@ -621,8 +645,14 @@ Lab2B
                     "Subject Voc Count,"+ 
                     "Partner Voc Count,"+ 
                     "Subject Adult Count,"+ 
-                    "Partner Adult Count,"+ 
-                    "Subject Noise,"+ 
+                    "Partner Adult Count,"+
+                    "Subject Adult Utt Length," +
+                    "Partner Adult Utt Length," +
+                    "Subject Teacher Count," +
+                    "Partner Teacher Count," +
+                    "Subject Teacher Utt Length," +
+                    "Partner Teacher Utt Length," +
+                    "Subject Noise," + 
                     "Partner Noise,"+ 
                     "Subject OLN,"+ 
                     "Partner OLN,"+ 
@@ -668,7 +698,9 @@ Lab2B
                 String header1 = "Date, Subject, Partner, Subject ShortID, Partner ShortID, Subject Diagnosis, Partner Diagnosis, Subject Gender, Partner Gender, Subject Language, Partner Language, Adult,Subject Status, Partner Status,Subject Type,Partner Type, " + title;
                 String header2 = "Lead_Date,Lead_Subject Status, Lead_Partner Status,Lead_" + title.Replace(",", ",Lead_");
                 sw.Write(header1.Replace(" ", ""));
-                sw.WriteLine(header2.Replace(" ", "")+",CLASSROOM");
+                String newHeader2 = header2.Replace(" ", "") + ",CLASSROOM";
+               // newHeader2.Replace(",Lead_,", ",");
+                sw.WriteLine(newHeader2);
                 int idx = 0;
                 foreach (ClassroomDay day in days)
                 {
@@ -712,8 +744,8 @@ Lab2B
                             String subjectLine = date + "," + subject + "," + partner + "," + mr.shortBID + "," + mrp.shortBID + "," + mr.aid + "," + mrp.aid + "," + mr.sex + "," + mrp.sex + "," + mr.lang + "," + mrp.lang + "," + adult + "," + lines[0];
                             String partnerLine = date + "," + partner + "," + subject + "," + mrp.shortBID + "," + mr.shortBID + "," + mrp.aid + "," + mr.aid + "," + mrp.sex + "," + mr.sex + "," + mrp.lang + "," + mr.lang + "," + adult + "," + lines[1];
 
-                            String partnerLine2 = new StringBuilder().Insert(0, "NA,", 68).ToString();
-                            String subjectLine2 = new StringBuilder().Insert(0, "NA,", 68).ToString();
+                            String partnerLine2 = new StringBuilder().Insert(0, "NA,", 75).ToString();//68
+                            String subjectLine2 = new StringBuilder().Insert(0, "NA,", 75).ToString();//68
                             if (idx < days.Count)
                             {
                                 ClassroomDay nextDay = days[idx];
