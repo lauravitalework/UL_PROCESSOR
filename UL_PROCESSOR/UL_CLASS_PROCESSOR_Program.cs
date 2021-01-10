@@ -84,7 +84,13 @@ Lab2B
                 //configInfo.settings.subs.Add("L8P");
 
                 //configInfo.settings.subs.Add("2B");
-
+                //pairInteractions["PR_LEAP_1819_T3-PR_LEAP_AM_1819_11"].partner.ad
+                /*configInfo.settings.subs.Add("PR_LEAP_AM_1819_11");
+                configInfo.settings.subs.Add("PR_LEAP_AM_1819_2");
+                configInfo.settings.subs.Add("PR_LEAP_AM_1819_3");
+                configInfo.settings.subs.Add("PR_LEAP_AM_1819_1");
+                configInfo.settings.subs.Add("PR_LEAP_1819_T3");
+                configInfo.settings.subs.Add("PR_LEAP_1819_T1");*/
                 /************ 1)READ DAY MAPPINGS*******************/
                 if (configInfo.classSettings.mappingBy!="CLASS")
                 configInfo.readDayMappings(day);
@@ -154,7 +160,7 @@ Lab2B
                 {
                     /************ I)COUNT INTERACTIONS*******************/
                     if (!configInfo.justUbi)
-                    {
+                    {//
                         Console.WriteLine("countInteractions (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                         cd.countInteractionsNew(trunkAt, rawLena); //count interactions but no need to write a file
                     }
@@ -163,7 +169,9 @@ Lab2B
                     {
                         /************ II)10TH SEC AND VEL REPORT*******************/
                         Console.WriteLine("write10SecTalkingCSV (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                        cd.write10SecTalkingCSV(  ); //write complete data files to disc
+                        //DEBUG DELETE
+                        cd.write10SecTalkingCSVDetailed(); //write complete data files to disc
+                        //cd.write10SecTalkingCSV(  ); //write complete data files to disc
                     }
                     cd.activities.Clear();
                     cd.activities = null;
@@ -199,6 +207,8 @@ Lab2B
 
                     }
                 }
+                 
+
                 Console.WriteLine("Summarizing ALL " + " (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
 
                 if (configInfo.settings.doSumAllFiles)
@@ -365,8 +375,11 @@ Lab2B
             String partner = pair.Split('-')[1];
             String status = "present";
             String statusp = "present";
-            Boolean sAbsent = day.cf.getMapping(subject, day.day).isAbsent(day.day);//|| (!day.startLenaTimes.ContainsKey(subject));// false;
-            Boolean pAbsent = day.cf.getMapping(partner, day.day).isAbsent(day.day);//|| (!day.startLenaTimes.ContainsKey(partner)); ;
+            MappingRow mrs = day.cf.getMapping(subject, day.day);
+            MappingRow mrp = day.cf.getMapping(partner, day.day);
+
+            Boolean sAbsent = mrs.isAbsent(day.day);//|| (!day.startLenaTimes.ContainsKey(subject));// false;
+            Boolean pAbsent = mrp.isAbsent(day.day);//|| (!day.startLenaTimes.ContainsKey(partner)); ;
             Boolean lAbsent = (!day.startLenaTimes.ContainsKey(subject)) || (!day.startLenaTimes.ContainsKey(partner));
             Boolean dAbsent = !day.pairInteractions.ContainsKey(pair);
            
@@ -410,12 +423,21 @@ Lab2B
                    (statusp) + "," +
                    (nextDay ? "" : (type) + ",") +
                    (nextDay ? "" : (typep) + ",")
-                   + new StringBuilder().Insert(0, "NA,", 71).ToString();//65
+                   + new StringBuilder().Insert(0, "NA,", 66).ToString();//65
             lines[1] = (statusp) + "," +
                    (status) + "," +
                    (nextDay ? "" : (typep) + ",") +
                    (nextDay ? "" : (type) + ",")
-                   + new StringBuilder().Insert(0, "NA,", 71).ToString();//65
+                   + new StringBuilder().Insert(0, "NA,", 66).ToString();//65
+
+
+
+            if (UL_PROCESSOR_Program.doTempLkpFpVars)
+            {
+                lines[0]+= (new StringBuilder().Insert(0, "NA,", 7).ToString()+"NA");
+                lines[1] +=( new StringBuilder().Insert(0, "NA,", 7).ToString() + "NA");
+            }
+
             if (!absent)
             {
 
@@ -429,10 +451,6 @@ Lab2B
                 double partnerVocDur = 0;
                 double subjectAdUttLen= 0;
                 double partnerAdUttLen = 0;
-                double subjectTeacherUttLen = 0;
-                double partnerTeacherUttLen = 0;
-                double subjectTeacherCount = 0;
-                double partnerTeacherCount = 0; //Math.Round(day.pairStatsSep[pair].p2.ac, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
                 double subjectAdCount = 0;
                 double partnerAdCount = 0; //Math.Round(day.pairStatsSep[pair].p2.ac, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
                 double subjectNoise = 0; //Math.Round(day.pairStatsSep[pair].p1.no, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
@@ -456,6 +474,19 @@ Lab2B
                 String subjectLine = "";
                 String partnerLine = "";
 
+
+
+                //10/19/20 lkp urgent request
+                double subjectVocCountFp = 0;
+                double partnerVocCountFp = 0;
+                double proximityOrientationTimeFp = 0; // Math.Round(day.pairCloseOrientation[pair], 2) / 2;
+                double sharedTimeFp = 0; // Math.Round(day.pairTime[pair], 2) / 2; //check on this. correct. 
+                double subjectVocCountNoFp = 0;
+                double partnerVocCountNoFp = 0;
+                double proximityOrientationTimeNoFp = 0; // Math.Round(day.pairCloseOrientation[pair], 2) / 2;
+                double sharedTimeNoFp = 0; // Math.Round(day.pairTime[pair], 2) / 2; //check on this. correct. 
+
+
                 if (!absent)
                 {
                     /*if (day.individualTime.ContainsKey(subject))
@@ -473,7 +504,7 @@ Lab2B
                         //absent = true;
 
                     }*/
-                    subjectTime= Math.Round(day.pairInteractions[pair].subject.individualTime, 2);
+                    subjectTime= Math.Round(day.pairInteractions[pair].subject.individualTime, 2);///////////
                     partnerTime = Math.Round(day.pairInteractions[pair].partner.individualTime, 2);
 
                     subjectTurnCount = Math.Round(day.pairInteractions[pair].subject.tc, 2); //Math.Round(day.pairStatsSep[pair].p1.tc, 2);
@@ -481,8 +512,6 @@ Lab2B
                     subjectVocDur = Math.Round(day.pairInteractions[pair].subject.vd, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
                     subjectAdCount = Math.Round(day.pairInteractions[pair].subject.ac, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
                     subjectAdUttLen = Math.Round(day.pairInteractions[pair].subject.ad, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
-                    subjectTeacherCount = Math.Round(day.pairInteractions[pair].subject.atc, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
-                    subjectTeacherUttLen = Math.Round(day.pairInteractions[pair].subject.atd, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
                     subjectNoise = Math.Round(day.pairInteractions[pair].subject.no, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
                     subjectOln = Math.Round(day.pairInteractions[pair].subject.oln, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
                     subjectCry = Math.Round(day.pairInteractions[pair].subject.cry, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
@@ -494,8 +523,6 @@ Lab2B
                     partnerVocDur = Math.Round(day.pairInteractions[pair].partner.vd, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
                     partnerAdCount = Math.Round(day.pairInteractions[pair].partner.ac, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
                     partnerAdUttLen = Math.Round(day.pairInteractions[pair].partner.ad, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
-                    partnerTeacherCount = Math.Round(day.pairInteractions[pair].partner.atc, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
-                    partnerTeacherUttLen = Math.Round(day.pairInteractions[pair].partner.atd, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
                     partnerNoise = Math.Round(day.pairInteractions[pair].partner.no, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
                     partnerOln = Math.Round(day.pairInteractions[pair].partner.oln, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
                     partnerCry = Math.Round(day.pairInteractions[pair].partner.cry, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
@@ -510,6 +537,25 @@ Lab2B
                     proximityOrientationTime = Math.Round(day.pairInteractions[pair].closeAndOrientedTimeInSecs, 2) / 2;
                     sharedTime = Math.Round(day.pairInteractions[pair].sharedTimeInSecs, 2) / 2; //check on this. correct. 
                     recordingTime = (day.endTime.Hour - day.startTime.Hour) * 60 * 60 + (day.endTime.Minute - day.startTime.Minute) * 60 + (day.endTime.Second - day.startTime.Second) + (day.endTime.Millisecond - day.startTime.Millisecond) / 1000;
+
+
+                    //10/19/20 lkp urgent request
+                    subjectVocCountFp = Math.Round(day.pairInteractions[pair].subject.vcFp, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
+                    subjectVocCountNoFp = Math.Round(day.pairInteractions[pair].subject.vcNoFp, 2);//.Round(day.pairStatsSeparatedVC[pair].Item1, 2);
+                    partnerVocCountFp = Math.Round(day.pairInteractions[pair].partner.vcFp, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                    partnerVocCountNoFp = Math.Round(day.pairInteractions[pair].partner.vcNoFp, 2);// Math.Round(day.pairStatsSeparatedVC[pair].Item2, 2);
+                    proximityOrientationTimeFp = Math.Round(day.pairInteractions[pair].closeAndOrientedTimeInSecsFp, 2) / 2;
+                    sharedTimeFp = Math.Round(day.pairInteractions[pair].sharedTimeInSecsFp, 2) / 2; //check on this. correct. 
+                    proximityOrientationTimeNoFp = Math.Round(day.pairInteractions[pair].closeAndOrientedTimeInSecsNoFp, 2) / 2;
+                    sharedTimeNoFp = Math.Round(day.pairInteractions[pair].sharedTimeInSecsNoFp, 2) / 2; //check on this. correct. 
+
+
+                    if (subjectAdUttLen>0 || partnerAdUttLen > 0)
+                    {
+                        bool stop = true;
+                    }
+
+
                 }
 
 
@@ -518,32 +564,37 @@ Lab2B
                 PersonInfo p = day.personTotalCounts.ContainsKey(partner) ? day.personTotalCounts[partner] : new PersonInfo();
                 PersonInfo pUbi = day.personTotalCountsWUbi.ContainsKey(partner) ? day.personTotalCountsWUbi[partner] : new PersonInfo();
 
+                //7/2/20 chnge to recording time UPDATE DEBUG!
+                subjectTime = Math.Round(s.totalRecMSecs, 2);///////////
+                partnerTime = Math.Round(p.totalRecMSecs, 2);
+
 
                 Tuple<String, String, String> metrics = getMetrics("WUBI Total ", "Total", "Partner WUBI Total ", "Partner Total",
                     sUbi,
                     s,
                     pUbi,
                     p, absent, absent);////
-                                       // TO ADD Input2_DUR_PVD_OR_UTTL
-                                       /* "Input2_pvc_or_stc" + "," +
-                                           "Pair Block Talking," +
-                                           "Pair Talking Duration," +
-                                           "Subject-Talking-Duration-From_Start," +
-                                           "Partner-Talking-Duration-From-Start," +
-                                           "Subject-Talking-Duration-Evenly-Spread," +
-                                           "Partner-Talking-Duration-Evenly-Spread," +
-                                           "Subject Turn Count," +
-                                           "Partner Turn Count," +*/
+
+               /* "Input2_pvc_or_stc" + "," +
+                   "Pair Block Talking," +
+                   "Pair Talking Duration," +
+                   "Subject-Talking-Duration-From_Start," +
+                   "Partner-Talking-Duration-From-Start," +
+                   "Subject-Talking-Duration-Evenly-Spread," +
+                   "Partner-Talking-Duration-Evenly-Spread," +
+                   "Subject Turn Count," +
+                   "Partner Turn Count," +*/
 
 
-                subjectLine = (
+               subjectLine = (
                        (status) + "," +
                        (statusp) + "," +
                        (nextDay ? "" : (type) + ",") +
                        (nextDay ? "" : (typep) + ",") +/////
                        (absent ? "NA" : typep=="Child" ? partnerVocCount.ToString() : subjectAdCount.ToString()) + "," +
                        (absent ? "NA" : typep == "Child" ? partnerVocCount.ToString() : subjectTurnCount.ToString()) + "," +
-                       (absent ? "NA" : VD.ToString()) + "," +
+                       (absent ? "NA" : typep == "Child" ? partnerVocDur.ToString() : subjectAdUttLen.ToString()) + "," +
+                       (absent ? "NA" : VD.ToString()) + "," +//
                        (absent ? "NA" : interactionTime.ToString()) + "," +
                        (sAbsent ? "NA" : subjectInteractionTime.ToString()) + "," +
                        (pAbsent ? "NA" : partnerInteractionTime.ToString()) + "," +
@@ -555,12 +606,6 @@ Lab2B
                        (pAbsent ? "NA" : partnerVocCount.ToString()) + "," +
                        (sAbsent ? "NA" : subjectAdCount.ToString()) + "," +
                        (pAbsent ? "NA" : partnerAdCount.ToString()) + "," +
-                       (sAbsent ? "NA" : subjectAdUttLen.ToString()) + "," +
-                       (pAbsent ? "NA" : partnerAdUttLen.ToString()) + "," +
-                       (sAbsent ? "NA" : subjectTeacherCount.ToString()) + "," +
-                       (pAbsent ? "NA" : partnerTeacherCount.ToString()) + "," +
-                       (sAbsent ? "NA" : subjectTeacherUttLen.ToString()) + "," +
-                       (pAbsent ? "NA" : partnerTeacherUttLen.ToString()) + "," +
                        (sAbsent ? "NA" : subjectNoise.ToString()) + "," +
                        (pAbsent ? "NA" : partnerNoise.ToString()) + "," +
                        (sAbsent ? "NA" : subjectOln.ToString()) + "," +
@@ -573,10 +618,10 @@ Lab2B
                        (absent ? "NA" : proximityTime.ToString()) + "," +
                        (absent ? "NA" : proximityOrientationTime.ToString()) + "," +
                        (absent ? "NA" : sharedTime.ToString()) + "," +
-                       (sAbsent ? "NA" : subjectTime.ToString()) + "," +
+                       (sAbsent ? "NA" : subjectTime.ToString()) + "," +/////////
                        (pAbsent ? "NA" : partnerTime.ToString()) + "," +
                        (absent ? "NA" : recordingTime.ToString()) + "," +
-                        metrics.Item2);
+                        metrics.Item2 );
 
                 partnerLine = (
                     (statusp) + "," +
@@ -585,6 +630,7 @@ Lab2B
                     (nextDay ? "" : (type) + ",") +
                     (absent ? "NA" : type == "Child" ? subjectVocCount.ToString() : partnerAdCount.ToString()) + "," +
                     (absent ? "NA" : type == "Child" ? subjectVocCount.ToString() : partnerTurnCount.ToString()) + "," +
+                    (absent ? "NA" : type == "Child" ? subjectVocDur.ToString() : partnerAdUttLen.ToString()) + "," +
                     (absent ? "NA" : VD.ToString()) + "," +
                     (absent ? "NA" : interactionTime.ToString()) + "," +
                     (pAbsent ? "NA" : partnerInteractionTime.ToString()) + "," +
@@ -597,12 +643,6 @@ Lab2B
                     (sAbsent ? "NA" : subjectVocCount.ToString()) + "," +
                     (pAbsent ? "NA" : partnerAdCount.ToString()) + "," +
                     (sAbsent ? "NA" : subjectAdCount.ToString()) + "," +
-                    (pAbsent ? "NA" : partnerAdUttLen.ToString()) + "," +
-                    (sAbsent ? "NA" : subjectAdUttLen.ToString()) + "," +
-                    (pAbsent ? "NA" : partnerTeacherCount.ToString()) + "," +
-                    (sAbsent ? "NA" : subjectTeacherCount.ToString()) + "," +
-                    (pAbsent ? "NA" : partnerTeacherUttLen.ToString()) + "," +
-                    (sAbsent ? "NA" : subjectTeacherUttLen.ToString()) + "," +
                     (pAbsent ? "NA" : partnerNoise.ToString()) + "," +
                     (sAbsent ? "NA" : subjectNoise.ToString()) + "," +
                     (pAbsent ? "NA" : partnerOln.ToString()) + "," +
@@ -620,6 +660,31 @@ Lab2B
                     (absent ? "NA" : recordingTime.ToString()) + "," +
                      metrics.Item3);
 
+                //10/19/20 lkp urgent request
+                if(UL_PROCESSOR_Program.doTempLkpFpVars)
+                {
+                    subjectLine += ( 
+                        (absent ? "NA" : sharedTimeFp.ToString()) + "," + 
+                        (sAbsent ? "NA" : subjectVocCountFp.ToString()) + "," +
+                        (pAbsent ? "NA" : partnerVocCountFp.ToString()) + ","+
+                        (absent ? "NA" : proximityOrientationTimeFp.ToString()) + "," +
+                        (absent ? "NA" : sharedTimeNoFp.ToString()) + "," +
+                        (sAbsent ? "NA" : subjectVocCountNoFp.ToString()) + "," +
+                        (pAbsent ? "NA" : partnerVocCountNoFp.ToString()) + "," +
+                        (absent ? "NA" : proximityOrientationTimeNoFp.ToString()));
+
+                    partnerLine += ( 
+                        (absent ? "NA" : sharedTimeFp.ToString()) + "," + 
+                        (pAbsent ? "NA" : partnerVocCountFp.ToString()) + "," +
+                        (sAbsent ? "NA" : subjectVocCountFp.ToString()) + ","+
+                        (absent ? "NA" : proximityOrientationTimeFp.ToString()) + "," +
+                        (absent ? "NA" : sharedTimeNoFp.ToString()) + "," +
+                        (pAbsent ? "NA" : partnerVocCountNoFp.ToString()) + "," +
+                        (sAbsent ? "NA" : subjectVocCountNoFp.ToString()) + "," +
+                        (absent ? "NA" : proximityOrientationTimeNoFp.ToString()));
+                }
+                 
+
                 lines[0] = subjectLine;
                 lines[1] = partnerLine;
             }
@@ -633,7 +698,8 @@ Lab2B
                 //String title = ",Pair Talking Duration, Subject Talking Duration, Partner Talking Duration,Pair Turn Count, Subject Turn Count, Partner Turn Count, Pair Proximity Duration, Pair Orientation-Proximity Duration, Shared Time in Classroom, Subject Time, Partner Time, Total Recording Time, Total Voc Duration, Total Voc Count, Total Turn Count, Total Partner Voc Duration, Total Partner Voc Count, Total Partner Turn Count";
                 String title =
                     "Input1_pvc_or_sac" + "," +
-                    "Input2_pvc_or_stc" + "," + 
+                    "Input2_pvc_or_stc" + "," +
+                    "Input3_dur_pvd_or_uttl" + "," +  //// 5/18/20TO ADD Input2_DUR_PVD_OR_UTTL
                     "Pair Block Talking," +
                     "Pair Talking Duration,"+ 
                     "Subject-Talking-Duration-From_Start," +
@@ -646,12 +712,6 @@ Lab2B
                     "Partner Voc Count,"+ 
                     "Subject Adult Count,"+ 
                     "Partner Adult Count,"+
-                    "Subject Adult Utt Length," +
-                    "Partner Adult Utt Length," +
-                    "Subject Teacher Count," +
-                    "Partner Teacher Count," +
-                    "Subject Teacher Utt Length," +
-                    "Partner Teacher Utt Length," +
                     "Subject Noise," + 
                     "Partner Noise,"+ 
                     "Subject OLN,"+ 
@@ -698,9 +758,7 @@ Lab2B
                 String header1 = "Date, Subject, Partner, Subject ShortID, Partner ShortID, Subject Diagnosis, Partner Diagnosis, Subject Gender, Partner Gender, Subject Language, Partner Language, Adult,Subject Status, Partner Status,Subject Type,Partner Type, " + title;
                 String header2 = "Lead_Date,Lead_Subject Status, Lead_Partner Status,Lead_" + title.Replace(",", ",Lead_");
                 sw.Write(header1.Replace(" ", ""));
-                String newHeader2 = header2.Replace(" ", "") + ",CLASSROOM";
-               // newHeader2.Replace(",Lead_,", ",");
-                sw.WriteLine(newHeader2);
+                sw.WriteLine(UL_PROCESSOR_Program.doLeads?header2.Replace(" ", "")+"CLASSROOM": UL_PROCESSOR_Program.doTempLkpFpVars ? ",SharedTimeinClassroomFP,SubjectVocCountFP,PartnerVocCountFP,PairOrientation_ProximityDurationFP,SharedTimeinClassroomNoFP,SubjectVocCountNoFP,PartnerVocCountNoFP,PairOrientation_ProximityDurationNoFP,CLASSROOM": "CLASSROOM");
                 int idx = 0;
                 foreach (ClassroomDay day in days)
                 {
@@ -726,27 +784,38 @@ Lab2B
                             MappingRow mr = day.cf.getBaseMapping(subject, day.day);
                             MappingRow mrp = day.cf.getBaseMapping(partner, day.day);
 
-                         /*   subjectLine = (
-                                   (nextDay ? "" : (mr.longBID) + ",") +
-                                   (nextDay ? "" : (mrp.longBID) + ",") +
-                                   (status) + "," +
-                                   (statusp) + "," +
-                                   (nextDay ? "" : (type) + ",") +
-                                   (nextDay ? "" : (typep) + ",") +/////
-                                   (nextDay ? "" : (mr.aid) + ",") +
-                                   (nextDay ? "" : (mrp.aid) + ",") +
-                                   (nextDay ? "" : (mr.sex) + ",") +
-                                   (nextDay ? "" : (mrp.sex) + ",") +
-                                   (nextDay ? "" : (mr.lang) + ",") +
-                                   (nextDay ? "" : (mrp.lang) + ",") +*/
+                            //FIX HACK 
+                            if(mr.shortBID=="" && mr.longBID!="" && subject.Length> mr.longBID.Length)
+                            {
+                                mr.shortBID = mr.longBID;
+                                mr.longBID = subject;
+                            }
+                            if (mrp.shortBID == "" && mrp.longBID != "" && partner.Length > mrp.longBID.Length)
+                            {
+                                mrp.shortBID = mrp.longBID;
+                                mrp.longBID = partner;
+                            }
+                            /*   subjectLine = (
+                                      (nextDay ? "" : (mr.longBID) + ",") +
+                                      (nextDay ? "" : (mrp.longBID) + ",") +
+                                      (status) + "," +
+                                      (statusp) + "," +
+                                      (nextDay ? "" : (type) + ",") +
+                                      (nextDay ? "" : (typep) + ",") +/////
+                                      (nextDay ? "" : (mr.aid) + ",") +
+                                      (nextDay ? "" : (mrp.aid) + ",") +
+                                      (nextDay ? "" : (mr.sex) + ",") +
+                                      (nextDay ? "" : (mrp.sex) + ",") +
+                                      (nextDay ? "" : (mr.lang) + ",") +
+                                      (nextDay ? "" : (mrp.lang) + ",") +*/
 
 
                             String subjectLine = date + "," + subject + "," + partner + "," + mr.shortBID + "," + mrp.shortBID + "," + mr.aid + "," + mrp.aid + "," + mr.sex + "," + mrp.sex + "," + mr.lang + "," + mrp.lang + "," + adult + "," + lines[0];
                             String partnerLine = date + "," + partner + "," + subject + "," + mrp.shortBID + "," + mr.shortBID + "," + mrp.aid + "," + mr.aid + "," + mrp.sex + "," + mr.sex + "," + mrp.lang + "," + mr.lang + "," + adult + "," + lines[1];
 
-                            String partnerLine2 = new StringBuilder().Insert(0, "NA,", 75).ToString();//68
-                            String subjectLine2 = new StringBuilder().Insert(0, "NA,", 75).ToString();//68
-                            if (idx < days.Count)
+                            String partnerLine2 = new StringBuilder().Insert(0, "NA,", 69).ToString();//68
+                            String subjectLine2 = new StringBuilder().Insert(0, "NA,", 69).ToString();//68
+                            if (idx < days.Count && UL_PROCESSOR_Program.doLeads)
                             {
                                 ClassroomDay nextDay = days[idx];
                                 String pairN = pair.Split('-')[1] + "-" + pair.Split('-')[0];
@@ -773,15 +842,16 @@ Lab2B
                                     }
                                     else
                                     {
-                                        subjectLine2 = nextDay.startTime.ToShortDateString() + "," + linesN[1];
+                                        subjectLine2 = nextDay.startTime.ToShortDateString() + "" + linesN[1];
                                         partnerLine2 = nextDay.startTime.ToShortDateString() + "," + linesN[0];
                                     }
                                 }
 
                             }
 
-                            sw.WriteLine(subjectLine + subjectLine2+","+day.cf.classroom);
-                            sw.WriteLine(partnerLine + partnerLine2 + "," + day.cf.classroom);
+                             
+                            sw.WriteLine(subjectLine + (UL_PROCESSOR_Program.doLeads? subjectLine2:","  ) +day.cf.classroom);
+                            sw.WriteLine(partnerLine + (UL_PROCESSOR_Program.doLeads ? partnerLine2 : ",") + day.cf.classroom);
 
                         }
                     }

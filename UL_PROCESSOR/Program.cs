@@ -8,11 +8,13 @@ using System.Xml;
 //COMMIT 2
 namespace UL_PROCESSOR
 {
-    
+     
      
     class UL_PROCESSOR_Program
     {
-         
+
+        public static Boolean doLeads = false;
+        public static Boolean doTempLkpFpVars = true;
 
         public void processClassroom(UL_PROCESSOR_SETTINGS settings, UL_PROCESSOR_CLASS_SETTINGS classSettings)
         {
@@ -34,7 +36,7 @@ namespace UL_PROCESSOR
                
                 if (count>= settings.chunkSize)
                 {
-                    if(lastDateChunks.Count > 0)
+                    if(lastDateChunks.Count > 0 && UL_PROCESSOR_Program.doLeads)
                         dateChunks.Insert(0, lastDateChunks[lastDateChunks.Count-1]);
                     Console.WriteLine("PROCESSING LB"+total);
                     UL_CLASS_PROCESSOR_Program ul0 = new UL_CLASS_PROCESSOR_Program(new Config(settings , classSettings),dateChunks);
@@ -52,7 +54,7 @@ namespace UL_PROCESSOR
 
             }
             
-            if (lastDateChunks.Count > 0)
+            if (lastDateChunks.Count > 0 && UL_PROCESSOR_Program.doLeads)
                 dateChunks.Insert(0, lastDateChunks[lastDateChunks.Count-1]);
 
 

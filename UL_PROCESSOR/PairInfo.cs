@@ -27,5 +27,10 @@ namespace UL_PROCESSOR
         public bool partnerSet = false;
 
 
+        //10/19/20 temp add freeplay vc lkp request quick urgent.
+        public double sharedTimeInSecsFp = 0.0;
+        public double closeAndOrientedTimeInSecsFp = 0.0;
+        public double sharedTimeInSecsNoFp = 0.0;
+        public double closeAndOrientedTimeInSecsNoFp = 0.0;
     }
 }

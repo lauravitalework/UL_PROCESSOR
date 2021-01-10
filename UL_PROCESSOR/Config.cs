@@ -204,6 +204,7 @@ namespace UL_PROCESSOR
                                         mr.aid = line[mappingAidCol].Trim();
                                         mr.type = line[mappingTypeCol].Trim();
                                         mr.dob = line[mappingDobCol].Trim();
+                                       
                                         if (!baseMappings.ContainsKey(mr.BID))
                                         {
                                             baseMappings.Add(mr.BID, mr);
@@ -248,6 +249,15 @@ namespace UL_PROCESSOR
                                     mr.lang = headers.Length>= mappingLangCol? headers[mappingLangCol - 1].ToLower().Contains("language") ? line[mappingLangCol]: "":"";
                                     mr.Expiration = this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingExpiredCol]) : absent?new DateTime(1900, 1,1):dt2;
                                     mr.Start = this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingStartCol]) : absent ? new DateTime(1900,1, 2) : dt;
+
+                                      if (line[mappingStartCol].Trim()!=""&& line[mappingExpiredCol].Trim() != "")
+                                        {
+                                            DateTime mrStart = Convert.ToDateTime(line[mappingStartCol].Trim());
+                                            mr.Start = new DateTime(2020, 11, 24, mrStart.Hour, mrStart.Minute, mrStart.Second);
+                                            DateTime mrEnd = Convert.ToDateTime(line[mappingExpiredCol].Trim());
+                                            mr.Expiration = new DateTime(2020, 11, 24, mrEnd.Hour, mrEnd.Minute, mrEnd.Second);
+                                        } 
+
                                     mr.absences = getAbsentDays(line[mappingAbsentCol]);
                                     if (absent)
                                         mr.absences.Add(dt);
@@ -496,11 +506,30 @@ namespace UL_PROCESSOR
             {
                 foreach (MappingRow r in mapRows[bid])
                 {
-                    if (d.CompareTo(r.Expiration) < 0 && d.CompareTo(r.Start) >= 0)
+                    if (classSettings.mappingBy != "CLASS")
                     {
-                        mr = r;
-                        break;
+                       if (d.Year==r.Start.Year &&
+                            d.Month == r.Start.Month &&
+                            d.Day == r.Start.Day  )
+                        {
+                            mr = r;
+                            break; 
+                        }
                     }
+                    else
+                    {
+                        if (d.CompareTo(r.Expiration) < 0 && d.CompareTo(r.Start) >= 0)
+                        {
+                            if (!r.absences.Contains(new DateTime(d.Year, d.Month, d.Day)))
+                            {
+                                mr = r;
+                                break;
+                            }
+                        }
+                    }
+                    
+
+                     
 
                 }
             }
@@ -515,8 +544,11 @@ namespace UL_PROCESSOR
                 {
                     if (d.CompareTo(r.Expiration) < 0 && d.CompareTo(r.Start) >= 0)
                     {
-                        mr = r;
-                        break;
+                        if ((classSettings.mappingBy != "CLASS" || (!r.absences.Contains(new DateTime(d.Year, d.Month, d.Day)))))
+                        {
+                            mr = r;
+                            break;
+                        }
                     }
 
                 }
@@ -533,8 +565,11 @@ namespace UL_PROCESSOR
                 {
                     if (d.CompareTo(r.Expiration) < 0 && d.CompareTo(r.Start) >= 0)
                     {
-                        mr = r;
-                        break;
+                        if ((classSettings.mappingBy != "CLASS" || (!r.absences.Contains(new DateTime(d.Year, d.Month, d.Day)))))
+                        {
+                            mr = r;
+                            break;
+                        }
                     }
 
                 }
@@ -543,15 +578,18 @@ namespace UL_PROCESSOR
         }
         public MappingRow getUbiMappingR(String ubiId, DateTime d)
         {
-            MappingRow mr = new MappingRow();
+            MappingRow mr = new MappingRow(); 
             if (mapRowsUbiR.ContainsKey(ubiId))
             {
                 foreach (MappingRow r in mapRowsUbiR[ubiId])
                 {
                     if (d.CompareTo(r.Expiration) < 0 && d.CompareTo(r.Start) >= 0)
                     {
-                        mr = r;
-                        break;
+                        if ((classSettings.mappingBy != "CLASS" || (!r.absences.Contains(new DateTime(d.Year, d.Month, d.Day)))))
+                        {
+                            mr = r;
+                            break;
+                        }
                     }
 
                 }
@@ -560,15 +598,23 @@ namespace UL_PROCESSOR
         }
         public MappingRow getLenaMapping(String lenaId, DateTime d)
         {
-            MappingRow mr = new MappingRow();
+            MappingRow mr = new MappingRow(); 
+            if (lenaId == "11565")
+            {
+                Boolean stop = true;
+            }
             if (mapRowsLena.ContainsKey(lenaId))
             {
                 foreach (MappingRow r in mapRowsLena[lenaId])
                 {
-                    if (d.CompareTo(r.Expiration) < 0 && d.CompareTo(r.Start) >= 0)
+                    if (d.CompareTo(r.Expiration) < 0 && d.CompareTo(r.Start) >= 0 )
                     {
-                        mr = r;
-                        break;
+                        if((classSettings.mappingBy != "CLASS" || ( !r.absences.Contains(new DateTime(d.Year, d.Month, d.Day)) )))
+                        {
+                            mr = r;
+                            break;
+                        } 
+                        
                     }
 
                 }

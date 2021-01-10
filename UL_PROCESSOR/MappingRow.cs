@@ -35,10 +35,11 @@ namespace UL_PROCESSOR
                 if (DateTime.Compare(day, aday) == 0)
                 {
                     isAbsent = true;
-                    break;
+                    return isAbsent; 
                 }
             }
-            return isAbsent;
+            
+            return this.BID == ""?true:isAbsent;
         }
     }
 }

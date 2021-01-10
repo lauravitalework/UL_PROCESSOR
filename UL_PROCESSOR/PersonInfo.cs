@@ -10,7 +10,10 @@ namespace UL_PROCESSOR
 {
   public class PersonInfo
   {
-    public DateTime startTime = new DateTime();
+
+        public double totalRecMSecs = 0;
+         
+        public DateTime startTime = new DateTime();
     public bool startTimeSet = false;
     public string ubiId = "";
     public string lenaId = "";
@@ -36,8 +39,7 @@ namespace UL_PROCESSOR
     public double no = 0.00;
     public double ac = 0.00;
     public double ad = 0.00;
-    public double atc = 0.00;
-    public double atd = 0.00;
+    
     public double oln = 0.00;
     public double cry = 0.00;
     public double otherChild = 0;
@@ -45,7 +47,7 @@ namespace UL_PROCESSOR
     public double ly = 0.00;
     public double rx = 0.00;
     public double ry = 0.00;
-    public bool isFreePlay = false;
+    public bool isFreePlay = false;///???? works????? DEBUG
     public bool isCrying = false;
         public double avDb =0.00;
         public double maxDb =0.00;
@@ -65,6 +67,11 @@ namespace UL_PROCESSOR
         public double secs = 0;
 
         public Boolean hasULData = false;
+
+
+        //10/19/20 temp add freeplay vc lkp request quick urgent.
+        public double vcFp = 0.00;
+        public double vcNoFp = 0.00;
 
     }
 }

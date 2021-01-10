@@ -12,9 +12,11 @@ namespace UL_PROCESSOR
         public int chunkSize = 4;
         public Boolean doUbiChildFiles = false;
         public Boolean doTenFiles = true;
+        public Boolean doCovid = false;
         public Boolean doSumDayFiles = true;
         public Boolean doSumAllFiles = true;
-        public Boolean doAngleFiles = true; //to implement
+        public Boolean doAngleFiles = true;  
+        public Boolean doTalkingCount = true; //to implement
         public Boolean getFromIts = false;
         public Boolean doGR = true;
         public Boolean doVel = true;
@@ -45,12 +47,15 @@ namespace UL_PROCESSOR
                 {
                     switch (setting[0].Trim())
                     {
+                        case "COVID":
+                            doCovid = setting[1].Trim().ToUpper() == "YES";
+                            break;
                         case "TEN":
                             doTenFiles = setting[1].Trim().ToUpper() == "YES";
                             break;
                         case "SUMDAY":
                             doSumDayFiles = setting[1].Trim().ToUpper() == "YES";
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               break;
+                            break;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   break;
                         case "SUMALL":
                             doSumAllFiles = setting[1].Trim().ToUpper() == "YES";
                             break;
