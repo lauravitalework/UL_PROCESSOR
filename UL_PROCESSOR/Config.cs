@@ -24,7 +24,7 @@ namespace UL_PROCESSOR
         public String baseMappingFile = "/MAPPING";
         public String adjustFile = "/ADJUST";
         public String ubisenseFile = "MiamiChild.";
-        public String ubisenseTagsFile = "MiamiLocation.";
+        public String ubisenseTagsFile = "MiamiLocation";
         public String ubisenseFileDir = "/Ubisense_Data/";// LADYBUG/";
         public String lenaFileDir = "/LENA_Data/";// LADYBUG/";
        // public String lenaITSDir = "/LENA_Data/";// LADYBUG/";
@@ -170,7 +170,9 @@ namespace UL_PROCESSOR
         //mr.Start = Convert.ToDateTime(line[mappingStartCol])
         //mappingFile = root + classroom + mappingFile + "_" + classroom + ".CSV";
         Boolean mappingStarted = false;
-        
+
+        public Dictionary<String, int> diagnosis = new Dictionary<string, int>();
+        public Dictionary<String, int> languages = new Dictionary<string, int>();
 
         public void readMappingFile(String thisMappingFile, DateTime dt, DateTime dt2)
         {
@@ -179,7 +181,10 @@ namespace UL_PROCESSOR
              * CASE 2) DAY FILE. ----- --- ABS
              * CASE 3) DAY FILE. ----- --- ---
              * ****/
-             //
+            //
+            diagnosis = new Dictionary<string, int>();
+            languages = new Dictionary<string, int>();
+
             try
             {
                 Dictionary<String, MappingRow> baseMappings = new Dictionary<string, MappingRow>();
@@ -187,6 +192,23 @@ namespace UL_PROCESSOR
                         using (StreamReader sr = new StreamReader(baseMappingFile))
                         {
                             String[] headers = sr.ReadLine().Split(',');
+                        //diagnosis.Add(headers[mappingAidCol].Trim(), mappingAidCol);
+                        //languages.Add(headers[mappingLangCol].Trim(), mappingLangCol);
+                        Boolean rosterHeaderNotLnFn = !(headers[0].Contains("LN") || headers[0].Contains("FN"));
+                            if (headers.Length >= (rosterHeaderNotLnFn?21:22))
+                            {
+                                for(int h=0;h<headers.Length && headers[h].Trim()!="";h++)
+                                {
+                                    if(headers[h].Trim().ToUpper().Contains("DIAGNOSIS") || headers[h].Trim().ToUpper().Contains("AID"))
+                                    {
+                                        diagnosis.Add(headers[h].Trim(), (rosterHeaderNotLnFn ? h+1 : h));
+                                    }
+                                    if (headers[h].Trim().ToUpper().Contains("LANGUAGE"))
+                                    {
+                                        languages.Add(headers[h].Trim(), (rosterHeaderNotLnFn ? h + 1 : h));
+                                    }
+                            }
+                            }
                             while (!sr.EndOfStream)
                             {
                                 try
@@ -198,13 +220,36 @@ namespace UL_PROCESSOR
                                         MappingRow mr = new MappingRow();
                                         mr.BID = line[mappingBIdCol].Trim();
                                         mr.shortBID = line[mappingShortBIdCol].Trim() != "" ? line[mappingShortBIdCol].Trim() : mr.BID;
-                                        mr.lang = headers[mappingLangCol - 1].ToLower().Contains("language") ? line[mappingLangCol] : "";
-                                        mr.aid = line[mappingAidCol].Trim();
+                                        //mr.lang = headers[mappingLangCol - 1].ToLower().Contains("language") ? line[mappingLangCol] : "";
                                         mr.sex = line[mappingSexCol].Trim();
-                                        mr.aid = line[mappingAidCol].Trim();
+                                        //mr.aid = line[mappingAidCol].Trim();
                                         mr.type = line[mappingTypeCol].Trim();
                                         mr.dob = line[mappingDobCol].Trim();
-                                       
+
+                                    if (diagnosis.Count >= 1)
+                                    {
+                                        int d = 0;
+                                        foreach (String key in diagnosis.Keys)
+                                        {
+                                            if (d > 0)
+                                                mr.aid += "|" + line[diagnosis[key]].Trim().Replace("|","-");
+                                            else
+                                                mr.aid += line[diagnosis[key]].Trim().Replace("|", "-");
+                                            d++;
+                                        }
+                                    }
+                                    if (languages.Count >= 1)
+                                    {
+                                       int  d = 0;
+                                            foreach (String key in languages.Keys)
+                                            {
+                                                if (d > 0)
+                                                    mr.lang += "|" + line[languages[key]].Trim().Replace("|", "-");
+                                            else
+                                                mr.lang += line[languages[key]].Trim().Replace("|", "-");
+                                            d++;
+                                            }
+                                        }
                                         if (!baseMappings.ContainsKey(mr.BID))
                                         {
                                             baseMappings.Add(mr.BID, mr);
@@ -250,10 +295,23 @@ namespace UL_PROCESSOR
                                     mr.Expiration = this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingExpiredCol]) : absent?new DateTime(1900, 1,1):dt2;
                                     mr.Start = this.classSettings.mappingBy == "CLASS" ? Convert.ToDateTime(line[mappingStartCol]) : absent ? new DateTime(1900,1, 2) : dt;
 
-                                      if (line[mappingStartCol].Trim()!=""&& line[mappingExpiredCol].Trim() != "")
+
+                                    //logic for 11/24 pilot data
+                                    if ((this.classSettings.mappingBy != "CLASS") &&
+                                     dt >= new DateTime(2020, 12, 24) &&
+                                     (line[mappingStartCol].Trim() != "" && line[mappingExpiredCol].Trim() != ""))
+                                    {
+                                        DateTime mrStart = Convert.ToDateTime(line[mappingStartCol].Trim());
+                                        mr.Start = new DateTime(dt.Year, dt.Month, dt.Day, mrStart.Hour, mrStart.Minute, mrStart.Second);
+                                        DateTime mrEnd = Convert.ToDateTime(line[mappingExpiredCol].Trim());
+                                        mr.Expiration = new DateTime(dt.Year, dt.Month, dt.Day, mrEnd.Hour, mrEnd.Minute, mrEnd.Second);
+                                    }
+                                    else if ( (this.classSettings.mappingBy != "CLASS" ) &&
+                                        dt >= new  DateTime(2020,11,24) &&
+                                        (line[mappingStartCol].Trim()!=""&& line[mappingExpiredCol].Trim() != ""))
                                         {
                                             DateTime mrStart = Convert.ToDateTime(line[mappingStartCol].Trim());
-                                            mr.Start = new DateTime(2020, 11, 24, mrStart.Hour, mrStart.Minute, mrStart.Second);
+                                            mr.Start = new DateTime(     2020, 11, 24, mrStart.Hour, mrStart.Minute, mrStart.Second);
                                             DateTime mrEnd = Convert.ToDateTime(line[mappingExpiredCol].Trim());
                                             mr.Expiration = new DateTime(2020, 11, 24, mrEnd.Hour, mrEnd.Minute, mrEnd.Second);
                                         } 

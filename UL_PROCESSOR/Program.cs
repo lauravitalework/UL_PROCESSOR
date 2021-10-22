@@ -13,8 +13,8 @@ namespace UL_PROCESSOR
     class UL_PROCESSOR_Program
     {
 
-        public static Boolean doLeads = false;
-        public static Boolean doTempLkpFpVars = true;
+        public static Boolean doLeads = true;
+        public static Boolean doTempLkpFpVars = false;//true;
 
         public void processClassroom(UL_PROCESSOR_SETTINGS settings, UL_PROCESSOR_CLASS_SETTINGS classSettings)
         {

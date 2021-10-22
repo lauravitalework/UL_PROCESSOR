@@ -90,17 +90,25 @@ Lab2B
                 configInfo.settings.subs.Add("PR_LEAP_AM_1819_3");
                 configInfo.settings.subs.Add("PR_LEAP_AM_1819_1");
                 configInfo.settings.subs.Add("PR_LEAP_1819_T3");
-                configInfo.settings.subs.Add("PR_LEAP_1819_T1");*/
+                configInfo.settings.subs.Add("PR_LEAP_1819_T1"); 
+                configInfo.settings.subs.Add("TROP_TRTL_1920_1");
+                configInfo.settings.subs.Add("TROP_TRTL_1920_11"); 
+
+                configInfo.settings.subs.Add("DS_STARFISH_1920_1");
+                configInfo.settings.subs.Add("DS_STARFISH_1920_2");
+                configInfo.settings.subs.Add("DS_STARFISH_1920_3");
+                //configInfo.settings.subs.Add("DS_STARFISH_1920_10");*/
+
                 /************ 1)READ DAY MAPPINGS*******************/
-                if (configInfo.classSettings.mappingBy!="CLASS")
-                configInfo.readDayMappings(day);
+                if (configInfo.classSettings.mappingBy != "CLASS")
+                    configInfo.readDayMappings(day);
 
                 ClassroomDay cd = new ClassroomDay(day, configInfo);
                 Console.WriteLine("PROCESSING " + configInfo.classroom + " " + day.ToShortDateString());
 
 
                 /************ 1)READ LENA FILE*******************/
-                Console.WriteLine("readLenaFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + " getFromIts " + configInfo.settings.getFromIts +"):");
+                Console.WriteLine("readLenaFile (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + " getFromIts " + configInfo.settings.getFromIts + "):");
                 Dictionary<String, List<PersonInfo>> rawLena = configInfo.settings.getFromIts ? cd.readLenaItsFiles(countDays) : cd.readLenaFile();
 
 
@@ -122,15 +130,15 @@ Lab2B
                 Console.WriteLine("setUbiTagData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
                 cd.setUbiTagData(rawTags.Item1, rawTags.Item2);
 
-                
+
                 //SORT 
                 /*List<Order> objListOrder =
                 source.OrderBy(order => order.OrderDate).ToList();*/
                 List<String> personKeys = new List<string>();
-                foreach(String person in rawLena.Keys)
+                foreach (String person in rawLena.Keys)
                 {
                     personKeys.Add(person);
-                   
+
                 }
                 foreach (String person in personKeys)
                 {
@@ -138,50 +146,58 @@ Lab2B
                     rawLena[person] = newList;
                 }
 
-                /************ 4)WRITE GR BASE FILES*******************/
-                if (configInfo.settings.doGR)
+                /************ 4)WRITE GR BASE FILES OR CLEANUBI *******************/
+                if (configInfo.settings.justCleanUbi)
                 {
-                    Console.WriteLine("GR (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                    cd.writeGR(rawTags.Item3, rawLena);
+                    Console.WriteLine("CLEAN UBI (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                    cd.makeCleanUbiLog(rawTags.Item3, rawLena);
                 }
-
-
-                /************ 5)SET LENA DATA*******************/
-                Console.WriteLine("setLenaData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                cd.setLenaData(rawLena);
-
-
-                /************ 6)GET TRUNK TIME*******************/
-                DateTime trunkAt = cd.getTrunkTime();//gets first end track time from last ten minutes of tracking.
-
-
-                /************ 8)GET REPORTS*******************/
-                if (configInfo.settings.doSocialOnsets || configInfo.settings.doAngleFiles || configInfo.settings.doApproach || configInfo.settings.doTenFiles || configInfo.settings.doSumAllFiles || configInfo.settings.doSumDayFiles)
+                else
                 {
-                    /************ I)COUNT INTERACTIONS*******************/
-                    if (!configInfo.justUbi)
-                    {//
-                        Console.WriteLine("countInteractions (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                        cd.countInteractionsNew(trunkAt, rawLena); //count interactions but no need to write a file
-                    }
-                    //cd.countInteractions(subs, doAngleFiles, doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file
-                    if (configInfo.settings.doTenFiles || configInfo.settings.doVel)
+                    if (configInfo.settings.doGR)
                     {
-                        /************ II)10TH SEC AND VEL REPORT*******************/
-                        Console.WriteLine("write10SecTalkingCSV (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
-                        //DEBUG DELETE
-                        cd.write10SecTalkingCSVDetailed(); //write complete data files to disc
-                        //cd.write10SecTalkingCSV(  ); //write complete data files to disc
+                        Console.WriteLine("GR (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                        cd.writeGR(rawTags.Item3, rawLena);
                     }
-                    cd.activities.Clear();
-                    cd.activities = null;
-                    cds.Add(cd);
-                    
+
+
+                    /************ 5)SET LENA DATA*******************/
+                    Console.WriteLine("setLenaData (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                    cd.setLenaData(rawLena);
+
+
+                    /************ 6)GET TRUNK TIME*******************/
+                    DateTime trunkAt = cd.getTrunkTime();//gets first end track time from last ten minutes of tracking.
+
+
+                    /************ 8)GET REPORTS*******************/
+                    if (configInfo.settings.doSocialOnsets || configInfo.settings.doAngleFiles || configInfo.settings.doApproach || configInfo.settings.doTenFiles || configInfo.settings.doSumAllFiles || configInfo.settings.doSumDayFiles)
+                    {
+                        /************ I)COUNT INTERACTIONS*******************/
+                        if (!configInfo.justUbi)
+                        {//
+                            Console.WriteLine("countInteractions (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                            cd.countInteractionsNew(trunkAt, rawLena); //count interactions but no need to write a file
+                        }
+                        //cd.countInteractions(subs, doAngleFiles, doAngleFiles, true, trunkAt, rawLena); //count interactions but no need to write a file
+                        if (configInfo.settings.doTenFiles || configInfo.settings.doVel)
+                        {
+                            /************ II)10TH SEC AND VEL REPORT*******************/
+                            Console.WriteLine("write10SecTalkingCSV (" + DateTime.Now.ToLongDateString() + " " + DateTime.Now.ToLongTimeString() + "):");
+                            //DEBUG DELETE
+                            cd.write10SecTalkingCSVDetailed(); //write complete data files to disc
+                                                               //cd.write10SecTalkingCSV(  ); //write complete data files to disc
+                        }
+                        cd.activities.Clear();
+                        cd.activities = null;
+                        cds.Add(cd);
+
+                    }
+                    countDays++;
                 }
-                countDays++;
+                /************ C)SUMMARY REPORTS*******************/
+                summarize(cds, countSets, processLast, grp);
             }
-            /************ C)SUMMARY REPORTS*******************/
-            summarize(cds, countSets, processLast, grp);
         }
         public Boolean doTotals = false;
         public void summarize(List<ClassroomDay> cds, int c, Boolean processLast, int grp)
@@ -199,7 +215,7 @@ Lab2B
                         if (configInfo.settings.doSumDayFiles)
                         {
                             /************ 1)SUMMARY DAY REPORT*******************/
-                            writeDataSummary(configInfo.settings.getFromIts, false, configInfo.root + configInfo.classroom + "/SYNC/PAIRACTIVITY_"+ c.ToString() + "_" + configInfo.classroom + "_" + (cd.justProx ? "no_" : "") + (configInfo.justFreePlay ? "freeplay_" : "") + cd.day.Month + "_" + cd.day.Day + "_" + cd.day.Year + "_" + configInfo.settings.fileNameVersion + ".csv", oneDay, true); //write summary data
+                            writeDataSummary(configInfo,configInfo.settings.getFromIts, false, configInfo.root + configInfo.classroom + "/SYNC/PAIRACTIVITY_"+ c.ToString() + "_" + configInfo.classroom + "_" + (cd.justProx ? "no_" : "") + (configInfo.justFreePlay ? "freeplay_" : "") + cd.day.Month + "_" + cd.day.Day + "_" + cd.day.Year + "_" + configInfo.settings.fileNameVersion + ".csv", oneDay, true); //write summary data
                         }
                     }
                     catch (Exception e)
@@ -216,7 +232,7 @@ Lab2B
                     String fileNameSum = configInfo.root + configInfo.classroom + "/SYNC/PAIRACTIVITY_ALL_"+ grp + configInfo.classroom + (configInfo.justFreePlay ? "_freeplay" : "") + "_" + configInfo.settings.fileNameVersion + ".CSV";
 
                     /************ 2)SUMMARY ALL REPORT*******************/
-                    writeDataSummary(configInfo.settings.getFromIts, c > 0, fileNameSum, cds, processLast); //write summary data
+                    writeDataSummary(configInfo,configInfo.settings.getFromIts, c > 0, fileNameSum, cds, processLast); //write summary data
                     fileNames.Add(fileNameSum);
                 }
             }
@@ -529,7 +545,7 @@ Lab2B
                     partnerInteractionTime = Math.Round(day.pairInteractions[pair].partner.interactionTime, 2);
                     partnerJoinedCry = Math.Round(day.pairInteractions[pair].partner.cryingTime, 2);
 
-                    interactionTime = Math.Round(day.pairInteractions[pair].partner.interactionTime, 2);
+                    interactionTime = Math.Round(day.pairInteractions[pair].partner.interactionTime, 2);/////
                     joinedCry = Math.Round(day.pairInteractions[pair].closeAndOrientedCryInSecs, 2) / 2;
                     VD = day.pairInteractions[pair].subject.vd + day.pairInteractions[pair].partner.vd;
 
@@ -565,8 +581,8 @@ Lab2B
                 PersonInfo pUbi = day.personTotalCountsWUbi.ContainsKey(partner) ? day.personTotalCountsWUbi[partner] : new PersonInfo();
 
                 //7/2/20 chnge to recording time UPDATE DEBUG!
-                subjectTime = Math.Round(s.totalRecMSecs, 2);///////////
-                partnerTime = Math.Round(p.totalRecMSecs, 2);
+               // subjectTime = Math.Round(s.totalRecMSecs, 2);///////////
+               // partnerTime = Math.Round(p.totalRecMSecs, 2);
 
 
                 Tuple<String, String, String> metrics = getMetrics("WUBI Total ", "Total", "Partner WUBI Total ", "Partner Total",
@@ -594,7 +610,7 @@ Lab2B
                        (absent ? "NA" : typep=="Child" ? partnerVocCount.ToString() : subjectAdCount.ToString()) + "," +
                        (absent ? "NA" : typep == "Child" ? partnerVocCount.ToString() : subjectTurnCount.ToString()) + "," +
                        (absent ? "NA" : typep == "Child" ? partnerVocDur.ToString() : subjectAdUttLen.ToString()) + "," +
-                       (absent ? "NA" : VD.ToString()) + "," +//
+                       (absent ? "NA" : VD.ToString()) + "," +////
                        (absent ? "NA" : interactionTime.ToString()) + "," +
                        (sAbsent ? "NA" : subjectInteractionTime.ToString()) + "," +
                        (pAbsent ? "NA" : partnerInteractionTime.ToString()) + "," +
@@ -690,7 +706,7 @@ Lab2B
             }
             return lines;
         }
-        public static void writeDataSummary(Boolean getFromIts, Boolean append, String file_name, List<ClassroomDay> days, Boolean processLast)
+        public static void writeDataSummary(Config configInfo,Boolean getFromIts, Boolean append, String file_name, List<ClassroomDay> days, Boolean processLast)
         {
             
             using (TextWriter sw = new StreamWriter(file_name, append: append))
@@ -755,10 +771,32 @@ Lab2B
 
                 //title += getMetrics(" Total ", "WUBI Total", "Partner Total ", "WUBI Partner Total", new PersonInfo(), new PersonInfo(), new PersonInfo(), new PersonInfo(),false,false).Item1;//getMetrics("WUBI Total ", "WUBI Partner Total", new PersonInfo(), new PersonInfo()).Item1;
                 title += getMetrics(" WUBI Total ", " Total", "Partner WUBI Total ", " Partner Total", new PersonInfo(), new PersonInfo(), new PersonInfo(), new PersonInfo(), false, false).Item1;//getMetrics("WUBI Total ", "WUBI Partner Total", new PersonInfo(), new PersonInfo()).Item1;
-                String header1 = "Date, Subject, Partner, Subject ShortID, Partner ShortID, Subject Diagnosis, Partner Diagnosis, Subject Gender, Partner Gender, Subject Language, Partner Language, Adult,Subject Status, Partner Status,Subject Type,Partner Type, " + title;
+                //String header1 = "Date, Subject, Partner, Subject ShortID, Partner ShortID, Subject Diagnosis, Partner Diagnosis, Subject Gender, Partner Gender, Subject Language, Partner Language, Adult,Subject Status, Partner Status,Subject Type,Partner Type, " + title;
+
+                String header1 = "Date, Subject, Partner, Subject ShortID, Partner ShortID";//
+                String szAids = "";
+                String szLangs = "";
+                int iAids = 0;
+                int iLangs = 0;
+                foreach (String aidName in configInfo.diagnosis.Keys)
+                {
+                    szAids += (", Subject " + aidName);// +", Partner " + aidName);
+                    iAids++;
+                }
+                foreach (String lang in configInfo.languages.Keys)
+                {
+                    szLangs += (", Subject " + lang);// + ", Partner " + lang);
+                    iLangs++;
+                }
+                header1 += (iAids>0?(szAids+szAids.Replace("Subject","Partner")):"Subject Diagnosis,Partner Diagnosis,") +
+                    (iLangs > 0 ? (szLangs + szLangs.Replace("Subject", "Partner")) : "Subject Language,Partner Language") +
+                    ",Subject Gender, Partner Gender, Adult,Subject Status, Partner Status,Subject Type,Partner Type, " + title;
+                //Subject Diagnosis, Partner Diagnosis, Subject Gender, Partner Gender, Subject Language, Partner Language, Adult,Subject Status, Partner Status,Subject Type,Partner Type, " + title;
+
+
                 String header2 = "Lead_Date,Lead_Subject Status, Lead_Partner Status,Lead_" + title.Replace(",", ",Lead_");
                 sw.Write(header1.Replace(" ", ""));
-                sw.WriteLine(UL_PROCESSOR_Program.doLeads?header2.Replace(" ", "")+"CLASSROOM": UL_PROCESSOR_Program.doTempLkpFpVars ? ",SharedTimeinClassroomFP,SubjectVocCountFP,PartnerVocCountFP,PairOrientation_ProximityDurationFP,SharedTimeinClassroomNoFP,SubjectVocCountNoFP,PartnerVocCountNoFP,PairOrientation_ProximityDurationNoFP,CLASSROOM": "CLASSROOM");
+                sw.WriteLine(UL_PROCESSOR_Program.doLeads?header2.Replace(" ", "")+"CLASSROOM": UL_PROCESSOR_Program.doTempLkpFpVars ? "SharedTimeinClassroomFP,SubjectVocCountFP,PartnerVocCountFP,PairOrientation_ProximityDurationFP,SharedTimeinClassroomNoFP,SubjectVocCountNoFP,PartnerVocCountNoFP,PairOrientation_ProximityDurationNoFP,CLASSROOM": "CLASSROOM");
                 int idx = 0;
                 foreach (ClassroomDay day in days)
                 {
@@ -775,7 +813,7 @@ Lab2B
                            
 
                             Boolean adult = false;
-                            if (partner.Contains("T") || partner.Contains("Lab") || subject.Contains("T") || subject.Contains("Lab"))
+                            if (partner.Contains("T") || partner.Contains("Lab") || subject.Contains("T") || subject.Contains("Lab") || subject.Contains("_L") || subject.Contains("_L"))
                             {
                                 adult = true;
                             }
@@ -810,11 +848,29 @@ Lab2B
                                       (nextDay ? "" : (mrp.lang) + ",") +*/
 
 
-                            String subjectLine = date + "," + subject + "," + partner + "," + mr.shortBID + "," + mrp.shortBID + "," + mr.aid + "," + mrp.aid + "," + mr.sex + "," + mrp.sex + "," + mr.lang + "," + mrp.lang + "," + adult + "," + lines[0];
-                            String partnerLine = date + "," + partner + "," + subject + "," + mrp.shortBID + "," + mr.shortBID + "," + mrp.aid + "," + mr.aid + "," + mrp.sex + "," + mr.sex + "," + mrp.lang + "," + mr.lang + "," + adult + "," + lines[1];
+                          /*  String szAidsS = !mr.aid.Contains("|")? mr.aid : mr.aid.Split('|').Length == iAids ? String.Join(",", mr.aid.Split('|')) : String.Join(",", mr.aid.Split('|')) + new StringBuilder().Insert(0, ",",iAids - mr.aid.Split('|').Length);
+                            String szAidsP = !mrp.aid.Contains("|") ? mrp.aid : mrp.aid.Split('|').Length == iAids ? String.Join(",", mrp.aid.Split('|')) : String.Join(",", mrp.aid.Split('|')) + new StringBuilder().Insert(0, ",", iAids - mrp.aid.Split('|').Length);
+                            String szLangS = !mr.lang.Contains("|") ? mr.lang : mr.lang.Split('|').Length == iLangs ? String.Join(",", mr.lang.Split('|')) : String.Join(",", mr.lang.Split('|')) + new StringBuilder().Insert(0, ",", iLangs - mr.lang.Split('|').Length);
+                            String szLangP = !mrp.lang.Contains("|") ? mrp.lang : mrp.lang.Split('|').Length == iLangs ? String.Join(",", mrp.lang.Split('|')) : String.Join(",", mrp.lang.Split('|')) + new StringBuilder().Insert(0, ",", iLangs - mrp.lang.Split('|').Length);
+*/
 
-                            String partnerLine2 = new StringBuilder().Insert(0, "NA,", 69).ToString();//68
-                            String subjectLine2 = new StringBuilder().Insert(0, "NA,", 69).ToString();//68
+                            if (mr.aid.Split('|').Length==0)
+                            {
+                                bool stop = true;
+                            }
+
+                            String szAidsS =  mr.aid.Split('|').Length == iAids ? String.Join(",", mr.aid.Split('|')) : (mr.aid.Split('|').Length>0?String.Join(",", mr.aid.Split('|')):"") + new StringBuilder().Insert(0, "NA,", iAids> mr.aid.Split('|').Length?iAids - mr.aid.Split('|').Length:iAids);
+                            String szAidsP =  mrp.aid.Split('|').Length == iAids ? String.Join(",", mrp.aid.Split('|')) : (mrp.aid.Split('|').Length > 0 ? String.Join(",", mrp.aid.Split('|')) : "") + new StringBuilder().Insert(0, "NA,", iAids > mrp.aid.Split('|').Length ? iAids - mrp.aid.Split('|').Length : iAids);
+                            String szLangS =  mr.lang.Split('|').Length == iLangs ? String.Join(",", mr.lang.Split('|')) : (mr.lang.Split('|').Length > 0 ? String.Join(",", mr.lang.Split('|')) : "") + new StringBuilder().Insert(0, "NA,", iAids > mr.lang.Split('|').Length ? iLangs - mr.lang.Split('|').Length : iLangs);
+                            String szLangP =  mrp.lang.Split('|').Length == iLangs ? String.Join(",", mrp.lang.Split('|')) : (mrp.lang.Split('|').Length > 0 ? String.Join(",", mrp.lang.Split('|')) : "") + new StringBuilder().Insert(0, "NA,", iAids > mrp.lang.Split('|').Length ? iLangs - mrp.lang.Split('|').Length : iLangs);
+
+
+
+                            String subjectLine = date + "," + subject + "," + partner + "," + mr.shortBID + "," + mrp.shortBID + "," + szAidsS + "," +szAidsP + "," + szLangS + "," + szLangP + "," + mr.sex + "," + mrp.sex + "," + adult + "," + lines[0];
+                            String partnerLine = date + "," + partner + "," + subject + "," + mrp.shortBID + "," + mr.shortBID + "," + szAidsP + "," + szAidsS + "," + szLangP + "," + szLangS + "," + mrp.sex + "," + mr.sex + "," + adult + "," + lines[1];
+
+                            String partnerLine2 = new StringBuilder().Insert(0, "NA,", 59 + (2*(iAids+iLangs))).ToString();//68
+                            String subjectLine2 = new StringBuilder().Insert(0, "NA,", 59 + (2 * (iAids + iLangs))).ToString();//68
                             if (idx < days.Count && UL_PROCESSOR_Program.doLeads)
                             {
                                 ClassroomDay nextDay = days[idx];

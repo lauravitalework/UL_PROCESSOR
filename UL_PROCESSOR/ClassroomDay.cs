@@ -23,7 +23,7 @@ namespace UL_PROCESSOR
         public DateTime day;
         public String szDay = "";
         public Dictionary<String, List<Tuple<DateTime, DateTime>>> personUbiTimes = new Dictionary<string, List<Tuple<DateTime, DateTime>>>();
-
+        public double angle = 90;//45;
         public ClassroomDay(DateTime d, Config c)
         {
             cf = c;
@@ -604,6 +604,68 @@ namespace UL_PROCESSOR
             swc.Close();
             swc.Dispose();
         }
+        public void makeCleanUbiLog(List<PersonInfo> rawData, Dictionary<String, List<PersonInfo>> rawLena)
+        {
+            DateTime trunk = getTrunkTime();/////
+            Dictionary<String, DateTime> lastR = new Dictionary<string, DateTime>();
+            Dictionary<String, DateTime> lastL = new Dictionary<string, DateTime>();
+            Dictionary<String, String> firstLinesL = new Dictionary<string, string>();
+            Dictionary<String, String> firstLinesR = new Dictionary<string, string>();
+            string uncleanDayUbiFolder =  "/Ubisense_Data/Ubisense_UnFiltered_Data/";
+            string dayUbiFolder = "/Ubisense_Data/";
+            String szDay = (this.day.Month < 10 ? "0" : "") + this.day.Month.ToString() + "-" + (this.day.Day < 10 ? "0" : "") + this.day.Day.ToString() + "-" + this.day.Year.ToString();
+            if (cf.classSettings.mappingBy == "CLASS")
+            {
+                dayUbiFolder = dayUbiFolder + "/" + szDay;
+                uncleanDayUbiFolder = dayUbiFolder + "/" + szDay;
+            }
+            else
+            {
+                dayUbiFolder = szDay + "/" + dayUbiFolder;
+                uncleanDayUbiFolder = szDay + "/" + uncleanDayUbiFolder;
+
+            }
+
+            if (!Directory.Exists(cf.root + cf.classroom + "//" + uncleanDayUbiFolder))
+            {
+                Directory.CreateDirectory(cf.root + cf.classroom + "//" + uncleanDayUbiFolder);
+            }
+
+            foreach(String file in Directory.GetFiles(cf.root + cf.classroom + "//" + dayUbiFolder+"//"))
+            {
+                File.Move(file, file.Replace("//Ubisense_Data//", "//Ubisense_Data//Ubisense_UnFiltered_Data/"));
+            }
+
+
+            TextWriter swc = new StreamWriter(cf.root + cf.classroom +"//"+dayUbiFolder+"//MiamiLocation_"+ szDay.Replace("-","_")+"_filtered.log");
+
+            foreach (PersonInfo i in rawData)
+            {
+                Boolean validTime = false;
+                String personId = i.bid;
+                DateTime lineTime = i.dt;
+                String szLine = i.szLineData;
+                 
+
+                if ((cf.settings.subs.Count == 0 || cf.settings.subs.Contains(personId)) &&
+                         personId.Trim() != "" &&
+                         rawLena.ContainsKey(personId) &&
+                         lineTime >= rawLena[personId][0].dt &&
+                         lineTime <= rawLena[personId][rawLena[personId].Count - 1].dt &&
+                         (!isThisInTimes(lineTime, cf.extractTimes)))
+                {
+                    
+                    Boolean sAbsent = cf.getMapping(personId, day).isAbsent(day);//|| (!day.startLenaTimes.ContainsKey(subject));// false;
+                    if ((!sAbsent) && lineTime.CompareTo(trunk) <= 0)
+                    {
+                              swc.WriteLine(szLine);
+                    }
+                }
+            }
+            swc.Close();
+            swc.Dispose();
+            
+        }
         public Tuple<Dictionary<String, List<PersonInfo>>, Dictionary<String, List<PersonInfo>>, List<PersonInfo>> readUbiTagFile(Dictionary<String, List<PersonInfo>> rawLena, Boolean writeChaomingFile)
         {
             Dictionary<String, List<PersonInfo>> rawInfo = new Dictionary<String, List<PersonInfo>>();
@@ -734,7 +796,7 @@ namespace UL_PROCESSOR
                                                 }
                                                 if (writeChaomingFile && tagType != "")
                                                 {
-                                                    i.szLineData = szLine.Replace(tag, personId + tagType) + "," + tag;
+                                                    i.szLineData = cf.settings.justCleanUbi? szLine:( szLine.Replace(tag, personId + tagType) + "," + tag);
                                                     i.tagType = tagType;
                                                     i.tag = tag;
                                                     rawInfoAll.Add(i);
@@ -960,6 +1022,8 @@ namespace UL_PROCESSOR
             }
             return r;
         }
+
+
         public static Tuple<double, double> withinOrientationData(PersonInfo a, PersonInfo b)
         {
             Tuple<double, double> r = new Tuple<double, double>(180, 180);
@@ -1455,7 +1519,7 @@ if (theta > 360) theta -= 360;*/
 
 
 
-                                        //So the angle is arc tan(1.0) = 45°. 
+                                        //So the angle is arc tan(1.0) = angle°. 
                                         sw.WriteLine(s + "," + dt.ToString("hh:mm:ss.fff tt") + "," + activities[dt][s].x + "," + activities[dt][s].y + "," + activities[dt][s].ori + "," + chaoming_ori + "," +
                                                 activities[dt][s].wasTalking + "," +
                                                 mr.aid + "," + mr.sex + "," + mr.type + "," +
@@ -1796,6 +1860,7 @@ e20170310_134226_014863.wav	1
                         foreach (string file in files)
                         {
                             String fileName = Path.GetFileName(file);
+                            if(fileName.EndsWith(".its"))
                             {
 
                                 Console.WriteLine(file);
@@ -2234,7 +2299,7 @@ e20170310_134226_014863.wav	1
                                                                     cstart,
                                                                     cend,
                                                                     pi.vd,
-                                                                    pi.bd,
+                                                                    cpi.bd,
                                                                     0,
                                                                     0,
                                                                     0,
@@ -2242,7 +2307,7 @@ e20170310_134226_014863.wav	1
                                                                         }
 
                                                                         if (mr.type == "Child")
-                                                                            addMsToRawLena(ref rawLenaInfo, cpi);
+                                                                            addMsToRawLena(ref rawLenaInfo, cpi);///
 
                                                                     }
                                                                     else if (atts.Name.IndexOf("startUtt") == 0)
@@ -2275,7 +2340,7 @@ e20170310_134226_014863.wav	1
                                                                         //duration,seg_duration,wordcount,avg_db,avg_peak,turn_taking ");
 
                                                                         newSwLine = (file + "," + this.day + "," + pi.bid + "," + pi.lenaId + "," + mr.type + "," + segmentNumber +
-                                                                        ",CHN_CHF Utt," +
+                                                                        ",CHN_CHF Utt "+ ","+//cryStep + ","+
                                                                             Config.getTimeStr(recStartTime) + "," +
                                                                             cstartSecs + "," +
                                                                             cendSecs + "," +
@@ -2303,7 +2368,7 @@ e20170310_134226_014863.wav	1
                                                                 cendSecs,
                                                                 cstart,
                                                                 cend,
-                                                                pi.vd,
+                                                                cpi.vd,
                                                                 pi.bd,
                                                                 0,
                                                                 0,
@@ -2655,7 +2720,7 @@ e20170310_134226_014863.wav	1
                         personTotalCounts[person].avDb = personTotalCounts[person].avDb + avDb;
                         personTotalCounts[person].maxDb = personTotalCounts[person].maxDb + maxDb;
                         personTotalCounts[person].childSegments = personTotalCounts[person].childSegments + segs;
-                        personTotalCounts[person].totalRecMSecs = blockDur / 10;
+                        personTotalCounts[person].totalRecMSecs = personTotalCounts[person].totalRecMSecs+ ( blockDur / 10 );
 
                         //blockDur) / 10
                         //personTotalCounts[person] = new Tuple<double, double, double, double, double>(totalInfo.Item1 + vocDur, totalInfo.Item2 + vocCount, totalInfo.Item3 + turnCount, totalInfo.Item4 + a, totalInfo.Item5 + n);
@@ -2913,10 +2978,10 @@ e20170310_134226_014863.wav	1
 
                 {
                     if (cf.settings.doAngleFiles)
-                        sw.WriteLine("Person 1, Person2, Interaction Time, Interaction Millisecond, Interaction, 45Interaction, Angle1, Angle2, Leftx,Lefty,Rightx,Righty, Leftx2,Lefty2,Rightx2,Righty2,Type1, Type2, Gender1, Gender2, Diagnosis1, Diagnosis2, WasTalking1, WasTalking2 ");
+                        sw.WriteLine("Person 1, Person2, Interaction Time, Interaction Millisecond, Interaction, "+ angle+"Interaction, Angle1, Angle2, Leftx,Lefty,Rightx,Righty, Leftx2,Lefty2,Rightx2,Righty2,Type1, Type2, Gender1, Gender2, Diagnosis1, Diagnosis2, WasTalking1, WasTalking2 ");
 
                     if (cf.settings.doApproach)
-                        swa.WriteLine("Person 1, Person2, Interaction Time, Interaction Millisecond,d1,d2,approachMeters,x10,y10,x20,y20,x11,y11,x21,y21, WithinGR, WithinGRAnd45deg, Angle1, Angle2,Type1, Type2, Gender1, Gender2, Diagnosis1, Diagnosis2,LongPerson 1, LongPerson2,  ");
+                        swa.WriteLine("Person 1, Person2, Interaction Time, Interaction Millisecond,d1,d2,approachMeters,x10,y10,x20,y20,x11,y11,x21,y21, WithinGR, WithinGRAnd"+ angle+"deg, Angle1, Angle2,Type1, Type2, Gender1, Gender2, Diagnosis1, Diagnosis2,LongPerson 1, LongPerson2,  ");
 
                     if (cf.settings.doTalkingCount)
                         swtc.WriteLine("Day, Person 1, Person2, People Talking , Interaction Time, Interaction Millisecond, Type1, Type2, Gender1, Gender2, Diagnosis1, Diagnosis2, WasTalking1, WasTalking2 ");
@@ -3002,7 +3067,7 @@ e20170310_134226_014863.wav	1
                                                             Boolean inversePair = false;
                                                             String subject = p;
                                                             String partner = person;
-                                                            String pair = p + "-" + person;
+                                                            String pair = p + "-" + person;///
                                                             if ((!cf.pairs.Contains(pair)) && cf.pairs.Contains(person + "-" + p))
                                                             {
                                                                 inversePair = true;
@@ -3036,7 +3101,7 @@ e20170310_134226_014863.wav	1
                                                             if (!pairInteractions.ContainsKey(pair))
                                                                 pairInteractions.Add(pair, new PairInfo());
 
-                                                            if (!inversePair)
+                                                            if (!inversePair)////
                                                             {
                                                                 if (!pairInteractions[pair].subjectSet)
                                                                 {
@@ -3070,13 +3135,13 @@ e20170310_134226_014863.wav	1
                                                                     pairInteractions[pair].sharedTimeInSecsNoFp += .1;
                                                                 }
                                                             }
-                                                            pairInteractions[pair].sharedTimeInSecs += .1;
+                                                            pairInteractions[pair].sharedTimeInSecs += .1;/////
                                                              ///////ADD FP DEBUG
 
                                                             double dist = calcSquaredDist(activities[dt][person], activities[dt][p]);
                                                             MappingRow person1 = cf.getMapping(person, dt);
                                                             MappingRow person2 = cf.getMapping(p, dt);
-
+                                                            //
 
                                                             Boolean withinGofR = (dist <= (cf.gOfR * cf.gOfR)) && (dist >= (cf.gOfRMin * cf.gOfRMin));
                                                             Tuple<double, double> angles = withinOrientationData(activities[dt][p], activities[dt][person]);
@@ -3086,7 +3151,7 @@ e20170310_134226_014863.wav	1
                                                             //cf.getMapping(person, dt).leftTag.Trim() == "00:11:CE:00:00:00:02:CE" && dt >= new DateTime(2019, 02, 12, 10, 28, 38, 644) && dt <= new DateTime(2019, 06, 3);
                                                                                    /*****T1 HACK right tag *****/
 
-                                                            Boolean orientedCloseness = withinGofR && ((Math.Abs(angles.Item1) <= 45 && Math.Abs(angles.Item2) <= 45) || hackThisT1);
+                                                            Boolean orientedCloseness = withinGofR && ((Math.Abs(angles.Item1) <= angle && Math.Abs(angles.Item2) <= angle) || hackThisT1);
 
                                                             Boolean wasTalking = activities[dt][person].wasTalking;
                                                             if (cf.settings.doApproach)
@@ -3174,6 +3239,8 @@ e20170310_134226_014863.wav	1
                                                                  
                                                                  
                                                             }
+                                                            /** withinGofR START**/
+
                                                             if (withinGofR)
                                                             {
 
@@ -3245,6 +3312,8 @@ e20170310_134226_014863.wav	1
 
                                                                 }
                                                             }
+                                                            /** withinGofR END**/
+
                                                             //if(wasTalking)
                                                             Double tc = activities[dt][person].tc;
                                                             Double vc = activities[dt][person].vc;
@@ -3258,10 +3327,11 @@ e20170310_134226_014863.wav	1
                                                             ////////LENASAFE
                                                             if (wasTalking || vd > 0 || ad > 0 || tc > 0 || a > 0 || n > 0 || vc > 0 || o > 0 || c > 0)
                                                             {
+                                                                
                                                                 if (dist <= (cf.gOfR * cf.gOfR) && dist >= (cf.gOfRMin * cf.gOfRMin))
                                                                 {
-
-                                                                    if (hackThisT1 || justProx || withinOrientation(activities[dt][p], activities[dt][person], 45))
+                                                                    //gr ori andtalking person
+                                                                    if (hackThisT1 || justProx || withinOrientation(activities[dt][p], activities[dt][person], angle))
                                                                     {
                                                                         if (activities[dt][person].cry > 0 && activities[dt][p].cry > 0)
                                                                         {
@@ -3279,6 +3349,7 @@ e20170310_134226_014863.wav	1
 
                                                                         List<PersonInfo> pi = lenaInfo[person];
                                                                         pic = 0;
+                                                                        ////
                                                                         foreach (PersonInfo i in pi)
                                                                         {
                                                                             pic++;
@@ -3308,7 +3379,7 @@ e20170310_134226_014863.wav	1
                                                                                 o = i.oln > 0 && i.bd > 0 ? (i.oln / i.bd) / 10 : 0;
                                                                                 c = i.cry > 0 && i.bd > 0 ? (i.cry / i.bd) / 10 : 0;
                                                                                 double vd2 = i.vd > 0 && i.bd > 0 ? (i.vd / i.bd) / 10 : 0;///////
-                                                                                if (person.Equals(pair.Split('-')[0]))/////
+                                                                                if (person.Equals(pair.Split('-')[0]))///////
                                                                                 {
                                                                                     pairInteractions[pair].subject.vd += vd2;
                                                                                     pairInteractions[pair].subject.vc += vc;
@@ -3418,7 +3489,7 @@ e20170310_134226_014863.wav	1
                                                                                     }
                                                                                 }
                                                                                 onsetPos[partner] = pPos;
-
+                                                                                ///
 
                                                                             }
 
@@ -3431,8 +3502,8 @@ e20170310_134226_014863.wav	1
                                                                             {
                                                                                 pairInteractions[pair].partner.interactionTime += 0.1;
                                                                             }
-                                                                        }
-                                                                    }
+                                                                        }/**wasTalkingy*/
+                                                                    } //gr ori andtalking person
                                                                 }
                                                             }
                                                         }
@@ -3469,7 +3540,7 @@ e20170310_134226_014863.wav	1
                         }
                     }
                 }*/
-                sw.Close();
+                                                            sw.Close();
                 swa.Close();
             }
             catch (Exception e)
@@ -3493,7 +3564,7 @@ e20170310_134226_014863.wav	1
         }
         public bool getChildWavSocial = true;
         public void writeSocialOnsets()
-        {
+        {//
             TextWriter sw = null;
             TextWriter sw2 = null;
             if (cf.settings.doSocialOnsets)
@@ -3531,7 +3602,7 @@ e20170310_134226_014863.wav	1
                          os.dbPeak + "," +
                          os.turnTaking + "," +
                         (os.inSocialContact ? "YES" : "NO") + "," + os.diagnosis);
-
+                        ///
                         if (getChildWavSocial && os.inChildSocialContact && os.subjectType == "Child")
                         {
                             if((os.inSocialContact ? "YES" : "NO")=="NO")
@@ -3605,7 +3676,7 @@ e20170310_134226_014863.wav	1
                     sw = new StreamWriter(cf.root + cf.classroom + "/SYNC/interaction_angles_xy_output_" + (trunkDetailFile ? "trunk_" : "") + (cf.justFreePlay ? "freeplay_" : "") + day.Month + "_" + day.Day + "_" + day.Year + "_" + cf.settings.fileNameVersion + ".csv");
                 {
                     if (cf.settings.doAngleFiles)
-                        sw.WriteLine("Person 1, Person2, Interaction Time, Interaction, 45Interaction, Angle1, Angle2, Leftx,Lefty,Rightx,Righty, Leftx2,Lefty2,Rightx2,Righty2");
+                        sw.WriteLine("Person 1, Person2, Interaction Time, Interaction, "+ angle+"Interaction, Angle1, Angle2, Leftx,Lefty,Rightx,Righty, Leftx2,Lefty2,Rightx2,Righty2");
                     //foreach (DateTime dt in activities.Keys)
                     //{
                     foreach (KeyValuePair<DateTime, Dictionary<String, PersonInfo>> opi in activities.OrderBy(key => key.Key))
@@ -3686,7 +3757,7 @@ e20170310_134226_014863.wav	1
                                                 {
                                                     pairInteractions[pair].closeTimeInSecs += .1;
                                                     Tuple<double, double> angles = withinOrientationData(activities[dt][p], activities[dt][person]);
-                                                    Boolean orientedCloseness = Math.Abs(angles.Item1) <= 45 && Math.Abs(angles.Item2) <= 45;
+                                                    Boolean orientedCloseness = Math.Abs(angles.Item1) <= angle && Math.Abs(angles.Item2) <= angle;
                                                     if (cf.settings.doAngleFiles)
                                                     {
                                                         sw.WriteLine(person + "," + p + "," + dt.ToLongTimeString() + ",0.1," + (orientedCloseness ? "0.1," : "0,") + (angles.Item1) + "," + (angles.Item2) + "," + activities[dt][person].lx + "," + activities[dt][person].ly + "," + activities[dt][person].rx + "," + activities[dt][person].ry + "," + activities[dt][p].lx + "," + activities[dt][p].ly + "," + activities[dt][p].rx + "," + activities[dt][p].ry);
@@ -3719,7 +3790,7 @@ e20170310_134226_014863.wav	1
                                                     if (dist <= (cf.gOfR * cf.gOfR) && dist <= (cf.gOfRMin * cf.gOfRMin))
                                                     {
 
-                                                        if (justProx || withinOrientation(activities[dt][p], activities[dt][person], 45))
+                                                        if (justProx || withinOrientation(activities[dt][p], activities[dt][person], angle))
                                                         {
                                                             String pair = p + "-" + person;
                                                             Boolean inversePair = false;

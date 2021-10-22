@@ -8,6 +8,8 @@ namespace UL_PROCESSOR
 {
     class UL_PROCESSOR_SETTINGS
     {
+        public Boolean justCleanUbi = false;
+
         public Boolean hackT1 = false;
         public int chunkSize = 4;
         public Boolean doUbiChildFiles = false;
@@ -47,6 +49,9 @@ namespace UL_PROCESSOR
                 {
                     switch (setting[0].Trim())
                     {
+                        case "JUSTCLEANUBI":
+                            justCleanUbi = setting[1].Trim().ToUpper() == "YES";
+                            break;
                         case "COVID":
                             doCovid = setting[1].Trim().ToUpper() == "YES";
                             break;
